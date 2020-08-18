@@ -19,7 +19,7 @@
     <title>多线程(一) 基本概念 - 花裤衩</title>
   
   
-    <meta name="description" content="Kahdahdlahdlkshldksl">
+    <meta name="description" content="了解线程、进程、上下文切换、线程安全等基本概念。">
   
 
   <!-- feed -->
@@ -444,14 +444,20 @@
       <section class="article typo">
         <div class="article-entry" itemprop="articleBody">
           
-          <p>Kahdahdlahdlkshldksl</p>
+          <p>了解线程、进程、上下文切换、线程安全等基本概念。</p>
 <a id="more"></a>
 
-<h3 id="什么是多线程"><a href="#什么是多线程" class="headerlink" title="什么是多线程"></a>什么是多线程</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
-<h3 id="什么是线程上下文切换"><a href="#什么是线程上下文切换" class="headerlink" title="什么是线程上下文切换"></a>什么是线程上下文切换</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
-<h3 id="什么是线程安全"><a href="#什么是线程安全" class="headerlink" title="什么是线程安全"></a>什么是线程安全</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
-<h3 id="如何实现线程安全"><a href="#如何实现线程安全" class="headerlink" title="如何实现线程安全"></a>如何实现线程安全</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
+<h3 id="1-线程与进程"><a href="#1-线程与进程" class="headerlink" title="1.线程与进程"></a>1.线程与进程</h3><div class="note info"><p>进程：操作系统进行资源分配和调度的基本单位，每个运行的java项目就是一个jvm进程。</p></div>
 
+<div class="note info"><p>线程：CPU运行的最小单位，只能寄存在进程中。</p></div>
+
+<div class="note info"><p>多线程：进程内拥有多个线程共享进程资源，也拥有自己的私有空间，各线程同时工作，完成不同的任务。</p></div>
+
+
+<h3 id="2-线程上下文切换"><a href="#2-线程上下文切换" class="headerlink" title="2.线程上下文切换"></a>2.线程上下文切换</h3><div class="note "><p>任何一门计算机语言的执行，最终都是转化为机器语言在操作系统中运行。java中每个线程的运行，都是转化为一组机器指令交由依次CPU执行，线程在被CPU执行的过程中会因为一些原因(sleep、wait、join、各种锁等)被挂起转而执行其他的线程，多线程交替占用CPU使用权的过程叫做线程上下文切换</p></div>
+
+
+<h3 id="3-线程安全"><a href="#3-线程安全" class="headerlink" title="3.线程安全"></a>3.线程安全</h3><h3 id="4-如何实现线程安全"><a href="#4-如何实现线程安全" class="headerlink" title="4.如何实现线程安全"></a>4.如何实现线程安全</h3>
           
             <br>
             
@@ -503,10 +509,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-04-13T08:33:47+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-08-17T17:45:24+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年4月13日</p>
+    <p>更新于：2020年8月17日</p>
   </a>
 </div>
 
@@ -530,7 +536,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer"
           
-          href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%B8%80)%20%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 花裤衩&summary=Kahdahdlahdlkshldksl"
+          href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%B8%80)%20%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 花裤衩&summary=了解线程、进程、上下文切换、线程安全等基本概念。"
           
           >
           
@@ -542,7 +548,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer"
           
-          href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%B8%80)%20%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 花裤衩&summary=Kahdahdlahdlkshldksl"
+          href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%B8%80)%20%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 花裤衩&summary=了解线程、进程、上下文切换、线程安全等基本概念。"
           
           >
           
@@ -554,7 +560,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer"
           
-          href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%B8%80)%20%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 花裤衩&summary=Kahdahdlahdlkshldksl"
+          href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%B8%80)%20%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 花裤衩&summary=了解线程、进程、上下文切换、线程安全等基本概念。"
           
           >
           
@@ -644,7 +650,7 @@
 
 
     <div class='content'>
-      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#什么是多线程"><span class="toc-text">什么是多线程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#什么是线程上下文切换"><span class="toc-text">什么是线程上下文切换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#什么是线程安全"><span class="toc-text">什么是线程安全</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#如何实现线程安全"><span class="toc-text">如何实现线程安全</span></a></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-线程与进程"><span class="toc-text">1.线程与进程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-线程上下文切换"><span class="toc-text">2.线程上下文切换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-线程安全"><span class="toc-text">3.线程安全</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-如何实现线程安全"><span class="toc-text">4.如何实现线程安全</span></a></li></ol>
     </div>
   </section>
 
