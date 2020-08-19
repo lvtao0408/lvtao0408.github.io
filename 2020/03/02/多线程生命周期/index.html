@@ -19,7 +19,7 @@
     <title>多线程(二) 生命周期 - 花裤衩</title>
   
   
-    <meta name="description" content="Kahdahdlahdlkshldksl">
+    <meta name="description" content="线程七种状态以及转化、常用方法">
   
 
   <!-- feed -->
@@ -381,7 +381,7 @@
           
   
     <h1 class="title">
-      <a href="/2020/03/02/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%BA%8C)%20%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/">
+      <a href="/2020/03/02/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/">
         多线程(二) 生命周期
       </a>
     </h1>
@@ -444,14 +444,43 @@
       <section class="article typo">
         <div class="article-entry" itemprop="articleBody">
           
-          <p>Kahdahdlahdlkshldksl</p>
+          <p>线程七种状态以及转化、常用方法</p>
 <a id="more"></a>
 
-<h3 id="线程状态"><a href="#线程状态" class="headerlink" title="线程状态"></a>线程状态</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
-<h3 id="状态转化"><a href="#状态转化" class="headerlink" title="状态转化"></a>状态转化</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
-<h3 id="sleep-方法"><a href="#sleep-方法" class="headerlink" title="sleep()方法"></a>sleep()方法</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
-<h3 id="join-方法"><a href="#join-方法" class="headerlink" title="join()方法"></a>join()方法</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
-<h3 id="yield"><a href="#yield" class="headerlink" title="yield()"></a>yield()</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
+<h3 id="线程状态"><a href="#线程状态" class="headerlink" title="线程状态"></a>线程状态</h3><h4 id="NEW-新建"><a href="#NEW-新建" class="headerlink" title="NEW(新建)"></a>NEW(新建)</h4><ul>
+<li>使用new创建出线程后，进入新建状态</li>
+<li>此时jvm为其分配内存以及其成员变量</li>
+<li>除此之外没有任何特征，方法也不会被执行</li>
+</ul>
+<h4 id="RUNNABLE-就绪"><a href="#RUNNABLE-就绪" class="headerlink" title="RUNNABLE(就绪)"></a>RUNNABLE(就绪)</h4><ul>
+<li>调用对象的start()方法，进入就绪状态</li>
+<li>此时jvm会为其创建方法调用栈和程序计数器</li>
+<li>线程拥有被CPU调度资格，开始疯狂争夺使用权</li>
+</ul>
+<h4 id="RUNNING-运行"><a href="#RUNNING-运行" class="headerlink" title="RUNNING(运行)"></a>RUNNING(运行)</h4><ul>
+<li>抢到CPU使用权时，开始执行run()方法，进入运行状态</li>
+<li>线程只有通过start()后争夺到CPU时间片的方式运行run()方法，才可以实现异步执行</li>
+<li>如果直接调用run()方法运行，系统会当作普通方法，不会异步执行</li>
+</ul>
+<h4 id="BLOCKED-阻塞"><a href="#BLOCKED-阻塞" class="headerlink" title="BLOCKED(阻塞)"></a>BLOCKED(阻塞)</h4><ul>
+<li>处于运行状态的线程在进入synchronized关键字修饰的方法或代码块时，进入阻塞状态</li>
+<li>阻塞的过程就是线程在抢夺锁的过程，因此阻塞是被动的</li>
+<li>阻塞在某个锁上的线程，在锁被释放后会主动去争取，争取到锁后回到运行状态，因此脱离阻塞状态是主动的</li>
+</ul>
+<h4 id="WAITING-等待"><a href="#WAITING-等待" class="headerlink" title="WAITING(等待)"></a>WAITING(等待)</h4><ul>
+<li>调用wait()、join()方法时，进入等待状态</li>
+<li>因此进入等待状态是主动的，需要有事件主动唤醒</li>
+</ul>
+<h4 id="TIMED-WAITING-等待"><a href="#TIMED-WAITING-等待" class="headerlink" title="TIMED_WAITING(等待)"></a>TIMED_WAITING(等待)</h4><ul>
+<li>调用sleep(long)、wait(long)、join(long)方法时，进入超时等待状态</li>
+<li>同等待状态，到达参数指定时间自动唤醒</li>
+</ul>
+<h4 id="TERMINATED-终止"><a href="#TERMINATED-终止" class="headerlink" title="TERMINATED(终止)"></a>TERMINATED(终止)</h4><ul>
+<li>run()方法或call()方法运行完毕，线程正常结束</li>
+<li>线程执行代码过程中抛出未捕获异常或直接ERROR</li>
+<li>调用stop()方法，也是个奇葩的方法，不推荐使用</li>
+</ul>
+<p>附加状态转化图：</p>
 
           
             <br>
@@ -480,7 +509,7 @@
           
         
           
-            <p>本文永久链接是：<a href=http://yoursite.com/2020/03/02/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%BA%8C)%20%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/>http://yoursite.com/2020/03/02/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%BA%8C)%20%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/</a></p>
+            <p>本文永久链接是：<a href=http://yoursite.com/2020/03/02/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/>http://yoursite.com/2020/03/02/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/</a></p>
           
         
       </blockquote>
@@ -504,10 +533,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-04-13T08:35:35+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-08-20T00:00:32+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年4月13日</p>
+    <p>更新于：2020年8月20日</p>
   </a>
 </div>
 
@@ -531,7 +560,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer"
           
-          href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/02/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%BA%8C)%20%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/&title=多线程(二) 生命周期 - 花裤衩&summary=Kahdahdlahdlkshldksl"
+          href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/02/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/&title=多线程(二) 生命周期 - 花裤衩&summary=线程七种状态以及转化、常用方法"
           
           >
           
@@ -543,7 +572,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer"
           
-          href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/02/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%BA%8C)%20%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/&title=多线程(二) 生命周期 - 花裤衩&summary=Kahdahdlahdlkshldksl"
+          href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/02/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/&title=多线程(二) 生命周期 - 花裤衩&summary=线程七种状态以及转化、常用方法"
           
           >
           
@@ -555,7 +584,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer"
           
-          href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/02/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%BA%8C)%20%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/&title=多线程(二) 生命周期 - 花裤衩&summary=Kahdahdlahdlkshldksl"
+          href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/02/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/&title=多线程(二) 生命周期 - 花裤衩&summary=线程七种状态以及转化、常用方法"
           
           >
           
@@ -650,7 +679,7 @@
 
 
     <div class='content'>
-      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#线程状态"><span class="toc-text">线程状态</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#状态转化"><span class="toc-text">状态转化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#sleep-方法"><span class="toc-text">sleep()方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#join-方法"><span class="toc-text">join()方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#yield"><span class="toc-text">yield()</span></a></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#线程状态"><span class="toc-text">线程状态</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#NEW-新建"><span class="toc-text">NEW(新建)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#RUNNABLE-就绪"><span class="toc-text">RUNNABLE(就绪)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#RUNNING-运行"><span class="toc-text">RUNNING(运行)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#BLOCKED-阻塞"><span class="toc-text">BLOCKED(阻塞)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#WAITING-等待"><span class="toc-text">WAITING(等待)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#TIMED-WAITING-等待"><span class="toc-text">TIMED_WAITING(等待)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#TERMINATED-终止"><span class="toc-text">TERMINATED(终止)</span></a></li></ol></li></ol>
     </div>
   </section>
 
