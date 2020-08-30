@@ -499,15 +499,19 @@
 <p>目前想不到什么应用场景，如果一个线程的优先级特别低，执行内容也不是很重要，又怕他被CPU调度的次数多，可以适当的调用此方法减少执行的次数，把CPU资源给其他重要的线程工作。</p>
 <h3 id="interrupt"><a href="#interrupt" class="headerlink" title="interrupt()"></a>interrupt()</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">public void interrupt() &#123;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F;如果调用中断的是线程自身，则不需要进行安全性判断</span><br><span class="line">    if (this !&#x3D; Thread.currentThread())</span><br><span class="line">        checkAccess();</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F;  </span><br><span class="line">    synchronized (blockerLock) &#123;</span><br><span class="line">        Interruptible b &#x3D; blocker;</span><br><span class="line">        if (b !&#x3D; null) &#123;</span><br><span class="line">            interrupt0();           &#x2F;&#x2F; 只是设置中断标志</span><br><span class="line">            b.interrupt(this);</span><br><span class="line">            return;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	interrupt0();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>调用线程的interrupt()方法时，首先把线程的中断标志变为true。如果线程不处于阻塞状态，不做其他任何操作，如果此时线程已经处于阻塞状态(wait、sleep、join方法)时，线程立刻退出阻塞状态并抛出一个InterruptedException异常，如果中断标志为true的情况下线程调用方法进入阻塞状态，还是抛出InterruptedException异常。当抛出InterruptedException异常后，<span class="p red">线程中断状态回归false。</span></p>
-<p>这里提到的阻塞，只是因为wait、sleep、join方法导致线程被堵住无法继续执行，并不是线程七大状态的BLOCKED(阻塞)状态，BLOCKED(阻塞)状态只由synchronized导致，而且不能被打断。相同的，IO阻塞也不能被打断。</p>
+<p>每个线程内部都维护了一个中断标志(默认false)，调用线程的interrupt()方法时会根据当前线程的中断标志和阻塞情况，判断是否需要抛出异常：</p>
+<ul>
+<li>如果中断标志为false，且没有被阻塞，修改中断标志为true。</li>
+<li>如果中断标志为true，此时调用wait、sleep、join方法时会抛出InterruptedException异常，恢复中断标志为false。</li>
+<li>如果已经被wait、sleep、join方法阻塞，调用interrupt()会抛出InterruptedException异常，恢复中断标志为false。</li>
+</ul>
+<p>这里提到的阻塞，只是因为wait、sleep、join方法导致线程被堵住无法继续执行，并不是线程七大状态的BLOCKED(阻塞)状态。BLOCKED(阻塞)状态只由synchronized导致，而且不能被打断，相同的，IO阻塞也不能被打断。</p>
 <p>由此可以看出来interrupt()方法中断的不是线程的<span class="p red">运行</span>，而是中断线程的<span class="p red">阻塞状态</span>，并且采用抛异常的方式引起线程的注意，被中断线程可以通过try catch方式自己决定如何应对中断信号。</p>
-<p>比如使用kafka采用while(true)的方式消费数据时，又希望在某个时刻终止这个线程，并且终止线程过程中，又要保证此刻正在处理的那条消息处理完毕后才能终止，可以采用interrupt()方法+wait、sleep、join的一种来实现：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">public void run()&#123;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 创建消费者</span><br><span class="line">	Properties props &#x3D; createProperties(&quot;localhost:9092&quot;, &quot;groups&quot;);</span><br><span class="line">	props.put(&quot;enable.auto.commit&quot;, &quot;false&quot;);</span><br><span class="line">	KafkaConsumer&lt;String, String&gt; consumer &#x3D; new KafkaConsumer&lt;&gt;(props);</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 设置消费topic</span><br><span class="line">	consumer.subscribe(Arrays.asList(&quot;topic-name&quot;));</span><br><span class="line"></span><br><span class="line">	while (true) &#123;</span><br><span class="line"></span><br><span class="line">		&#x2F;&#x2F; 每次拉取消息</span><br><span class="line">		ConsumerRecords&lt;String, String&gt; records &#x3D; consumer.poll(100);</span><br><span class="line"></span><br><span class="line">		&#x2F;&#x2F; 循环处理</span><br><span class="line">		for (ConsumerRecord&lt;String, String&gt; record : records) &#123;	</span><br><span class="line"></span><br><span class="line">        	&#x2F;&#x2F; 消费逻辑..</span><br><span class="line"></span><br><span class="line">        	&#x2F;&#x2F; wait或sleep或join阻塞1毫秒，试探线程有没有被中断</span><br><span class="line">        	try &#123;</span><br><span class="line">            	Thread.wait(1);</span><br><span class="line">            &#125; catch (InterruptedException e) &#123;</span><br><span class="line">            	&#x2F;&#x2F; 关闭消费者对象</span><br><span class="line">            	consumer.close();</span><br><span class="line">            	return;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>比如使用kafka采用while(true)的方式消费数据时，又希望在某个时刻终止这个线程，并且终止过程中要保证此刻正在处理的那条消息处理完毕后才能终止，可以采用interrupt()方法+wait、sleep、join的一种来实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">public void run()&#123;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 创建消费者</span><br><span class="line">	Properties props &#x3D; createProperties(&quot;localhost:9092&quot;, &quot;groups&quot;);</span><br><span class="line">	props.put(&quot;enable.auto.commit&quot;, &quot;false&quot;);</span><br><span class="line">	KafkaConsumer&lt;String, String&gt; consumer &#x3D; new KafkaConsumer&lt;&gt;(props);</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 设置消费topic</span><br><span class="line">	consumer.subscribe(Arrays.asList(&quot;topic-name&quot;));</span><br><span class="line"></span><br><span class="line">	while (true) &#123;</span><br><span class="line"></span><br><span class="line">		&#x2F;&#x2F; 每次拉取消息</span><br><span class="line">		ConsumerRecords&lt;String, String&gt; records &#x3D; consumer.poll(100);</span><br><span class="line"></span><br><span class="line">		&#x2F;&#x2F; 循环处理</span><br><span class="line">		for (ConsumerRecord&lt;String, String&gt; record : records) &#123;	</span><br><span class="line"></span><br><span class="line">        	&#x2F;&#x2F; 消费逻辑..</span><br><span class="line"></span><br><span class="line">        	&#x2F;&#x2F; wait或sleep或join阻塞1毫秒，试探线程有没有被中断</span><br><span class="line">        	try &#123;</span><br><span class="line">            	Thread.wait(1);</span><br><span class="line">            &#125; catch (InterruptedException e) &#123;</span><br><span class="line">            	&#x2F;&#x2F; 关闭消费者对象</span><br><span class="line">            	consumer.close();</span><br><span class="line">            	return;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
+<h3 id="stop"><a href="#stop" class="headerlink" title="stop()"></a>stop()</h3><p>强制终止线程的运行，并立即释放掉此线程持有的锁，这些锁可能用来维护数据一致性的，所以此方法被废弃。</p>
 
-
-<h3 id="stop"><a href="#stop" class="headerlink" title="stop()"></a>stop()</h3>
           
             <br>
             
@@ -559,10 +563,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-08-26T19:32:05+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-08-27T11:19:28+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年8月26日</p>
+    <p>更新于：2020年8月27日</p>
   </a>
 </div>
 
@@ -634,13 +638,12 @@
         
           <div class="prev-next">
             
-              <a class='prev' href='/2020/03/03/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%B8%89)%20%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1/'>
-                <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(三) 线程通信</p>
-                <p class='content'>Kahdahdlahdlkshldksl
+              <a class='prev' href='/2020/03/03/volatile%E5%85%B3%E9%94%AE%E5%AD%97/'>
+                <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(三) volatile关键字</p>
+                <p class='content'>通过CPU缓存模型、。
 
 
-线程协作:wait()/notify()&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^&amp;……
-...</p>
+CPU高速缓存计算机中程序的执行，本质上是线程指令在CPU上的执行，并且在执行必然牵涉到数据的读和写，程序运行过程的临时数据都是存放在主内存(RAM)中，因此CPU在...</p>
               </a>
             
             

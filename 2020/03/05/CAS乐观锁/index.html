@@ -16,7 +16,7 @@
 
   <!-- 页面元数据 -->
   
-    <title>多线程(九) 性能调优 - 花裤衩</title>
+    <title>多线程(五) CAS乐观锁 - 花裤衩</title>
   
   
     <meta name="description" content="Kahdahdlahdlkshldksl">
@@ -381,8 +381,8 @@
           
   
     <h1 class="title">
-      <a href="/2020/03/09/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%B9%9D)%20%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/">
-        多线程(九) 性能调优
+      <a href="/2020/03/05/CAS%E4%B9%90%E8%A7%82%E9%94%81/">
+        多线程(五) CAS乐观锁
       </a>
     </h1>
   
@@ -421,7 +421,7 @@
               <div class="new-meta-item date">
   <a class='notlink'>
     <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
-    <p>发布于：2020年3月9日</p>
+    <p>发布于：2020年3月5日</p>
   </a>
 </div>
 
@@ -447,9 +447,10 @@
           <p>Kahdahdlahdlkshldksl</p>
 <a id="more"></a>
 
-<h3 id="内部优化锁"><a href="#内部优化锁" class="headerlink" title="内部优化锁"></a>内部优化锁</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
-<h3 id="应用层优化锁"><a href="#应用层优化锁" class="headerlink" title="应用层优化锁"></a>应用层优化锁</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
-<h3 id="减少上下文切换"><a href="#减少上下文切换" class="headerlink" title="减少上下文切换"></a>减少上下文切换</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
+<h3 id="什么是CAS"><a href="#什么是CAS" class="headerlink" title="什么是CAS"></a>什么是CAS</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
+<h3 id="CAS内部如何保证原子性"><a href="#CAS内部如何保证原子性" class="headerlink" title="CAS内部如何保证原子性"></a>CAS内部如何保证原子性</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
+<h3 id="ABA问题"><a href="#ABA问题" class="headerlink" title="ABA问题"></a>ABA问题</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
+<h3 id="其他的弊端"><a href="#其他的弊端" class="headerlink" title="其他的弊端"></a>其他的弊端</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
 
           
             <br>
@@ -478,7 +479,7 @@
           
         
           
-            <p>本文永久链接是：<a href=http://yoursite.com/2020/03/09/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%B9%9D)%20%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/>http://yoursite.com/2020/03/09/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%B9%9D)%20%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/</a></p>
+            <p>本文永久链接是：<a href=http://yoursite.com/2020/03/05/CAS%E4%B9%90%E8%A7%82%E9%94%81/>http://yoursite.com/2020/03/05/CAS%E4%B9%90%E8%A7%82%E9%94%81/</a></p>
           
         
       </blockquote>
@@ -502,10 +503,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-04-13T08:36:07+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-08-27T17:21:32+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年4月13日</p>
+    <p>更新于：2020年8月27日</p>
   </a>
 </div>
 
@@ -529,7 +530,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer"
           
-          href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/09/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%B9%9D)%20%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/&title=多线程(九) 性能调优 - 花裤衩&summary=Kahdahdlahdlkshldksl"
+          href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/05/CAS%E4%B9%90%E8%A7%82%E9%94%81/&title=多线程(五) CAS乐观锁 - 花裤衩&summary=Kahdahdlahdlkshldksl"
           
           >
           
@@ -541,7 +542,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer"
           
-          href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/09/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%B9%9D)%20%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/&title=多线程(九) 性能调优 - 花裤衩&summary=Kahdahdlahdlkshldksl"
+          href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/05/CAS%E4%B9%90%E8%A7%82%E9%94%81/&title=多线程(五) CAS乐观锁 - 花裤衩&summary=Kahdahdlahdlkshldksl"
           
           >
           
@@ -553,7 +554,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer"
           
-          href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/09/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E4%B9%9D)%20%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/&title=多线程(九) 性能调优 - 花裤衩&summary=Kahdahdlahdlkshldksl"
+          href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/05/CAS%E4%B9%90%E8%A7%82%E9%94%81/&title=多线程(五) CAS乐观锁 - 花裤衩&summary=Kahdahdlahdlkshldksl"
           
           >
           
@@ -577,23 +578,11 @@
         
           <div class="prev-next">
             
-              <a class='prev' href='/2020/03/10/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E5%8D%81)%20%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E5%9C%BA%E6%99%AF/'>
-                <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(十) 常见问题场景</p>
-                <p class='content'>Kahdahdlahdlkshldksl
-
-
-死锁是如何产生的&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^&amp;……
-如何快速定位死锁位置&a...</p>
-              </a>
             
-            
-              <a class='next' href='/2020/03/08/%E5%A4%9A%E7%BA%BF%E7%A8%8B(%E5%85%AB)%20%E5%BC%82%E6%AD%A5%E6%88%96%E5%B9%B6%E8%A1%8C/'>
-                <p class='title'>多线程(八) 异步或并行<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-                <p class='content'>Kahdahdlahdlkshldksl
-
-
-异步批量任务&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^&amp;……
-并行执行&amp;&amp;...</p>
+              <a class='next' href='/2020/03/04/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/'>
+                <p class='title'>多线程(四) synchronized关键字<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+                <p class='content'>sunchronized锁的实现原理。
+</p>
               </a>
             
           </div>
@@ -621,7 +610,7 @@
 
   <script>
     window.subData = {
-      title: '多线程(九) 性能调优',
+      title: '多线程(五) CAS乐观锁',
       tools: true
     }
   </script>
@@ -647,7 +636,7 @@
 
 
     <div class='content'>
-      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#内部优化锁"><span class="toc-text">内部优化锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#应用层优化锁"><span class="toc-text">应用层优化锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#减少上下文切换"><span class="toc-text">减少上下文切换</span></a></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#什么是CAS"><span class="toc-text">什么是CAS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CAS内部如何保证原子性"><span class="toc-text">CAS内部如何保证原子性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ABA问题"><span class="toc-text">ABA问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#其他的弊端"><span class="toc-text">其他的弊端</span></a></li></ol>
     </div>
   </section>
 
