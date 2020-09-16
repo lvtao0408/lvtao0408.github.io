@@ -16,10 +16,10 @@
 
   <!-- 页面元数据 -->
   
-    <title>多线程(二) 并发编程三大特性 - 花裤衩</title>
+    <title>多线程(五) CAS - 花裤衩</title>
   
   
-    <meta name="description" content="JMM在并发编程中，对共享变量读写的原子性、可见性、一致性。">
+    <meta name="description" content="CAS的实现原理。">
   
 
   <!-- feed -->
@@ -381,8 +381,8 @@
           
   
     <h1 class="title">
-      <a href="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/">
-        多线程(二) 并发编程三大特性
+      <a href="/2020/03/05/CAS/">
+        多线程(五) CAS
       </a>
     </h1>
   
@@ -421,7 +421,7 @@
               <div class="new-meta-item date">
   <a class='notlink'>
     <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
-    <p>发布于：2020年3月2日</p>
+    <p>发布于：2020年3月5日</p>
   </a>
 </div>
 
@@ -444,58 +444,13 @@
       <section class="article typo">
         <div class="article-entry" itemprop="articleBody">
           
-          <p>JMM在并发编程中，对共享变量读写的原子性、可见性、一致性。</p>
+          <p>CAS的实现原理。</p>
 <a id="more"></a>
 
-<h3 id="CPU读写内存数据"><a href="#CPU读写内存数据" class="headerlink" title="CPU读写内存数据"></a>CPU读写内存数据</h3><p>计算机中程序的执行，本质上是线程指令在CPU处理器上的执行，并且在执行必然牵涉到数据的读和写，程序运行过程的临时数据都是存放在主内存(RAM)中，因此CPU在处理数据的时候也必然牵涉到和主内存的交互。处理器访问内存时，需要先获取内存总线的控制权，任何时刻只能有一个处理器获得内存总线的控制权，可以理解为同一时刻某个内存地址只可能被一个处理器访问。</p>
-<p>随着硬件技术的不断发展，现在的CPU处理速度已经远远超过主内存的访问速度，如果任何时候对数据的操作都要和内存进行交互，会大大降低指令的执行速度，因此就有了CPU高速缓存：<br><img src="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/CPU%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6.jpg" alt="图片"></p>
-<p>高速缓存的产生大大减少了CPU直接访问主内存的频率，也减少了内存访问速度对CPU的拖累，提高了CPU的执行效率。如果是单核CPU的操作系统中，只有一个高速缓存，没有任何问题。但是在多核CPU的操作系统中，每个处理器都有自己的高速缓存，就带来了<span class="p red">缓存一致性问题</span>。</p>
-<p>比如i++操作，编译成指令后大概有三步骤：<br>1.将i=0从主内存复制到<br>2.对i进行加1运算<br>3.将运算后的值刷回</p>
-<p>在多线程编程情况下，如果我们不做任何措施，会导致运行结果与预期不一致：<br><img src="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/%E5%9B%BE.jpg" alt="图片"></p>
-<p>对此，早期的解决方案是总线加锁，一个处理器在总线上输出LOCK#信号，使得其他处理器对内存的操作请求都会被阻塞，该处理器独占共享内存。方法简单粗暴，就是锁定范围太大(整个共享内存)，导致CPU利用率急剧下降。</p>
-<p>为了解决总线锁开销过大问题，CPU提出了缓存一致性解决方案，主要有Directory协议、Snoopy协议、MESI协议。这个说下MESI协议，这个协议只会对高速缓存中的某个数据加锁(如果数据不在缓存中，还是会总线加锁)，不会影响到内存中其他数据的读写。MESI协议将数据划分为四种状态，通过总线嗅探机制让所有处理器监听数据状态的变化，缓存一致的目的。</p>
-<p><img src="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/%E5%9B%BE.jpg" alt="图片"></p>
-<p>我们重点关注一下修改缓存数据的情况，对于E状态的数据，只有自己在读，可以直接把数据设置为M状态，对于S状态的数据，说明有多个处理器在读，必须将其他处理器对此数据的缓存作废，然后才能把数据的状态设置为M。当其他处理器发现自己的缓存是I状态时，就去主内存再次读取，而MESI协议保证其他处理器去主内存读取此数据前，将修改后的数据从高速缓存刷回主内存，并把数据状态改为E。</p>
-<h3 id="原子性"><a href="#原子性" class="headerlink" title="原子性"></a>原子性</h3><div class="note info"><p>原子性操作是指一个或多个操作，要么全部执行且在执行过程中不被任何因素打断，要么全部不执行。并且针对某个值的原子操作在被执行的过程中，CPU绝不会再去进行其他的针对该值的操作</p></div>
-
-<p>java作为一门高级语言，一个可执行线程会被编译成多条指令序列交由CPU执行，既然是多条指令，在执行过程中就存在被上下文切换打断的可能。在多线程编程中如果有的操作不具有原子性，会导致运行结果与预期的不一致，比如i++操作：<br><img src="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/%E6%9A%82%E6%97%A0.jpg" alt="图片"></p>
-<p>CPU如何保证原子性？<br>首先，处理器自动保证单条指令、基本内存操作的原子性，因此中断只会发生在指令之间。在单核CPU中保证操作原子性非常简单，只要禁止CPU在原子操作过程中发生上下文切换，那么就可以保证多线程对某个公共变量的多步骤操作都是串行的。嗯，有点线程安全的味道了。到了多核CPU时代，仅仅保证原子操作的执行不被CPU打断已经没什么卵用了，因为多个线程可以并行执行修改一个公共变量，线程之间又出现了干扰。对此，CPU又提出了CAS来解决这个问题(CAS下一章会讲)。</p>
-<p>Java自带的原子性操作：</p>
-<ul>
-<li>基本数据类型的赋值(long、double无法保证)</li>
-<li>所有引用类型的赋值</li>
-<li>synchronized关键字(采用jvm的monitor，monitor底层采用CPU的CAS)</li>
-<li>Lock相关类(采用aqs，aqs底层采用CPU的CAS)</li>
-<li>java.concurrent.Atomic包下所有类(采用CPU的CAS)</li>
-</ul>
-<p>注:CPU和Java(内存读写)的原子性与数据库的原子性还是有区别的，CPU和Java(内存读写)执行原子操作过程中发生中断的唯一可能就是断电，这时候所有内存数据全部消失，也就没讨论的意义了。而数据库的增删改操作涉及的都是持久化的磁盘数据，就算执行过程发生断电，持久化的数据仍然存在，因此数据库的原子操作增加了事务回滚概念，只要事务没提交，就相当于没执行。无论CPU还是Java还是数据库，都是强调整体的成败，不允许仅执行部分操作的存在。</p>
-<h3 id="可见性"><a href="#可见性" class="headerlink" title="可见性"></a>可见性</h3><div class="note info"><p>可见性是指一个线程对共享变量的修改，其他线程可以立即感知到这个变化</p></div>
-
-<p>可见性问题主要发生在多核CPU的场景中，如果线程对数据的读取都是通过内存实现，不会有任何可见性问题，因为上面说过某个内存地址任何时刻只会被一个处理器访问，但是高速缓存的诞生打破了这个规则，如果高速缓存中存在就从缓存访问，这就意味着某个内存数据可以被多个处理器同时访问。处理器对数据的修改在没有做任何措施的情况下，不会及时通知到其他处理器的缓存，这就导致其他处理器的数据是脏数据。比如i++操作：<br><img src="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/%E6%9A%82%E6%97%A0.jpg" alt="图片"></p>
-<p>CPU如何保证可见性？<br>这个很明显了，MESI缓存一致协议。</p>
-<p>Java自带的可见性操作：</p>
-<ul>
-<li>volatile关键字(采用MESI协议保证，如果数据不在缓存中就用总线锁)</li>
-<li>synchronized关键字(同一时刻就一个线程操作，还有啥不可见的)</li>
-<li>Lock相关类(跟synchronized一个套路)</li>
-</ul>
-<h3 id="有序性"><a href="#有序性" class="headerlink" title="有序性"></a>有序性</h3><div class="note info"><p>有序性是指程序按照写代码的顺序执行</p></div>
-
-<p>处理器和编译器为了提高程序运行效率，可能会对输入代码进行优化，并且不保证程序中各个语句的执行先后顺序同代码中的顺序一致。当然，CPU和编译器是在遵循as-if-serial语意的前提下对指令重排，而不是随意重排。首先CPU保证调度线程过程中，单线程的执行结果不会受指令重排影响导致结果不一致，编译器保证编译过程中不会对有依赖关系的数据进行指令重排。由此看出多线程情况下还是会有问题：<br><img src="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/%E6%9A%82%E6%97%A0.jpg" alt="图片"></p>
-<p>CPU如何保证有序性？<br>处理器主要通过内存屏障机制来解决有序性问题，如果不想让它重排，在两条指令中间加一道屏障。拿X86平台来说，有几种主要的内存屏障：</p>
-<ul>
-<li>lfence，是一种Load Barrier(读屏障)，在lfence指令前的所有读操作当必须在lfence指令后的所有读操作前完成</li>
-<li>sfence, 是一种Store Barrier(写屏障)，在sfence指令前的所有写操作当必须在sfence指令后的所有写操作前完成</li>
-<li>mfence, 是一种General Barrier(通用屏障)，在mfence指令前的所有读写操作当必须在mfence指令后的所有读写操作前完成</li>
-<li>除了内存屏障，也可以使用原子指令，如x86上的”lock…”前缀</li>
-</ul>
-<p>Java自带的有序性操作：</p>
-<ul>
-<li>volatile关键字(内存屏障)</li>
-<li>synchronized关键字(单线程操作，as-if-serial语意自动保证)</li>
-<li>Lock相关类(单线程操作，as-if-serial语意自动保证)</li>
-</ul>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>原子性、可见性、有序性问题是一切线程安全问题的根源，单纯的保证操作具有某一种特性只能解决某一部分场景问题。Java提供了很多类以及修饰符，提供了不同维度的保证，底层也都是封装CPU提供的措施来实现。</p>
+<h3 id="什么是CAS"><a href="#什么是CAS" class="headerlink" title="什么是CAS"></a>什么是CAS</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
+<h3 id="CAS内部如何保证原子性"><a href="#CAS内部如何保证原子性" class="headerlink" title="CAS内部如何保证原子性"></a>CAS内部如何保证原子性</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
+<h3 id="ABA问题"><a href="#ABA问题" class="headerlink" title="ABA问题"></a>ABA问题</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
+<h3 id="其他的弊端"><a href="#其他的弊端" class="headerlink" title="其他的弊端"></a>其他的弊端</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
 
           
             <br>
@@ -524,7 +479,7 @@
           
         
           
-            <p>本文永久链接是：<a href=http://yoursite.com/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/>http://yoursite.com/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/</a></p>
+            <p>本文永久链接是：<a href=http://yoursite.com/2020/03/05/CAS/>http://yoursite.com/2020/03/05/CAS/</a></p>
           
         
       </blockquote>
@@ -548,10 +503,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-09-16T16:40:36+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-09-15T11:27:18+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年9月16日</p>
+    <p>更新于：2020年9月15日</p>
   </a>
 </div>
 
@@ -575,7 +530,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer"
           
-          href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/&title=多线程(二) 并发编程三大特性 - 花裤衩&summary=JMM在并发编程中，对共享变量读写的原子性、可见性、一致性。"
+          href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/05/CAS/&title=多线程(五) CAS - 花裤衩&summary=CAS的实现原理。"
           
           >
           
@@ -587,7 +542,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer"
           
-          href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/&title=多线程(二) 并发编程三大特性 - 花裤衩&summary=JMM在并发编程中，对共享变量读写的原子性、可见性、一致性。"
+          href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/05/CAS/&title=多线程(五) CAS - 花裤衩&summary=CAS的实现原理。"
           
           >
           
@@ -599,7 +554,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer"
           
-          href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/&title=多线程(二) 并发编程三大特性 - 花裤衩&summary=JMM在并发编程中，对共享变量读写的原子性、可见性、一致性。"
+          href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/05/CAS/&title=多线程(五) CAS - 花裤衩&summary=CAS的实现原理。"
           
           >
           
@@ -623,26 +578,19 @@
         
           <div class="prev-next">
             
-              <a class='prev' href='/2020/03/03/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%92%8C%E5%B8%B8%E7%94%A8%E6%96%B9%E6%B3%95/'>
-                <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(三) 生命周期和常用方法</p>
-                <p class='content'>线程七种状态以及转化、常用方法
-
-
-线程状态以及转化NEW(新建)
-使用new创建出线程后，进入新建状态
-此时jvm为其分配内存以及其成员变量
-除此之外没有任何特征，方法也不会被执行
-
-RUNN...</p>
+              <a class='prev' href='/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/'>
+                <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(六) synchronized关键字</p>
+                <p class='content'>java锁的分类。
+</p>
               </a>
             
             
-              <a class='next' href='/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/'>
-                <p class='title'>多线程(一) 基本概念<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-                <p class='content'>线程进程相关基本概念。
+              <a class='next' href='/2020/03/04/volatile%E5%85%B3%E9%94%AE%E5%AD%97/'>
+                <p class='title'>多线程(四) volatile关键字<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+                <p class='content'>volatile关键字的实现原理。
 
 
-1.进程操作系统进行资源分配和调度的基本单位，每一个进程都是一个应用程序的执行实例，比如我们启动的一个java项目就是一个jvm进程，操作系统为jvm分配运行内存等资...</p>
+1.概述volatile是Java的一个修饰符，它在多线程编程开发中保证了共享变量的可见性和有序性。相对于各种排他锁，volatile在使用和执行成本上占...</p>
               </a>
             
           </div>
@@ -670,7 +618,7 @@ RUNN...</p>
 
   <script>
     window.subData = {
-      title: '多线程(二) 并发编程三大特性',
+      title: '多线程(五) CAS',
       tools: true
     }
   </script>
@@ -696,7 +644,7 @@ RUNN...</p>
 
 
     <div class='content'>
-      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#CPU读写内存数据"><span class="toc-text">CPU读写内存数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#原子性"><span class="toc-text">原子性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#可见性"><span class="toc-text">可见性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#有序性"><span class="toc-text">有序性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#什么是CAS"><span class="toc-text">什么是CAS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CAS内部如何保证原子性"><span class="toc-text">CAS内部如何保证原子性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ABA问题"><span class="toc-text">ABA问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#其他的弊端"><span class="toc-text">其他的弊端</span></a></li></ol>
     </div>
   </section>
 

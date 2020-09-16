@@ -16,10 +16,10 @@
 
   <!-- 页面元数据 -->
   
-    <title>多线程(五) CAS乐观锁 - 花裤衩</title>
+    <title>多线程(四) volatile关键字 - 花裤衩</title>
   
   
-    <meta name="description" content="Kahdahdlahdlkshldksl">
+    <meta name="description" content="volatile关键字的实现原理。">
   
 
   <!-- feed -->
@@ -381,8 +381,8 @@
           
   
     <h1 class="title">
-      <a href="/2020/03/05/CAS%E4%B9%90%E8%A7%82%E9%94%81/">
-        多线程(五) CAS乐观锁
+      <a href="/2020/03/04/volatile%E5%85%B3%E9%94%AE%E5%AD%97/">
+        多线程(四) volatile关键字
       </a>
     </h1>
   
@@ -421,7 +421,7 @@
               <div class="new-meta-item date">
   <a class='notlink'>
     <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
-    <p>发布于：2020年3月5日</p>
+    <p>发布于：2020年3月4日</p>
   </a>
 </div>
 
@@ -444,14 +444,24 @@
       <section class="article typo">
         <div class="article-entry" itemprop="articleBody">
           
-          <p>Kahdahdlahdlkshldksl</p>
+          <p>volatile关键字的实现原理。</p>
 <a id="more"></a>
 
-<h3 id="什么是CAS"><a href="#什么是CAS" class="headerlink" title="什么是CAS"></a>什么是CAS</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
-<h3 id="CAS内部如何保证原子性"><a href="#CAS内部如何保证原子性" class="headerlink" title="CAS内部如何保证原子性"></a>CAS内部如何保证原子性</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
-<h3 id="ABA问题"><a href="#ABA问题" class="headerlink" title="ABA问题"></a>ABA问题</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
-<h3 id="其他的弊端"><a href="#其他的弊端" class="headerlink" title="其他的弊端"></a>其他的弊端</h3><p><em>&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^</em>&amp;……</p>
+<h3 id="1-概述"><a href="#1-概述" class="headerlink" title="1.概述"></a>1.概述</h3><p>volatile是Java的一个修饰符，它在多线程编程开发中保证了共享变量的<span class="p red">可见性</span>和<span class="p red">有序性</span>。相对于各种排他锁，volatile在使用和执行成本上占用资源较少。</p>
+<h3 id="2-实现原理"><a href="#2-实现原理" class="headerlink" title="2.实现原理"></a>2.实现原理</h3><p>那么volatile如何保证可见性和有序性呢？我们写一段单例模式的java代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">package com.test;</span><br><span class="line"></span><br><span class="line">public class SingletonObject &#123;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 单例对象</span><br><span class="line">    private static volatile SingletonObject instance;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 获取单例对象方法</span><br><span class="line">    public static SingletonObject get()&#123;</span><br><span class="line"></span><br><span class="line">        if(instance &#x3D;&#x3D; null)&#123;</span><br><span class="line">            instance &#x3D; new SingletonObject();</span><br><span class="line">        &#125;</span><br><span class="line">        return instance;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        SingletonObject.get();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
+
+<p>然后用idea运行main方法并打印汇编代码，jvm参数：<br>-server -Xcomp -XX:+UnlockDiagnosticVMOptions -XX:+PrintAssembly<br>-XX:CompileCommand=compileonly,*SingletonObject.get (只打印SingletonObject的get方法)</p>
+<p>运行打印结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># &#123;method&#125; &#123;0x0000000128e022b0&#125; &#39;get&#39; &#39;()Lcom&#x2F;test&#x2F;SingletonObject;&#39; in &#39;com&#x2F;test&#x2F;SingletonObject&#39;</span><br><span class="line">#           [sp+0x40]  (sp of caller)</span><br><span class="line"></span><br><span class="line">  省略代码.....</span><br><span class="line"></span><br><span class="line">  0x000000010af1fb54: movb   $0x0,(%rax,%rsi,1)</span><br><span class="line">  0x000000011b6f4e58: lock addl $0x0,(%rsp)     ;*putstatic instance</span><br><span class="line">                                              ; - com.test.SingletonObject::get@13 (line 12)</span><br><span class="line">  省略代码.....</span><br><span class="line"></span><br><span class="line">  0x000000010af1f701: mov    %r12b,(%r11,%r10,1)</span><br><span class="line">  0x000000011b6f4a05: lock addl $0x0,(%rsp)     ;*putstatic instance</span><br><span class="line">                                              ; - com.test.SingletonObject::get@13 (line 12)</span><br><span class="line">  省略代码.....</span><br></pre></td></tr></table></figure> 
+
+<p>我们可以看到被volatile修饰的共享变量进行写操作的时候，会比普通公共变量的读写操作多一行lock addl $0x0,(%rsp)前缀的代码，lock前缀指令有俩个作用：</p>
+<ul>
+<li>使用总线锁或缓存一致性协议来保证数据的可见性。</li>
+<li>不是内存屏障却能完成类似内存屏障的功能，阻止屏障两遍的指令重排序保证有序性。</li>
+</ul>
+<h3 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h3>
           
             <br>
             
@@ -479,7 +489,7 @@
           
         
           
-            <p>本文永久链接是：<a href=http://yoursite.com/2020/03/05/CAS%E4%B9%90%E8%A7%82%E9%94%81/>http://yoursite.com/2020/03/05/CAS%E4%B9%90%E8%A7%82%E9%94%81/</a></p>
+            <p>本文永久链接是：<a href=http://yoursite.com/2020/03/04/volatile%E5%85%B3%E9%94%AE%E5%AD%97/>http://yoursite.com/2020/03/04/volatile%E5%85%B3%E9%94%AE%E5%AD%97/</a></p>
           
         
       </blockquote>
@@ -503,10 +513,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-08-27T17:21:32+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-09-16T16:46:58+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年8月27日</p>
+    <p>更新于：2020年9月16日</p>
   </a>
 </div>
 
@@ -530,7 +540,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer"
           
-          href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/05/CAS%E4%B9%90%E8%A7%82%E9%94%81/&title=多线程(五) CAS乐观锁 - 花裤衩&summary=Kahdahdlahdlkshldksl"
+          href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/04/volatile%E5%85%B3%E9%94%AE%E5%AD%97/&title=多线程(四) volatile关键字 - 花裤衩&summary=volatile关键字的实现原理。"
           
           >
           
@@ -542,7 +552,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer"
           
-          href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/05/CAS%E4%B9%90%E8%A7%82%E9%94%81/&title=多线程(五) CAS乐观锁 - 花裤衩&summary=Kahdahdlahdlkshldksl"
+          href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/04/volatile%E5%85%B3%E9%94%AE%E5%AD%97/&title=多线程(四) volatile关键字 - 花裤衩&summary=volatile关键字的实现原理。"
           
           >
           
@@ -554,7 +564,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer"
           
-          href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/05/CAS%E4%B9%90%E8%A7%82%E9%94%81/&title=多线程(五) CAS乐观锁 - 花裤衩&summary=Kahdahdlahdlkshldksl"
+          href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/04/volatile%E5%85%B3%E9%94%AE%E5%AD%97/&title=多线程(四) volatile关键字 - 花裤衩&summary=volatile关键字的实现原理。"
           
           >
           
@@ -578,11 +588,27 @@
         
           <div class="prev-next">
             
+              <a class='prev' href='/2020/03/05/CAS/'>
+                <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(五) CAS</p>
+                <p class='content'>CAS的实现原理。
+
+
+什么是CAS&amp;&amp;#&amp;）@#¥%……&amp;**&amp;……¥&amp;^ ^&amp;……
+CAS内部如何保证原子性&amp;&amp;#&a...</p>
+              </a>
             
-              <a class='next' href='/2020/03/04/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/'>
-                <p class='title'>多线程(四) synchronized关键字<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-                <p class='content'>sunchronized锁的实现原理。
-</p>
+            
+              <a class='next' href='/2020/03/03/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%92%8C%E5%B8%B8%E7%94%A8%E6%96%B9%E6%B3%95/'>
+                <p class='title'>多线程(三) 生命周期和常用方法<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+                <p class='content'>线程七种状态以及转化、常用方法
+
+
+线程状态以及转化NEW(新建)
+使用new创建出线程后，进入新建状态
+此时jvm为其分配内存以及其成员变量
+除此之外没有任何特征，方法也不会被执行
+
+RUNN...</p>
               </a>
             
           </div>
@@ -610,7 +636,7 @@
 
   <script>
     window.subData = {
-      title: '多线程(五) CAS乐观锁',
+      title: '多线程(四) volatile关键字',
       tools: true
     }
   </script>
@@ -636,7 +662,7 @@
 
 
     <div class='content'>
-      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#什么是CAS"><span class="toc-text">什么是CAS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CAS内部如何保证原子性"><span class="toc-text">CAS内部如何保证原子性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ABA问题"><span class="toc-text">ABA问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#其他的弊端"><span class="toc-text">其他的弊端</span></a></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-概述"><span class="toc-text">1.概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-实现原理"><span class="toc-text">2.实现原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#使用场景"><span class="toc-text">使用场景</span></a></li></ol>
     </div>
   </section>
 

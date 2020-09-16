@@ -19,7 +19,7 @@
     <title>多线程(一) 基本概念 - 花裤衩</title>
   
   
-    <meta name="description" content="线程、进程、上下文切换、线程安全等基本概念。">
+    <meta name="description" content="线程进程相关基本概念。">
   
 
   <!-- feed -->
@@ -444,30 +444,28 @@
       <section class="article typo">
         <div class="article-entry" itemprop="articleBody">
           
-          <p>线程、进程、上下文切换、线程安全等基本概念。</p>
+          <p>线程进程相关基本概念。</p>
 <a id="more"></a>
 
-<h3 id="1-线程与进程"><a href="#1-线程与进程" class="headerlink" title="1.线程与进程"></a>1.线程与进程</h3><div class="note info"><p>进程：操作系统进行资源分配和调度的基本单位，每个运行的java项目就是一个jvm进程。</p></div>
-
-<div class="note info"><p>线程：CPU运行的最小单位，线程共享进程的资源</p></div>
-
-<h3 id="2-进程上下文切换"><a href="#2-进程上下文切换" class="headerlink" title="2.进程上下文切换"></a>2.进程上下文切换</h3><p>操作系统中，一个运行的java项目、redis服务、mysql服务等都是一个进程，只有抢到CPU资源的进程才可以执行任务。进程对CPU竞争有很多种策略，Unix系统使用的是<span class="p red">时间片轮转算法</span>，而Windows则属于<span class="p red">抢占式算法</span>。</p>
-<p>时间片轮转算法：把所有的进程排成一个队列，操作系统按照他们的顺序给每个进程分配CPU时间片，这段时间是允许进程使用CPU的时间。如果进程在时间片内执行完毕，那么CPU会把进程从列表中删除，如果执行过程中进入阻塞状态或时间片耗尽还在运行，CPU会剥夺此进程的使用权并放入队列尾部。</p>
-<p>抢占式算法：操作系统根据他们的优先级、饥饿时间(已经多长时间没有使用CPU了)，给所有进程算出一个总优先级。然后操作系统把CPU交给优先级最高的线程执行，被选中的进程将完全霸占CPU的使用权，直到运行结束或自己主动挂起，操作系统在重新计算总优先级并选出一个进程再次分配CPU使用权。</p>
-<p>CPU从一个进程切换到另一个进程的过程，就是一次进程上下文切换。</p>
-<h3 id="3-线程上下文切换"><a href="#3-线程上下文切换" class="headerlink" title="3.线程上下文切换"></a>3.线程上下文切换</h3><p>进程抢到CPU资源后，其所属的多个线程依然会对资源再次竞争。得到CPU使用权的线程在执行过程中，如果耗尽进程时间片，则发生进程上下文切换，如果时间片范围内执行完毕，则再次选取其他线程继续执行，如果执行过程中调用wait()、sleep()、join()或遇到锁或IO阻塞等，CPU会挂起此线程切换到此进程中的其他线程，被挂起的线程只能等待下一轮竞争。CPU从一个线程切换到另一个线程的过程，就是一次线程上下文切换。</p>
-<p>当发生切换的时候，CPU会把被挂起线程的上下文保存在<span class="p red">程序计数器和寄存器</span>(线程的私有空间)中，<span class="p red">程序计数器</span>存储正在执行的机器指令的位置、<span class="p red">寄存器</span>存储工作变量，然后从高速缓存中清除掉被挂起线程的上下文，去加载新线程的上下文到高速缓存中。因此线程上下文的切换需要消耗CPU的资源。</p>
-<h3 id="4-进程线程和多核多CPU的运行关系"><a href="#4-进程线程和多核多CPU的运行关系" class="headerlink" title="4.进程线程和多核多CPU的运行关系"></a>4.进程线程和多核多CPU的运行关系</h3><p>单个CPU在同一时刻只能把资源分配给某一个进程，因此单CPU操作系统中多个进程同时运行，实质上是交替占有CPU使用权并运行其内部多个线程的过程，同时运行只是CPU处理过快造成的错觉，这种现象可以称作为<span class="p red">进程并发运行</span>。到了多CPU时代才实现真正意义上的多进程同时运行，比如4颗CPU的操作系统可以做到4个进程的同时运行，但是操作系统中可能有很多进程需要被执行，比如有16个进程在运行，那么平均4个进程仍然要争夺一个CPU的使用权，只是同一时刻必然有4个争夺到使用权，这种现象称作为<span class="p red">进程并行运行</span>。</p>
-<p>单个CPU中包含一个或多个处理器（核），单个处理器在同一时刻只能运行一个线程的任务，因此单核CPU的操作系统中多个线程同时运行，实质上是进程占有CPU的基础上，内部多个线程交替占有唯一一个处理器执行任务的过程，和进程一样，同时运行只是CPU处理过快造成的错觉，这种现象称为<span class="p red">线程并发运行</span>。到了多核时代才实现真正意义上的多线程同时运行，比如4核处理器的操作系统可以做到4个线程并行运行，但是在一个进程中可能有很多线程需要被执行，如果有16个线程在运行，那么平均4个线程仍然要争夺一个处理器的使用权，只是同一时刻必然有4个争夺到处理器使用权的<span class="p red">线程并行运行</span>。</p>
-<p>由此可以看出，操作系统中CPU的数量直接影响进程上下文切换带来的性能损耗，CPU中处理器的数量直接影响线程上下文切换带来的性能损耗。因此项目开发中要尽量参考所在服务器的CPU配置，作出适当的线程池参数以避免频繁的上下文切换带来的性能损耗。同样在选取机器配置上尽量考虑放置服务的线程特点，比如存放redis服务选用多处理器的CPU没有任何意义，redis永远只在一个处理器上面运行。</p>
-<h3 id="5-线程安全"><a href="#5-线程安全" class="headerlink" title="5.线程安全"></a>5.线程安全</h3><p>在一个jvm进程中，堆和方法区中的数据可以被所有线程共享，当多线程访问某个共享类时，在没有任何限制的情况下也能达到我们预期的执行结果，这个类就是线程安全的。如果不能保证那就是非线程安全，例如懒汉式单例模式：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">public class SingletonPattern&#123;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 单例对象</span><br><span class="line">	private static SingleObject instance;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 类内部不包含非静态方法和变量，私有化构造方法</span><br><span class="line">	private SingleObject()&#123;&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 获取单例对象方法</span><br><span class="line">	public static SingleObject get()&#123;</span><br><span class="line"></span><br><span class="line">		if(instance &#x3D;&#x3D; null)&#123;</span><br><span class="line">			instance &#x3D; new SingleObject();</span><br><span class="line">		&#125;</span><br><span class="line">		return instance;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-<p>假设这个方法转化为机器语言时是三条指令序列：<br>1.判断instance是否为空<br>2.如果为空new出新的对象并指向instance引用<br>3.返回instance</p>
-<p>现在线程A、线程B并发访问get()方法，如果没有发生上下文切换，或者上下文切换的方式如下图所示，不会出现线程安全问题：<br><img src="/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%B9%B6%E5%8F%91-%E5%AE%89%E5%85%A8.jpg" alt="图片"></p>
-<p>但实际使用中却往往不尽人意，下图就发生了意外修改的情况：<br><img src="/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%B9%B6%E5%8F%91-%E9%9D%9E%E5%AE%89%E5%85%A8.jpg" alt="图片"></p>
-<p>多线程并行的例子就不描述了，都可以理解为线程B的非空判断抢先在线程A创建单例对象并指向instance之前执行，导致instance被赋值2次，这违背了单例模式的初衷。</p>
+<h3 id="1-进程"><a href="#1-进程" class="headerlink" title="1.进程"></a>1.进程</h3><p>操作系统进行资源分配和调度的基本单位，每一个进程都是一个应用程序的执行实例，比如我们启动的一个java项目就是一个jvm进程，操作系统为jvm分配运行内存等资源，进程中包含一个或多个线程，线程之间共享进程的资源(比如堆、栈、方法区等)。</p>
+<h3 id="2-线程"><a href="#2-线程" class="headerlink" title="2.线程"></a>2.线程</h3><p>CPU运行的最小单位，线程之间共享进程的资源，也有自己的私有空间，比如虚拟机栈、本地方法栈、程序计数器。</p>
+<h3 id="3-进程上下文切换"><a href="#3-进程上下文切换" class="headerlink" title="3.进程上下文切换"></a>3.进程上下文切换</h3><h3 id="4-线程上下文切换"><a href="#4-线程上下文切换" class="headerlink" title="4.线程上下文切换"></a>4.线程上下文切换</h3><p>CPU通过分配时间片来执行任务，当一个任务的时间片用完，就会切换到另一个任务。在切换之前会保存上一个任务的状态，当下次再切换到该任务，就会加载这个状态，任务从保存到再加载的过程就是一次上下文切换。</p>
+<ul>
+<li>切出：一个线程被剥夺处理器的使用权而被暂停运行</li>
+<li>切入：一个线程被系统选中占用处理器开始或继续运行</li>
+</ul>
+<p>线程的上下文是什么？<br>对于CPU来说一个线程就是多条指令集合，线程的运行实质上是多条指令在CPU上的运行，而上下文是指线程私有空间的内容。比如虚拟机栈、本地方法栈保存了某一时刻线程局部变量的值，程序计数器保存了线程此刻执行到哪一条指令的位置。</p>
+<p>导致上下文切换的原因？</p>
+<ul>
+<li>CPU分配的时间片用完了 </li>
+<li>有个优先级更高的线程需要被执行</li>
+<li>手动操作比如java线程的sleep、yield、wait、join、synchronized、lock等</li>
+<li>读取数据库操作由于数据量较大引起IO阻塞,线程会被挂起直到读取完毕再次回归等待被CPU调度</li>
+</ul>
+<p>上下文切换的过程？<br>放发生切换的时候，CPU会把被挂起线程的上下文保存在程序计数器和寄存器中，程序计数器存储正在执行的指令序列的位置、寄存器存储工作变量，然后从高速缓存中清除掉被挂起线程的上下文，去加载新线程的上下文到高速缓存中。因此线程上下文的切换需要消耗CPU的资源。</p>
+<h3 id="5-并发与并行"><a href="#5-并发与并行" class="headerlink" title="5.并发与并行"></a>5.并发与并行</h3><p>单CPU操作系统中多个线程同时运行，实质上是交替占有CPU使用权的过程，同时运行只是CPU处理过快造成的错觉，这种现象可以称作为<span class="p red">线程并发运行</span>。</p>
+<p>到了多CPU时代才实现真正意义上的多线程同时运行，比如4颗CPU的操作系统可以做到4个线程的同时运行，但是操作系统中可能有很多线程需要被执行，比如有16个线程在运行，那么平均4个线程仍然要争夺一个CPU的使用权，只是同一时刻必然有4个争夺到使用权，这种现象称作为<span class="p red">线程并行运行</span>。</p>
+<p>由此可以看出，操作系统中CPU的数量对多线程编程非常重要。因此项目开发中要尽量参考所在服务器的CPU配置，作出适当的线程池参数以避免频繁的上下文切换带来的性能损耗。同样在选取机器配置上尽量考虑放置服务的线程特点，比如存放redis服务选用多处理器的CPU没有任何意义，redis永远只在一个处理器上面运行。</p>
 
           
             <br>
@@ -520,10 +518,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-08-23T15:51:41+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-09-15T15:41:51+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年8月23日</p>
+    <p>更新于：2020年9月15日</p>
   </a>
 </div>
 
@@ -547,7 +545,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer"
           
-          href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 花裤衩&summary=线程、进程、上下文切换、线程安全等基本概念。"
+          href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 花裤衩&summary=线程进程相关基本概念。"
           
           >
           
@@ -559,7 +557,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer"
           
-          href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 花裤衩&summary=线程、进程、上下文切换、线程安全等基本概念。"
+          href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 花裤衩&summary=线程进程相关基本概念。"
           
           >
           
@@ -571,7 +569,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer"
           
-          href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 花裤衩&summary=线程、进程、上下文切换、线程安全等基本概念。"
+          href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 花裤衩&summary=线程进程相关基本概念。"
           
           >
           
@@ -655,7 +653,7 @@ CPU读写内存数据计算机中程序的执行，本质上是线程指令在CP
 
 
     <div class='content'>
-      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-线程与进程"><span class="toc-text">1.线程与进程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-进程上下文切换"><span class="toc-text">2.进程上下文切换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-线程上下文切换"><span class="toc-text">3.线程上下文切换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-进程线程和多核多CPU的运行关系"><span class="toc-text">4.进程线程和多核多CPU的运行关系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-线程安全"><span class="toc-text">5.线程安全</span></a></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-进程"><span class="toc-text">1.进程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-线程"><span class="toc-text">2.线程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-进程上下文切换"><span class="toc-text">3.进程上下文切换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-线程上下文切换"><span class="toc-text">4.线程上下文切换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-并发与并行"><span class="toc-text">5.并发与并行</span></a></li></ol>
     </div>
   </section>
 
