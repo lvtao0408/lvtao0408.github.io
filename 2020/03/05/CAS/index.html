@@ -447,16 +447,32 @@
           <p>CAS在CPU的实现，以及Java对CAS的封装</p>
 <a id="more"></a>
 
-<h3 id="什么是CAS"><a href="#什么是CAS" class="headerlink" title="什么是CAS"></a>什么是CAS</h3><p>CAS的全称是Compare and Swap(比较和交换)，是一种系统原语，原语属于操作系统用语范畴，是由若干条指令组成的，并且操作系统保证在执行过程中不允许被中断。CAS是一种特殊的修改数据的方式，线程通过CAS修改数据时整个过程涉及到三个数据：</p>
-<ul>
-<li>要修改的内存数据V</li>
-<li>执行CAS前读取将V的值复制到工作空间计作A</li>
-<li>修改后的数据B</li>
-</ul>
-<p>当且仅当预期值A和内存值V相同时，将内存值V修改为B并返回true，否则视为修改失败返回false。比如i=0，现在线程A执行i++操作，首先从内存或高速缓存读取数据i复制到自己的工作空间计作变量A，然后调用CAS再次从内存中获取V的值与A比较，如果想等则将V修改为B并返回true，如果不相等则说明从读取至比较过程中有其他线程对数据V进行修改值操作，然后放弃操作返回false。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">再次去内存查询、和第一次查询的比较、如果相等就修改 这三个步骤由下面的方法完成，用boolean类型表示是否修改成功：</span><br><span class="line">public final boolean compareAndSet(int expect, int update) &#123;</span><br><span class="line">    return unsafe.compareAndSwapInt(this, valueOffset, expect, update);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="什么是CAS"><a href="#什么是CAS" class="headerlink" title="什么是CAS"></a>什么是CAS</h3><p>CAS的全称是Compare and Swap(比较和交换)，是一种特殊的修改数据的方式，线程通过CAS修改数据时整个过程涉及到三个数据：要修改的内存数据V、执行CAS操作前读取V并将V的值复制到工作空间计作A(预期值)、修改后的数据B，执行CAS操作中当且仅当预期值A和内存值V相同时，将内存值V修改为B并返回true，否则视为修改失败返回false。<br><img src="/2020/03/05/CAS/%E6%9A%82%E6%97%A0" alt="图片"></p>
+<h3 id="Atomic对CAS的应用"><a href="#Atomic对CAS的应用" class="headerlink" title="Atomic对CAS的应用"></a>Atomic对CAS的应用</h3><p>Atomic包是Java.util.concurrent下的另一个专门为线程安全设计的Java包，包含多个原子操作类，我们以AtomicInteger为例看看java如何通过CAS实现原子性。</p>
+<p>incrementAndGet方法，以原子方式将当前值增加1并返回增加后的值：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">public final int incrementAndGet() &#123;</span><br><span class="line">    return unsafe.getAndAddInt(this, valueOffset, 1) + 1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<h3 id="CAS"><a href="#CAS" class="headerlink" title="CAS"></a>CAS</h3>
+<p>我们发现incrementAndGet方法把这个操作委托给unsafe类的getAndAddInt方法处理，我们继续看getAndAddInt方法源码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public final int getAndAddInt(Object var1, long var2, int var4) &#123;</span><br><span class="line">       int var5;</span><br><span class="line">       do &#123;</span><br><span class="line"></span><br><span class="line">       	&#x2F;&#x2F; 读取AtomicInteger在内存中对应的值，并复制一份赋值给var5，作为期望值</span><br><span class="line">           var5 &#x3D; this.getIntVolatile(var1, var2);</span><br><span class="line"></span><br><span class="line">           &#x2F;&#x2F; 将AtomicInteger对象引用、偏移量、预期值、修改后的值交给compareAndSwapInt也就是CAS方法循环执行，直到true</span><br><span class="line">       &#125; while(!this.compareAndSwapInt(var1, var2, var5, var5 + var4));</span><br><span class="line"></span><br><span class="line">       return var5;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<p>代码中我们可以看到，真正的CAS修改操作是compareAndSwapInt方法，我们继续往下看：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">public final native boolean compareAndSwapInt(Object var1, long var2, int var4, int var5);</span><br></pre></td></tr></table></figure>
+
+<p>到这里的时候我们发现compareAndSwapInt方法是被native修饰的，说明接下来的代码是使用C++实现的了。源码就不贴了，这个方法实际上是利用处理器提供的汇编指令<span class="p red">CMPXCHG</span>。当CPU执行此修改指令时发现带有CMPXCHG前缀，那么会采用CAS方式(比较并交换操作数)修改数据，并且保证比较、交换俩个步骤不会被上下文切换打断。当且仅当预期值var4与要修改的内存值相等时，将内存值修改为var5。</p>
+<p>如果你细心的话会发现，在多核CPU的操作系统中仅仅保证CAS的俩个步骤不被上下文切换打断没什么卵用，如果俩个线程并行同时对某个AtomicInteger(0)执行incrementAndGet方法，怎么保证高速缓存中取出的期望值不是脏数据？怎么保证多个处理器不会同时执行到CAS的比较操作并且都返回true，继而同时修改内存值为1，最终导致结果应该是2却因为线程安全问题变为1？</p>
+<p>我们回头看看AtomicInteger的其他源码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line"></span><br><span class="line">   private volatile int value;</span><br><span class="line"></span><br><span class="line">   public AtomicInteger(int initialValue) &#123;</span><br><span class="line">       value &#x3D; initialValue;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   public AtomicInteger() &#123;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   public final int get() &#123;</span><br><span class="line">       return value;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   ...</span><br></pre></td></tr></table></figure>
+
+<p>AtomicInteger内部有个int类型的value属性，代表着自身的值，并且AtomicInteger读写操作都是围绕这个值进行的，并且这个类被volatile修饰的。到这里思路就清晰了，volatile修饰符保证了value值的可见性，线程不会出现读到脏数据的情况。</p>
+<p>对于第二种情况百度的资料很少提及，所以也无法确定CPU到底如何解决这个问题。但是我在知乎上看到了俩个感觉还算靠谱的答案。首先被volatile修饰的变量会使用MESI协议确保同一时刻只有一个处理器修改值，并且把其他处理器此值的缓存设为无效，当第二个处理器想要修改值时发现无效，CAS操作失败，返回false，另一个答案则表示当多个处理器同时使用cmpxchg指令(也就是CAS)操作同一个数据时，总线会进行仲裁只有一个处理器执行CAS，其他处理器连比较操作都不会执行，直到上一个处理器执行完毕后总线再次仲裁并选中自己。</p>
+<p>第一种答案强调使用MESI的失效机制解决问题，第二种答案则强调将CAS视为一个整体，在执行比较操作的时候就会利用MESI协议将数据修改为M状态。不同的CPU架构可能解决问题的方式也不同，总之CPU保证多处理器并行执行CAS不会出错，Java保证volatile+自旋CAS修改数据的原子性，以后搞懂了再更新。</p>
+<h3 id="ABA问题"><a href="#ABA问题" class="headerlink" title="ABA问题"></a>ABA问题</h3><p>我实在是不想写这个问题，我也想不到ABA会带来什么后果，通过CAS修改数据也想不到啥业务场景需要记录修改了多少次，百度一堆人云亦云此A非彼A瞎鸡吧复制，就是讲不明白此A和彼A到底有啥区别。<br>但是Java在1.5版本引进了AtomicStampedReference类，采用版本号的机制解决这个操蛋的问题。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>CAS是典型的乐观派操作，每次都迷之自信认为操作一定成功，但是在高并发比较严重的情况下会导致大量线程不断的循环，增大CPU的消耗。</li>
+<li>CAS只能保证单个共享变量的原子操作，如果操作涉及多个共享变量，必须要排他锁解决</li>
+<li>仅仅依靠CAS无法保证原子性，必须配合CPU缓存锁一起保证。</li>
+</ul>
+
           
             <br>
             
@@ -508,10 +524,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-09-18T10:27:15+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-09-22T11:06:25+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年9月18日</p>
+    <p>更新于：2020年9月22日</p>
   </a>
 </div>
 
@@ -584,9 +600,11 @@
           <div class="prev-next">
             
               <a class='prev' href='/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/'>
-                <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(六) synchronized关键字</p>
-                <p class='content'>java锁的分类。
-</p>
+                <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(六) 锁分类</p>
+                <p class='content'>java中五花八门的锁
+
+
+前言java中的锁可谓是五花八门，各种锁功能相似又不同，有的是概念、有的是java接口、有的是实现类，让你很难找到明显的分界线去区分并记住他们。所以学习锁首先要打消一...</p>
               </a>
             
             
@@ -649,7 +667,7 @@
 
 
     <div class='content'>
-      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#什么是CAS"><span class="toc-text">什么是CAS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CAS"><span class="toc-text">CAS</span></a></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#什么是CAS"><span class="toc-text">什么是CAS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Atomic对CAS的应用"><span class="toc-text">Atomic对CAS的应用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ABA问题"><span class="toc-text">ABA问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li></ol>
     </div>
   </section>
 
