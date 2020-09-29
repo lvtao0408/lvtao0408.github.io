@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html>
-<head hexo-theme='https://volantis.js.org/#2.6.0'>
+<html lang="zh-CN">
+<head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.0.0'>
   <meta charset="utf-8">
   <!-- SEO相关 -->
   
@@ -13,11 +13,13 @@
   <meta name="HandheldFriendly" content="True" >
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
 
   <!-- 页面元数据 -->
   
-    <title>多线程(六) 锁分类 - 花裤衩</title>
+  <title>多线程(六) 锁分类 - 来杯冰镇可乐</title>
   
+
   
     <meta name="description" content="java中五花八门的锁">
   
@@ -29,22 +31,22 @@
   
 
   <!-- link -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13/css/all.min.css">
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
   
     
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css">
 
   
-  
-    
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-waves@0.7.6/dist/waves.min.css">
-
   
 
   
 
   
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10/dist/APlayer.min.css">
+    <link rel="shortcut icon" type='image/x-icon' href="https://cdn.jsdelivr.net/gh/xaoxuu/assets@master/favicon/favicon.ico">
+  
+
+  
+
   
 
   <!-- import link -->
@@ -56,28 +58,31 @@
 <link rel="stylesheet" href="/css/style.css">
 
   
-
+  
+  
+  <!-- 脚本懒加载函数 -->
   <script>
-    function setLoadingBarProgress(num) {
-      document.getElementById('loading-bar').style.width=num+"%";
-    }
+  function loadScript(src, cb) {
+    var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+    var script = document.createElement('script');
+    script.setAttribute('type','text/javascript');
+    if (cb) script.onload = cb;
+    script.setAttribute('src', src);
+    HEAD.appendChild(script);
+  }
+  //https://github.com/filamentgroup/loadCSS
+  !function(c){"use strict";var e=function(e,t,n,r){var o,i=c.document,a=i.createElement("link");if(t)o=t;else{var d=(i.body||i.getElementsByTagName("head")[0]).childNodes;o=d[d.length-1]}var f=i.styleSheets;if(r)for(var l in r)r.hasOwnProperty(l)&&a.setAttribute(l,r[l]);a.rel="stylesheet",a.href=e,a.media="only x",function e(t){if(i.body)return t();setTimeout(function(){e(t)})}(function(){o.parentNode.insertBefore(a,t?o:o.nextSibling)});var s=function(e){for(var t=a.href,n=f.length;n--;)if(f[n].href===t)return e();setTimeout(function(){s(e)})};function u(){a.addEventListener&&a.removeEventListener("load",u),a.media=n||"all"}return a.addEventListener&&a.addEventListener("load",u),(a.onloadcssdefined=s)(u),a};"undefined"!=typeof exports?exports.loadCSS=e:c.loadCSS=e}("undefined"!=typeof global?global:this);
   </script>
-
-  
-  
+  <script id="loadcss"></script>
 </head>
 
 <body>
-  
-  <div id="loading-bar-wrapper">
-  <div id="loading-bar"></div>
-</div>
-<header class="l_header shadow blur">
+  <header class="l_header auto shadow blur " style='opacity: 0' >
   <div class='container'>
   <div class='wrapper'>
     <div class='nav-sub'>
       <p class="title"></p>
-      <ul class='switcher nav-list-h'>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
         <li><a class="s-comment fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
         
           <li><a class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
@@ -89,32 +94,28 @@
         
         <a class="title flat-box" target="_self" href='/'>
           
+            <img no-lazy class='logo' src='https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/blog/Logo-NavBar@3x.png'/>
           
           
-          
-            VOLANTIS <b><sup style='color:#3AA757'>2.6.0</sup></b>
           
         </a>
       
 
 			<div class='menu navigation'>
-				<ul class='nav-list-h'>
+				<ul class='nav-list-h m-pc'>
           
           
           
             
             
               <li>
-                <a class="flat-box" href=/
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
                   
                   
                   
                     id="home"
                   >
-                  
-                    <i class='fas fa-rss fa-fw'></i>
-                  
-                  博客
+                  <i class='fas fa-rss fa-fw'></i>博客
                 </a>
                 
               </li>
@@ -124,54 +125,13 @@
             
             
               <li>
-                <a class="flat-box" href=/categories/
-                  
-                  
-                  
-                    id="categories"
-                  >
-                  
-                    <i class='fas fa-folder-open fa-fw'></i>
-                  
-                  分类
-                </a>
-                
-              </li>
-            
-          
-          
-            
-            
-              <li>
-                <a class="flat-box" href=/tags/
-                  
-                  
-                  
-                    id="tags"
-                  >
-                  
-                    <i class='fas fa-tags fa-fw'></i>
-                  
-                  标签
-                </a>
-                
-              </li>
-            
-          
-          
-            
-            
-              <li>
-                <a class="flat-box" href=/archives/
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
                   
                   
                   
                     id="archives"
                   >
-                  
-                    <i class='fas fa-archive fa-fw'></i>
-                  
-                  归档
+                  <i class='fas fa-archive fa-fw'></i>归档
                 </a>
                 
               </li>
@@ -181,16 +141,13 @@
             
             
               <li>
-                <a class="flat-box" href=/friends/
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
                   
                   
                   
                     id="friends"
                   >
-                  
-                    <i class='fas fa-link fa-fw'></i>
-                  
-                  友链
+                  <i class='fas fa-link fa-fw'></i>日记
                 </a>
                 
               </li>
@@ -200,16 +157,29 @@
             
             
               <li>
-                <a class="flat-box" href=/about/
+                <a class="menuitem flat-box faa-parent animated-hover" href=/entertain/
                   
                   
                   
-                    id="about"
+                    id="entertain"
                   >
+                  <i class='fas fa-info-circle fa-fw'></i>娱乐
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/me/
                   
-                    <i class='fas fa-info-circle fa-fw'></i>
                   
-                  关于
+                  
+                    id="me"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
                 </a>
                 
               </li>
@@ -226,7 +196,7 @@
         </form>
       </div>
 
-			<ul class='switcher nav-list-h'>
+			<ul class='switcher nav-list-h m-phone'>
 				
 					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
 				
@@ -237,16 +207,13 @@
               
             
               <li>
-                <a class="flat-box" href=/
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
                   
                   
                   
                     id="home"
                   >
-                  
-                    <i class='fas fa-rss fa-fw'></i>
-                  
-                  博客
+                  <i class='fas fa-rss fa-fw'></i>博客
                 </a>
                 
               </li>
@@ -256,54 +223,13 @@
               
             
               <li>
-                <a class="flat-box" href=/categories/
-                  
-                  
-                  
-                    id="categories"
-                  >
-                  
-                    <i class='fas fa-folder-open fa-fw'></i>
-                  
-                  分类
-                </a>
-                
-              </li>
-            
-          
-            
-              
-            
-              <li>
-                <a class="flat-box" href=/tags/
-                  
-                  
-                  
-                    id="tags"
-                  >
-                  
-                    <i class='fas fa-tags fa-fw'></i>
-                  
-                  标签
-                </a>
-                
-              </li>
-            
-          
-            
-              
-            
-              <li>
-                <a class="flat-box" href=/archives/
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
                   
                   
                   
                     id="archives"
                   >
-                  
-                    <i class='fas fa-archive fa-fw'></i>
-                  
-                  归档
+                  <i class='fas fa-archive fa-fw'></i>归档
                 </a>
                 
               </li>
@@ -313,16 +239,13 @@
               
             
               <li>
-                <a class="flat-box" href=/friends/
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
                   
                   
                   
                     id="friends"
                   >
-                  
-                    <i class='fas fa-link fa-fw'></i>
-                  
-                  友链
+                  <i class='fas fa-link fa-fw'></i>日记
                 </a>
                 
               </li>
@@ -332,16 +255,29 @@
               
             
               <li>
-                <a class="flat-box" href=/about/
+                <a class="menuitem flat-box faa-parent animated-hover" href=/entertain/
                   
                   
                   
-                    id="about"
+                    id="entertain"
                   >
+                  <i class='fas fa-info-circle fa-fw'></i>娱乐
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/me/
                   
-                    <i class='fas fa-info-circle fa-fw'></i>
                   
-                  关于
+                  
+                    id="me"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
                 </a>
                 
               </li>
@@ -356,182 +292,221 @@
   </div>
 </header>
 
-<script>setLoadingBarProgress(40);</script>
+  <div class="l_body">
+    <div class="l_cover">
+  
+    
+    
+        <div class='cover-wrapper post search' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://cdn.jsdelivr.net/gh/volantis-x/cdn-wallpaper-minimalist@1.0.0/2020/001.jpg"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">冰镇可乐</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <input type="text" class="input u-search-input" placeholder="search you want .." />
+          <i class="icon fas fa-search fa-fw"></i>
+        </form>
+      </div>
+    
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+      </div>
+    </div>
+  </div>
+</div>
 
+          <div class="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+  
+    <div class='safearea'>
+      <div class='body-wrapper' id="pjax-container">
+        
+          <!--此文件用来存放一些不方便取值的变量--> 
+<!--思路大概是将值藏到重加载的区域内--> 
+ 
+ 
+ 
+<div id="pjax-data" style="display: none"> 
+  <div id="pjax-ispage">true</div> 
+  <div id="pjax-pageTitle">多线程(六) 锁分类</div> 
+  <div id="pjax-enable-cover">true</div> 
+  <div id="pjax-comment-path"></div> 
+  <div id="pjax-comment-placeholder"></div> 
+</div> 
+ 
+ 
+<script> 
+  // 处理封面 此时 jquery 还没加载 
+  if ("none" == "none") { // 移除封面 
+    document.getElementsByClassName('cover-wrapper')[0].style.display = "none"; 
+    document.getElementsByClassName('l_header', 'cover-wrapper')[0].classList.add("show"); 
+  } else { 
+    if ("none" == "half") { // 半屏 
+      document.getElementsByClassName('cover-wrapper')[0].setAttribute('id', 'half'); 
+      document.getElementsByClassName('scroll-down')[0].style.display = "none"; 
+    } else if ("none" == "full") { // 全屏 
+      document.getElementsByClassName('cover-wrapper')[0].setAttribute('id', 'full'); 
+      document.getElementsByClassName('scroll-down')[0].style.display = ""; 
+    } 
+    document.getElementsByClassName('cover-wrapper')[0].style.display = ""; 
+    document.getElementsByClassName('l_header', 'cover-wrapper')[0].classList.remove("show"); 
+  } 
+</script> 
+ 
 
-
-  <div class="l_body nocover">
-    <div class='body-wrapper'>
-      
+        
+        
 
 <div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
   
 
+
   
-    <article id="post" class="post white-box shadow article-type-post" itemscope itemprop="blogPost">
-      
-
-
-  <section class='meta'>
+  <div class="article-meta" id="top">
     
-      
-      
-      <div class="meta" id="header-meta">
-        
-          
-  
-    <h1 class="title">
-      <a href="/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/">
+    
+    
+      <h1 class="title">
         多线程(六) 锁分类
-      </a>
-    </h1>
-  
-
-
+      </h1>
+      <div class='new-meta-box'>
         
-        <div class='new-meta-box'>
           
             
-          
-            
-              
 <div class='new-meta-item author'>
-  <a href="https://xaoxuu.com" target="_blank" rel="nofollow noopener">
-    <img src="https://cdn.jsdelivr.net/gh/xaoxuu/cdn-assets/avatar/avatar.png">
-    <p>Mr. X</p>
+  <a class='author' href="/" rel="nofollow">
+    <img no-lazy src="">
+    <p>lvtao</p>
   </a>
 </div>
 
-            
+          
+        
           
             
-              
-  
   <div class='new-meta-item category'>
-    <a href='/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/' rel="nofollow">
+    <a class='notlink'>
       <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
-      <p>java基础/多线程</p>
+      <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
     </a>
   </div>
 
 
-            
           
-            
-              <div class="new-meta-item date">
+        
+          
+            <div class="new-meta-item date">
   <a class='notlink'>
     <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
     <p>发布于：2020年3月6日</p>
   </a>
 </div>
 
-            
           
-            
-              
-
-            
-          
-        </div>
         
-          <hr>
+          
+            
+  <div class="new-meta-item browse leancloud">
+    <a class='notlink'>
+      
+      <div id="lc-pv" data-title="多线程(六) 锁分类" data-path="/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/">
+        <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
+        <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
+        次浏览
+      </div>
+    </a>
+  </div>
+
+
+          
         
       </div>
     
-  </section>
+  </div>
 
 
-      <section class="article typo">
-        <div class="article-entry" itemprop="articleBody">
-          
-          <p>java中五花八门的锁</p>
+  
+  <p>java中五花八门的锁</p>
 <a id="more"></a>
 
-<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>java中的锁可谓是五花八门，各种锁功能相似又不同，有的是概念、有的是java接口、有的是实现类，让你很难找到明显的分界线去区分并记住他们。<span class="p red">所以学习锁首先要打消一种想法，就是一个锁只属于一个分类</span>，比如一个锁可以同时是乐观锁、可重入锁，公平锁，就像一个人可以是男人、程序员、健身爱好者。</p>
-<h3 id="synchronized与Lock"><a href="#synchronized与Lock" class="headerlink" title="synchronized与Lock"></a>synchronized与Lock</h3><p>java代码中两种加锁方式 一种是用<strong>synchronized关键字</strong>，另一种是用<strong>Lock接口</strong>的实现类。形象地说，synchronized关键字是自动档，可以满足一切日常驾驶需求。但是如果你想要玩漂移或者各种骚操作，就需要手动档了——各种Lock的实现类，因为Lock的实现类可以通过设置不同的参数改变锁的作用达到灵活适应场景的作用，而synchronized是关键字，底层有jvm实现，很多参数都是写死的。</p>
-<h3 id="悲观锁与乐观锁"><a href="#悲观锁与乐观锁" class="headerlink" title="悲观锁与乐观锁"></a>悲观锁与乐观锁</h3><p>锁的一种宏观分类方式是<strong>悲观锁</strong>和<strong>乐观锁</strong>。悲观锁与乐观锁并不是特指某个锁(Java中没有哪个Lock实现类就叫PessimisticLock或OptimisticLock)，而是在并发情况下的两种不同策略。</p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>java中的锁可谓是五花八门，各种锁功能相似又不同，有的是概念、有的是java接口、有的是实现类，让你很难找到明显的分界线去区分并记住他们。<span class="p red">所以学习锁首先要打消一种想法，就是一个锁只属于一个分类</span>，比如一个锁可以同时是乐观锁、可重入锁，公平锁，就像一个人可以是男人、程序员、健身爱好者。</p>
+<h2 id="synchronized与Lock"><a href="#synchronized与Lock" class="headerlink" title="synchronized与Lock"></a>synchronized与Lock</h2><p>java代码中两种加锁方式 一种是用<strong>synchronized关键字</strong>，另一种是用<strong>Lock接口</strong>的实现类。形象地说，synchronized关键字是自动档，可以满足一切日常驾驶需求。但是如果你想要玩漂移或者各种骚操作，就需要手动档了——各种Lock的实现类，因为Lock的实现类可以通过设置不同的参数改变锁的作用达到灵活适应场景的作用，而synchronized是关键字，底层有jvm实现，很多参数都是写死的。</p>
+<h2 id="悲观锁与乐观锁"><a href="#悲观锁与乐观锁" class="headerlink" title="悲观锁与乐观锁"></a>悲观锁与乐观锁</h2><p>锁的一种宏观分类方式是<strong>悲观锁</strong>和<strong>乐观锁</strong>。悲观锁与乐观锁并不是特指某个锁(Java中没有哪个Lock实现类就叫PessimisticLock或OptimisticLock)，而是在并发情况下的两种不同策略。</p>
 <p>悲观锁(Pessimistic Lock)，就是很悲观，每次去拿数据的时候都认为别人会修改。所以每次在拿数据的时候都会上锁，这样别人想拿数据就被挡住，直到悲观锁被释放。比如上面说的synchronized与Lock。</p>
 <p>乐观锁(Optimistic Lock), 就是很乐观，每次去拿数据的时候都认为别人不会修改。所以不会上锁，这里的上锁是指互斥性质的上锁，在说明白点就是我加锁了谁也别想碰，除非我释放锁，乐观锁采用的是类似CAS的方式，保证操作数据不会干扰到其他线程。</p>
 <p>悲观锁<strong>阻塞事务</strong>，乐观锁<strong>回滚重试</strong>，它们各有优缺点，不要认为一种一定好于另一种。像乐观锁适用于写比较少的情况下，即冲突真的很少发生的时候，这样可以省去锁的开销，加大了系统的整个吞吐量。但如果经常产生冲突，上层应用会不断的进行重试，这样反倒是降低了性能，所以这种情况下用悲观锁就比较合适。</p>
-<h3 id="自旋锁"><a href="#自旋锁" class="headerlink" title="自旋锁"></a>自旋锁</h3><p>有一种锁叫自旋锁。所谓自旋，说白了就是一个** while(true) 无限循环。<br>这个自旋锁与Atomic类的while实现的自旋代码不是一回事，下一章AQS会详细讲</p>
-<h3 id="synchronized锁升级：偏向锁-→-轻量级锁-→-重量级锁"><a href="#synchronized锁升级：偏向锁-→-轻量级锁-→-重量级锁" class="headerlink" title="synchronized锁升级：偏向锁 → 轻量级锁 → 重量级锁"></a>synchronized锁升级：偏向锁 → 轻量级锁 → 重量级锁</h3><p>前面提到synchronized关键字就像是汽车的自动档。一脚油门踩下去，synchronized会从无锁升级为偏向锁，再升级为轻量级锁，最后升级为重量级锁，就像自动换挡一样。那么自旋锁在哪里呢？这里的轻量级锁就是一种自旋锁。</p>
+<h2 id="自旋锁"><a href="#自旋锁" class="headerlink" title="自旋锁"></a>自旋锁</h2><p>有一种锁叫自旋锁。所谓自旋，说白了就是一个** while(true) ** 无限循环。<br>这个自旋锁与Atomic类的while实现的自旋代码不是一回事，下一章AQS会详细讲</p>
+<h2 id="synchronized锁升级：偏向锁-→-轻量级锁-→-重量级锁"><a href="#synchronized锁升级：偏向锁-→-轻量级锁-→-重量级锁" class="headerlink" title="synchronized锁升级：偏向锁 → 轻量级锁 → 重量级锁"></a>synchronized锁升级：偏向锁 → 轻量级锁 → 重量级锁</h2><p>前面提到synchronized关键字就像是汽车的自动档。一脚油门踩下去，synchronized会从无锁升级为偏向锁，再升级为轻量级锁，最后升级为重量级锁，就像自动换挡一样。那么自旋锁在哪里呢？这里的轻量级锁就是一种自旋锁。</p>
 <p>初次执行到synchronized代码块的时候，锁对象变成偏向锁(通过CAS修改对象头里的锁标志位，说明白点就是锁记住了第一次和他发生关系的线程)，字面意思是“偏向于第一个获得它的线程”的锁，执行完同步代码块后，线程并不会<strong>主动释放偏向锁</strong>。第二次访问如果还是此线程，那么就没有加锁释放锁这一说，正常执行。</p>
 <p>一旦有第二个线程加入锁竞争并发现锁是偏向锁，会去断线程A是否仍然存活。如果线程A仍然存活，将线程A暂停，此时偏向锁升级为轻量级锁，之后线程A继续执行，线程B自旋。但是如果判断结果是线程A不存在了，则线程B持有此偏向锁，锁不升级。</p>
 <p>在轻量级锁状态下继续锁竞争，没有抢到锁的线程将自旋，即不停地循环判断锁是否能够被成功获取。获取锁的操作，其实就是通过CAS修改对象头里的锁标志位。先比较当前锁标志位是否为“释放”，如果是则将其设置为“锁定”，比较并设置是原子性发生的。这就算抢到锁了，然后线程将当前锁的持有者信息修改为自己。</p>
-<p>自旋锁避免不了的问题就是竞争特别激烈的情况下，其他线程只能在原地<strong>空耗CPU</strong>，执行不了任何有效的任务，这种现象叫做<strong>忙等(busy-waiting)</strong>。显然，此忙等是有限度的(有个计数器记录自旋次数，默认允许循环10次，可以通过虚拟机参数更改)。如果锁竞争情况严重，某个达到最大自旋次数的线程，会将轻量级锁升级为重量级锁(依然是CAS修改锁标志位，但不修改持有锁的线程ID)。当后续线程尝试获取锁时，发现被占用的锁是重量级锁，则直接将自己挂起(而不是忙等)，等待将来被唤醒。在JDK1.6之前，synchronized直接加重量级锁，很明显现在得到了很好的优化。</p>
+<p>自旋锁避免不了的问题就是竞争特别激烈的情况下，其他线程只能在原地<strong>空耗CPU</strong>，执行不了任何有效的任务，这种现象叫做**忙等(busy-waiting)**。显然，此忙等是有限度的(有个计数器记录自旋次数，默认允许循环10次，可以通过虚拟机参数更改)。如果锁竞争情况严重，某个达到最大自旋次数的线程，会将轻量级锁升级为重量级锁(依然是CAS修改锁标志位，但不修改持有锁的线程ID)。当后续线程尝试获取锁时，发现被占用的锁是重量级锁，则直接将自己挂起(而不是忙等)，等待将来被唤醒。在JDK1.6之前，synchronized直接加重量级锁，很明显现在得到了很好的优化。</p>
 <p>一个锁只能按照 偏向锁、轻量级锁、重量级锁的顺序逐渐升级(也有叫锁膨胀的)，<strong>不允许降级</strong>。</p>
-<h3 id="可重入锁-递归锁"><a href="#可重入锁-递归锁" class="headerlink" title="可重入锁(递归锁)"></a>可重入锁(递归锁)</h3><p>可重入锁的字面意思是“可以重新进入的锁”，即允许同一个线程多次获取同一把锁。比如一个递归函数里有加锁操作，递归过程中这个锁会阻塞自己吗？如果不会，那么这个锁就是可重入锁(因为这个原因可重入锁也叫做递归锁)。</p>
-<h3 id="公平锁、非公平锁"><a href="#公平锁、非公平锁" class="headerlink" title="公平锁、非公平锁"></a>公平锁、非公平锁</h3><p>如果多个线程申请一把公平锁，那么当锁释放的时候，先申请的先得到，非常公平。显然如果是非公平锁，后申请的线程可能先获取到锁，是随机或者按照其他优先级排序的。</p>
+<h2 id="可重入锁-递归锁"><a href="#可重入锁-递归锁" class="headerlink" title="可重入锁(递归锁)"></a>可重入锁(递归锁)</h2><p>可重入锁的字面意思是“可以重新进入的锁”，即允许同一个线程多次获取同一把锁。比如一个递归函数里有加锁操作，递归过程中这个锁会阻塞自己吗？如果不会，那么这个锁就是可重入锁(因为这个原因可重入锁也叫做递归锁)。</p>
+<h2 id="公平锁、非公平锁"><a href="#公平锁、非公平锁" class="headerlink" title="公平锁、非公平锁"></a>公平锁、非公平锁</h2><p>如果多个线程申请一把公平锁，那么当锁释放的时候，先申请的先得到，非常公平。显然如果是非公平锁，后申请的线程可能先获取到锁，是随机或者按照其他优先级排序的。</p>
 <p>对ReentrantLock类而言，通过构造函数传参可以指定该锁是否是公平锁，默认是非公平锁。一般情况下，非公平锁的吞吐量比公平锁大，如果没有特殊要求，优先使用非公平锁。对于synchronized而言，它也是一种非公平锁，但是并没有任何办法使其变成公平锁。</p>
-<h3 id="可中断锁"><a href="#可中断锁" class="headerlink" title="可中断锁"></a>可中断锁</h3><p>这里的关键是理解什么是中断。Java并没有提供任何直接中断某线程的方法，只提供了中断机制。何谓“中断机制”？线程A向线程B发出“请你停止运行”的请求(线程B也可以自己给自己发送此请求)，但线程B并不会立刻停止运行，而是自行选择合适的时机以自己的方式响应中断，也可以直接忽略此中断。也就是说，<strong>Java的中断不能直接终止线程</strong>，而是需要被中断的线程自己决定怎么处理。这好比是父母叮嘱在外的子女要注意身体，但子女是否注意身体，怎么注意身体则完全取决于自己。</p>
-<h3 id="读写锁、共享锁、互斥锁"><a href="#读写锁、共享锁、互斥锁" class="headerlink" title="读写锁、共享锁、互斥锁"></a>读写锁、共享锁、互斥锁</h3><p>读写锁其实是一对锁，一个读锁(共享锁)和一个写锁(互斥锁、排他锁)，Java提供了ReadWriteLock接口和实现类ReentrantReadWriteLock来实现读写锁。</p>
+<h2 id="可中断锁"><a href="#可中断锁" class="headerlink" title="可中断锁"></a>可中断锁</h2><p>这里的关键是理解什么是中断。Java并没有提供任何直接中断某线程的方法，只提供了中断机制。何谓“中断机制”？线程A向线程B发出“请你停止运行”的请求(线程B也可以自己给自己发送此请求)，但线程B并不会立刻停止运行，而是自行选择合适的时机以自己的方式响应中断，也可以直接忽略此中断。也就是说，<strong>Java的中断不能直接终止线程</strong>，而是需要被中断的线程自己决定怎么处理。这好比是父母叮嘱在外的子女要注意身体，但子女是否注意身体，怎么注意身体则完全取决于自己。</p>
+<h2 id="读写锁、共享锁、互斥锁"><a href="#读写锁、共享锁、互斥锁" class="headerlink" title="读写锁、共享锁、互斥锁"></a>读写锁、共享锁、互斥锁</h2><p>读写锁其实是一对锁，一个读锁(共享锁)和一个写锁(互斥锁、排他锁)，Java提供了ReadWriteLock接口和实现类ReentrantReadWriteLock来实现读写锁。</p>
 <ul>
 <li>读锁：防止读的时候其他线程写，允许读的时候其他线程读</li>
 <li>写锁：防止写的时候其他线程读或写</li>
 </ul>
+<h2 id="使用锁带来的问题"><a href="#使用锁带来的问题" class="headerlink" title="使用锁带来的问题"></a>使用锁带来的问题</h2><p>死锁、活锁、饥饿</p>
 
-          
-            <br>
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+        <div class='copyright'>
+          <blockquote>
             
               
-  
-    
-    
+                <p>博客内容遵循 署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</p>
 
-
-
-  
-
-  
-    
-    
-
-<section class="widget copyright  desktop mobile">
-  <div class='content'>
-    
-      <blockquote>
-        
-          
-            <p>博客内容遵循 署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</p>
-
-          
-        
-          
-            <p>本文永久链接是：<a href=http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/>http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/</a></p>
-          
-        
-      </blockquote>
-    
-  </div>
-</section>
-
-  
-
-  
-
-
+              
             
-          
+              
+                <p>本文永久链接是：<a href=http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/>http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/</a></p>
+              
+            
+          </blockquote>
         </div>
-        
-          
+      
+      
+    </div>
+  
+  
+    
 
 
-  <section class='meta' id="footer-meta">
+  <div class='article-meta' id="bottom">
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-09-22T14:01:38+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-09-29T13:52:44+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年9月22日</p>
+    <p>更新于：2020年9月29日</p>
   </a>
 </div>
-
-        
-      
-        
-          
 
         
       
@@ -546,39 +521,43 @@
   <div class="-mob-share-list share-body">
     
       
-        <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer"
+        <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/&title=多线程(六) 锁分类 - 花裤衩&summary=java中五花八门的锁"
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/&title=多线程(六) 锁分类 - 来杯冰镇可乐&summary=java中五花八门的锁"
           
           >
           
-            <img src="https://cdn.jsdelivr.net/gh/xaoxuu/cdn-assets/logo/128/qq.png">
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
           
         </a>
       
     
       
-        <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer"
+        <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/&title=多线程(六) 锁分类 - 花裤衩&summary=java中五花八门的锁"
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/&title=多线程(六) 锁分类 - 来杯冰镇可乐&summary=java中五花八门的锁"
           
           >
           
-            <img src="https://cdn.jsdelivr.net/gh/xaoxuu/cdn-assets/logo/128/qzone.png">
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
           
         </a>
       
     
       
-        <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer"
+        <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/&title=多线程(六) 锁分类 - 花裤衩&summary=java中五花八门的锁"
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/&title=多线程(六) 锁分类 - 来杯冰镇可乐&summary=java中五花八门的锁"
           
           >
           
-            <img src="https://cdn.jsdelivr.net/gh/xaoxuu/cdn-assets/logo/128/weibo.png">
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
           
         </a>
+      
+    
+      
+    
       
     
   </div>
@@ -589,70 +568,63 @@
         
       
     </div>
-  </section>
+  </div>
 
 
-        
-        
-          <div class="prev-next">
-            
-              <a class='prev' href='/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/'>
-                <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(七) synchronized关键字</p>
-                <p class='content'>sunchronized锁的实现原理。
-</p>
-              </a>
-            
-            
-              <a class='next' href='/2020/03/05/CAS/'>
-                <p class='title'>多线程(五) CAS<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-                <p class='content'>CAS在CPU的实现，以及Java对CAS的封装
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(七) synchronized关键字</p>
+          <p class='content'>synchronized锁的实现原理。
+
+
+简介如果我们想要保证单个共享变量的原子操作，可以借助CAS来实现，当我们想要保证多个共享变量的原子操作时，那就要把对多个变量的操作代码整合在一起建立临...</p>
+        </a>
+      
+      
+        <a class='next' href='/2020/03/05/CAS/'>
+          <p class='title'>多线程(五) CAS<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>CAS在CPU的实现，以及Java对CAS的封装
 
 
 什么是CASCAS的全称是Compare and Swap(比较和交换)，是一种特殊的修改数据的方式，线程通过CAS修改数据时整个过程涉及到...</p>
-              </a>
-            
-          </div>
-        
-      </section>
-    </article>
+        </a>
+      
+    </div>
   
-
-  
-    <!-- 显示推荐文章和评论 -->
-
+</article>
 
 
   
 
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
 
-  
+  </article>
 
 
 
 
-<!-- 根据页面mathjax变量决定是否加载MathJax数学公式js -->
-
-
-
-  <script>
-    window.subData = {
-      title: '多线程(六) 锁分类',
-      tools: true
-    }
-  </script>
 
 
 </div>
 <aside class='l_side'>
   
   
-
-  
     
     
 
 
-  <section class="widget toc-wrapper shadow desktop mobile">
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
     
   <header>
     
@@ -662,7 +634,7 @@
 
 
     <div class='content'>
-      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#synchronized与Lock"><span class="toc-text">synchronized与Lock</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#悲观锁与乐观锁"><span class="toc-text">悲观锁与乐观锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#自旋锁"><span class="toc-text">自旋锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#synchronized锁升级：偏向锁-→-轻量级锁-→-重量级锁"><span class="toc-text">synchronized锁升级：偏向锁 → 轻量级锁 → 重量级锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#可重入锁-递归锁"><span class="toc-text">可重入锁(递归锁)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#公平锁、非公平锁"><span class="toc-text">公平锁、非公平锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#可中断锁"><span class="toc-text">可中断锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#读写锁、共享锁、互斥锁"><span class="toc-text">读写锁、共享锁、互斥锁</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#synchronized%E4%B8%8ELock"><span class="toc-text">synchronized与Lock</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%82%B2%E8%A7%82%E9%94%81%E4%B8%8E%E4%B9%90%E8%A7%82%E9%94%81"><span class="toc-text">悲观锁与乐观锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E6%97%8B%E9%94%81"><span class="toc-text">自旋锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#synchronized%E9%94%81%E5%8D%87%E7%BA%A7%EF%BC%9A%E5%81%8F%E5%90%91%E9%94%81-%E2%86%92-%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81-%E2%86%92-%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81"><span class="toc-text">synchronized锁升级：偏向锁 → 轻量级锁 → 重量级锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E9%87%8D%E5%85%A5%E9%94%81-%E9%80%92%E5%BD%92%E9%94%81"><span class="toc-text">可重入锁(递归锁)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AC%E5%B9%B3%E9%94%81%E3%80%81%E9%9D%9E%E5%85%AC%E5%B9%B3%E9%94%81"><span class="toc-text">公平锁、非公平锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E4%B8%AD%E6%96%AD%E9%94%81"><span class="toc-text">可中断锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%BB%E5%86%99%E9%94%81%E3%80%81%E5%85%B1%E4%BA%AB%E9%94%81%E3%80%81%E4%BA%92%E6%96%A5%E9%94%81"><span class="toc-text">读写锁、共享锁、互斥锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E9%94%81%E5%B8%A6%E6%9D%A5%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-text">使用锁带来的问题</span></a></li></ol>
     </div>
   </section>
 
@@ -673,29 +645,17 @@
 </aside>
 
 
+
+        
+      </div>
+      
   
-  <footer class="clearfix">
+  <footer class="footer clearfix">
     <br><br>
     
       
         <div class="aplayer-container">
           
-
-  
-    <meting-js
-      theme='#1BCDFC'
-      autoplay='false'
-      volume='0.7'
-      loop='all'
-      order='list'
-      fixed='false'
-      list-max-height='340px'
-      server='netease'
-      type='playlist'
-      id='3175833810'
-      list-folded='true'>
-    </meting-js>
-  
 
 
         </div>
@@ -706,163 +666,234 @@
         <div class="social-wrapper">
           
             
-              <a href="/atom.xml"
-                class="social fas fa-rss flat-btn"
-                target="_blank"
-                rel="external nofollow noopener noreferrer">
-              </a>
-            
           
             
-              <a href="mailto:me@xaoxuu.com"
-                class="social fas fa-envelope flat-btn"
-                target="_blank"
-                rel="external nofollow noopener noreferrer">
-              </a>
-            
           
-            
-              <a href="https://github.com/xaoxuu"
-                class="social fab fa-github flat-btn"
-                target="_blank"
-                rel="external nofollow noopener noreferrer">
-              </a>
-            
-          
-            
-              <a href="https://music.163.com/#/user/home?id=63035382"
-                class="social fas fa-headphones-alt flat-btn"
-                target="_blank"
-                rel="external nofollow noopener noreferrer">
-              </a>
             
           
         </div>
       
     
       
-        <div><p>博客内容遵循 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" target="_blank" rel="noopener">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
 </div>
       
     
       
-        本站使用
-        <a href="https://volantis.js.org/" target="_blank" class="codename">Volantis</a>
-        作为主题，总访问量为
-          <span id="busuanzi_value_site_pv"><i class="fas fa-spinner fa-spin fa-fw" aria-hidden="true"></i></span>
-          次
+        
+          <div><p><span id="lc-sv">本站总访问量为 <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span> 次</span> <span id="lc-uv">访客数为 <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span> 人</span></p>
+</div>
         
       
     
       
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.0.0" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
         <div class='copyright'>
-        <p><a href="https://xaoxuu.com" target="_blank" rel="noopener">Copyright © 2017-2020 Mr. X</a></p>
+        <p><a href="/">Copyright © 2017-2020 XXX</a></p>
 
         </div>
       
     
   </footer>
 
-<script>setLoadingBarProgress(80);</script>
 
-
-      <script>setLoadingBarProgress(60);</script>
+      <a class="s-top fas fa-arrow-up fa-fw" href='javascript:void(0)'></a>
     </div>
-    <a class="s-top fas fa-arrow-up fa-fw" href='javascript:void(0)'></a>
   </div>
-  
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.4/dist/jquery.min.js"></script>
+  <div>
+    <!-- required -->
 
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
 
-  <script>
-    
-    var SEARCH_SERVICE = "hexo" || "hexo";
-    var ROOT = "/" || "/";
-    if (!ROOT.endsWith('/')) ROOT += '/';
-  </script>
-
-
-  <script async src="https://cdn.jsdelivr.net/gh/xaoxuu/cdn-volantis@2/js/instant_page.js" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
-
-
-
-  
-<script src="https://cdn.jsdelivr.net/npm/node-waves@0.7.6/dist/waves.min.js"></script>
-
-  <script type="text/javascript">
-    $(function() {
-      Waves.attach('.flat-btn', ['waves-button']);
-      Waves.attach('.float-btn', ['waves-button', 'waves-float']);
-      Waves.attach('.float-btn-light', ['waves-button', 'waves-float', 'waves-light']);
-      Waves.attach('.flat-box', ['waves-block']);
-      Waves.attach('.float-box', ['waves-block', 'waves-float']);
-      Waves.attach('.waves-image');
-      Waves.init();
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
     });
-  </script>
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    setTimeout(function() {
+      loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+    }, 1);
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+</script>
 
 
-  <script async src="https://cdn.jsdelivr.net/gh/xaoxuu/cdn-busuanzi@2.3/js/busuanzi.pure.mini.js"></script>
+<!-- internal -->
+
+
+
+
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
 
 
 
   
   
-  
-    
-<script src="https://cdn.jsdelivr.net/npm/jquery-backstretch@2.1.18/jquery.backstretch.min.js"></script>
-
-    <script type="text/javascript">
-      $(function(){
-        var imgs=["https://cdn.jsdelivr.net/gh/xaoxuu/cdn-wallpaper/abstract/41F215B9-261F-48B4-80B5-4E86E165259E.jpeg"];
-        if ('true' == 'true') {
-          function shuffle(arr){
-            /*From countercurrent-time*/
-            var n = arr.length;
-            while(n--) {
-              var index = Math.floor(Math.random() * n);
-              var temp = arr[index];
-              arr[index] = arr[n];
-              arr[n] = temp;
-            }
-          }
-          shuffle(imgs);
-        }
-        if ('.cover') {
-          $('.cover').backstretch(
-            imgs,
-          {
-            duration: "20000",
-            fade: "1500"
-          });
-        } else {
-          $.backstretch(
-            imgs,
-          {
-            duration: "20000",
-            fade: "1500"
-          });
-        }
-      });
+    <script>
+      window.FPConfig = {
+        delay: 0,
+        ignoreKeywords: [],
+        maxRPS: 5,
+        hoverDelay: 25
+      };
     </script>
-  
-
-
-
-  
-    
-<script src="https://cdn.jsdelivr.net/npm/aplayer@1.10/dist/APlayer.min.js"></script>
-
-  
-    
-<script src="https://cdn.jsdelivr.net/npm/meting@2.0/dist/Meting.min.js"></script>
-
+    <script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
   
 
 
 
 
 
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  var GUEST_INFO = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link'.split(',').filter(function (item) {
+    return GUEST_INFO.indexOf(item) > -1
+  });
+  var REQUIRED_FIELDS = ['nick', 'mail', 'link'];
+  var requiredFields = 'nick,mail'.split(',').filter(function (item) {
+    return REQUIRED_FIELDS.indexOf(item) > -1
+  });
+
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+
+    let pagePlaceholder = $.trim($('#pjax-comment-placeholder').text()) || "快来评论吧~";
+
+    let path = $.trim($('#pjax-comment-path').text());
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+
+    var valine = new Valine();
+    valine.init({
+      el: '#valine_container',
+      meta: meta,
+      placeholder: pagePlaceholder,
+      path: path,
+      appId: "",
+      appKey: "",
+      pageSize: '10',
+      avatar: 'robohash',
+      lang: 'zh-cn',
+      visitor: 'true',
+      highlight: 'true',
+      mathJax: 'false',
+      enableQQ: 'true',
+      recordIP: 'false',
+      requiredFields: requiredFields,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps
+    })
+  }
+
+  $(function () {
+    pjax_valine();
+  });
+</script>
 
 
 
@@ -875,105 +906,372 @@
 
 
 
-  
-<script src="https://cdn.jsdelivr.net/gh/xaoxuu/cdn-volantis@2.4/js/search.js"></script>
-
-
 
   
-<script src="https://cdn.jsdelivr.net/gh/xaoxuu/cdn-volantis@2/js/comment_typing.js"></script>
+    
+<script src="/js/search.js"></script>
+
+  
 
 
+<!-- optional -->
 
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+(function ($) {
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+})(jQuery);
 
-
-
-<!-- 复制 -->
-
-  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
-<script>
-  function wait(callback, seconds) {
-    var timelag = null;
-    timelag = window.setTimeout(callback, seconds);
-  }
-  !function (e, t, a) {
-    var initCopyCode = function(){
-      var copyHtml = '';
-      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
-      copyHtml += '<i class="fas fa-copy"></i><span>COPY</span>';
-      copyHtml += '</button>';
-      $(".highlight .code pre").before(copyHtml);
-      $(".article pre code").before(copyHtml);
-      var clipboard = new ClipboardJS('.btn-copy', {
-        target: function(trigger) {
-          return trigger.nextElementSibling;
-        }
-      });
-      clipboard.on('success', function(e) {
-        let $btn = $(e.trigger);
-        $btn.addClass('copied');
-        let $icon = $($btn.find('i'));
-        $icon.removeClass('fa-copy');
-        $icon.addClass('fa-check-circle');
-        let $span = $($btn.find('span'));
-        $span[0].innerText = 'COPIED';
-        
-        wait(function () { // 等待两秒钟后恢复
-          $icon.removeClass('fa-check-circle');
-          $icon.addClass('fa-copy');
-          $span[0].innerText = 'COPY';
-        }, 2000);
-      });
-      clipboard.on('error', function(e) {
-        e.clearSelection();
-        let $btn = $(e.trigger);
-        $btn.addClass('copy-failed');
-        let $icon = $($btn.find('i'));
-        $icon.removeClass('fa-copy');
-        $icon.addClass('fa-times-circle');
-        let $span = $($btn.find('span'));
-        $span[0].innerText = 'COPY FAILED';
-        
-        wait(function () { // 等待两秒钟后恢复
-          $icon.removeClass('fa-times-circle');
-          $icon.addClass('fa-copy');
-          $span[0].innerText = 'COPY';
-        }, 2000);
-      });
-    }
-    initCopyCode();
-  }(window, document);
 </script>
 
 
 
 
-<!-- fancybox -->
 
-  <script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
-<script>
-  let LAZY_LOAD_IMAGE = "";
-  $(".article-entry").find("div.fancybox").find("img").each(function () {
-      var element = document.createElement("a");
-      $(element).attr("data-fancybox", "gallery");
-      $(element).attr("href", $(this).attr("src"));
-      /* 图片采用懒加载处理时,
-       * 一般图片标签内会有个属性名来存放图片的真实地址，比如 data-original,
-       * 那么此处将原本的属性名src替换为对应属性名data-original,
-       * 修改如下
-       */
-       if (LAZY_LOAD_IMAGE) {
-         $(element).attr("href", $(this).attr("data-original"));
-       }
-      $(this).wrap(element);
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'http://yoursite.com' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'http://yoursite.com' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'http://yoursite.com' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
   });
 </script>
 
 
 
+<!-- more -->
 
 
+    
+      
 
-  <script>setLoadingBarProgress(100);</script>
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+<!-- 样式位于：source/css/_third-party/pjaxanimate.styl -->
+
+<div class="pjax-animate">
+  
+    <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
+    <div id="loading-bar-wrapper"><script>NProgress.configure({parent:"#loading-bar-wrapper",trickleSpeed: 100})</script></div>
+    <script>
+      window.ShowLoading = function() {
+        NProgress.start();
+      };
+      window.HideLoading = function() {
+        NProgress.done();
+      }
+    </script>
+  
+</div>
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+      $('.l_header .switcher .s-search').removeClass('active'); // 关闭移动端激活的搜索框
+      $('.l_header').removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      $('.wrapper').removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      $('.s-top').unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+      window.ShowLoading();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      // 关于百度统计对 SPA 页面的处理：
+      // 方案一：百度统计>管理>单页应用设置中，打开开启按钮即可对SPA进行统计。 https://tongji.baidu.com/web/help/article?id=324
+      // 方案二：取消注释下列代码。 https://tongji.baidu.com/web/help/article?id=235
+      // 
+
+      // 关于谷歌统计对 SPA 页面的处理：
+      // 当应用以动态方式加载内容并更新地址栏中的网址时，也应该更新通过 gtag.js 存储的网页网址。
+      // https://developers.google.cn/analytics/devguides/collection/gtagjs/single-page-applications?hl=zh-cn
+      
+
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+          if (typeof $.fancybox == "undefined") {
+            SCload_fancybox();
+          } else {
+            pjax_fancybox();
+          }
+        
+        
+        
+        
+        
+        
+          pjax_valine();
+        
+        
+        
+        
+        
+      } catch (e) {
+        console.log(e);
+      }
+      window.HideLoading();
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+      window.HideLoading();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+
+    
+  </div>
 </body>
 </html>
