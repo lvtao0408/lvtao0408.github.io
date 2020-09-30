@@ -123,7 +123,7 @@
                   
                     id="home"
                   >
-                  <i class='fas fa-rss fa-fw'></i>博客
+                  <i class='fas fa-home fa-fw'></i>首页
                 </a>
                 
               </li>
@@ -155,7 +155,7 @@
                   
                     id="home"
                   >
-                  <i class='fas fa-link fa-fw'></i>日记
+                  <i class='fas fa-bug fa-fw'></i>日记
                 </a>
                 
               </li>
@@ -165,14 +165,48 @@
             
             
               <li>
+                <a class="menuitem flat-box faa-parent animated-hover" 
+                  
+                  
+                  >
+                  <i class='fas fa-bahai fa-fw'></i>娱乐
+                </a>
+                
+                  <ul class="list-v">
+                    
+                      
+            
+              <li>
                 <a class="menuitem flat-box faa-parent animated-hover" href=/
                   
                   
                   
                     id="home"
                   >
-                  <i class='fas fa-address-card-o fa-fw'></i>娱乐
+                  <i class='fas fa-camera-retro fa-fw'></i>相册
                 </a>
+                
+              </li>
+            
+          
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-guitar fa-fw'></i>视频
+                </a>
+                
+              </li>
+            
+          
+                    
+                  </ul>
                 
               </li>
             
@@ -221,7 +255,7 @@
                   
                     id="home"
                   >
-                  <i class='fas fa-rss fa-fw'></i>博客
+                  <i class='fas fa-home fa-fw'></i>首页
                 </a>
                 
               </li>
@@ -253,7 +287,7 @@
                   
                     id="home"
                   >
-                  <i class='fas fa-link fa-fw'></i>日记
+                  <i class='fas fa-bug fa-fw'></i>日记
                 </a>
                 
               </li>
@@ -263,14 +297,48 @@
               
             
               <li>
+                <a class="menuitem flat-box faa-parent animated-hover" 
+                  
+                  
+                  >
+                  <i class='fas fa-bahai fa-fw'></i>娱乐
+                </a>
+                
+                  <ul class="list-v">
+                    
+                      
+            
+              <li>
                 <a class="menuitem flat-box faa-parent animated-hover" href=/
                   
                   
                   
                     id="home"
                   >
-                  <i class='fas fa-address-card-o fa-fw'></i>娱乐
+                  <i class='fas fa-camera-retro fa-fw'></i>相册
                 </a>
+                
+              </li>
+            
+          
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-guitar fa-fw'></i>视频
+                </a>
+                
+              </li>
+            
+          
+                    
+                  </ul>
                 
               </li>
             
@@ -545,17 +613,17 @@
 <p>打印结果：<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E6%97%A0%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E6%97%A0%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
 <p>原图不好标注，重新做了一张：<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E6%97%A0%E9%94%81%E7%8A%B6%E6%80%81%E6%A0%87%E6%B3%A8%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E6%97%A0%E9%94%81%E7%8A%B6%E6%80%81%E6%A0%87%E6%B3%A8%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
 <p>2进制数据我们要从右往左看，然后从下往上看。</p>
-<h2 id="偏向锁状态"><a href="#偏向锁状态" class="headerlink" title="偏向锁状态"></a>偏向锁状态</h2><p>偏向锁是jdk1.6引入的一项锁优化，意思是偏向于第一个获得它的线程，在接下来的执行过程中，假如该锁没有被其他线程所获取，没有其他线程来竞争该锁，那么持有偏向锁的线程将永远不需要进行同步操作。</p>
+<h2 id="偏向锁"><a href="#偏向锁" class="headerlink" title="偏向锁"></a>偏向锁</h2><p>偏向锁是jdk1.6引入的一项锁优化，意思是偏向于第一个获得它的线程，在接下来的执行过程中，假如该锁没有被其他线程所获取，没有其他线程来竞争该锁，那么持有偏向锁的线程将永远不需要进行同步操作。</p>
 <p>JVM启动时会进行一系列的复杂活动，比如装载配置，系统类初始化等等。在这个过程中会使用大量synchronized关键字对对象加锁，且这些锁大多数都不是偏向锁。为了减少初始化的时间，JVM默认采用延时加载偏向锁的机制，大概4秒左右，应用程序(包括main方法)刚启动的时候直接调用同步代码块，对象锁升级会忽略偏向锁直接升级到轻量级锁。因此我们想要看到偏向锁的头信息，增加jvm启动参数取消延迟加载:-XX:BiasedLockingStartupDelay=0</p>
 <p>我们写个测试类:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line">    Person person &#x3D; new Person(&quot;李逍遥&quot;,18);</span><br><span class="line">    person.doSomething();</span><br><span class="line">    System.out.println(ClassLayout.parseInstance(person).toPrintable());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>打印结果：<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>标注：<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E7%8A%B6%E6%80%81%E6%A0%87%E6%B3%A8%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E7%8A%B6%E6%80%81%E6%A0%87%E6%B3%A8%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>偏向锁如何工作的：<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>打印结果:<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>标注:<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E7%8A%B6%E6%80%81%E6%A0%87%E6%B3%A8%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E7%8A%B6%E6%80%81%E6%A0%87%E6%B3%A8%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>偏向锁工作流程图:<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
 <p>第一次看到这个图的时候十分懵逼，如果线程A获取偏向锁成功，在执行同步方法(或代码块)期间，线程B试图访问同步方法(或代码块)，此时使用CAS修改JavaThread是必然成功的(因为现在没其他线程修改JavaThread)，那岂不2个线程同时访问同步方法(或代码块)了？</p>
 <p>只有在001状态下试图升级偏向锁的时候才会进行CAS，多个线程对无锁状态的字段标记CAS只有一个会成功，其他失败的再次尝试时，发现已经升级为偏向锁(101)此次CAS直接失败，开始偏向锁撤销。安全点为jvm时间暂停</p>
-<h2 id="轻量级锁状态"><a href="#轻量级锁状态" class="headerlink" title="轻量级锁状态"></a>轻量级锁状态</h2><h2 id="重量级锁状态"><a href="#重量级锁状态" class="headerlink" title="重量级锁状态"></a>重量级锁状态</h2><h2 id="synchronized优缺点"><a href="#synchronized优缺点" class="headerlink" title="synchronized优缺点"></a>synchronized优缺点</h2>
+<h2 id="轻量级锁"><a href="#轻量级锁" class="headerlink" title="轻量级锁"></a>轻量级锁</h2><h2 id="重量级锁"><a href="#重量级锁" class="headerlink" title="重量级锁"></a>重量级锁</h2><h2 id="synchronized优缺点"><a href="#synchronized优缺点" class="headerlink" title="synchronized优缺点"></a>synchronized优缺点</h2>
   
   
     
@@ -589,10 +657,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-09-29T15:57:14+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-09-30T12:32:55+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年9月29日</p>
+    <p>更新于：2020年9月30日</p>
   </a>
 </div>
 
@@ -723,7 +791,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#synchronized%E4%BD%BF%E7%94%A8"><span class="toc-text">synchronized使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#jvm%E5%AF%B9%E8%B1%A1%E5%A4%B4"><span class="toc-text">jvm对象头</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A0%E9%94%81%E7%8A%B6%E6%80%81"><span class="toc-text">无锁状态</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%81%8F%E5%90%91%E9%94%81%E7%8A%B6%E6%80%81"><span class="toc-text">偏向锁状态</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81%E7%8A%B6%E6%80%81"><span class="toc-text">轻量级锁状态</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81%E7%8A%B6%E6%80%81"><span class="toc-text">重量级锁状态</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#synchronized%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">synchronized优缺点</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#synchronized%E4%BD%BF%E7%94%A8"><span class="toc-text">synchronized使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#jvm%E5%AF%B9%E8%B1%A1%E5%A4%B4"><span class="toc-text">jvm对象头</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A0%E9%94%81%E7%8A%B6%E6%80%81"><span class="toc-text">无锁状态</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%81%8F%E5%90%91%E9%94%81"><span class="toc-text">偏向锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81"><span class="toc-text">轻量级锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81"><span class="toc-text">重量级锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#synchronized%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">synchronized优缺点</span></a></li></ol>
     </div>
   </section>
 
