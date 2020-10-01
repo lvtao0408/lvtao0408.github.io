@@ -614,16 +614,30 @@
 <p>原图不好标注，重新做了一张：<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E6%97%A0%E9%94%81%E7%8A%B6%E6%80%81%E6%A0%87%E6%B3%A8%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E6%97%A0%E9%94%81%E7%8A%B6%E6%80%81%E6%A0%87%E6%B3%A8%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
 <p>2进制数据我们要从右往左看，然后从下往上看。</p>
 <h2 id="偏向锁"><a href="#偏向锁" class="headerlink" title="偏向锁"></a>偏向锁</h2><p>偏向锁是jdk1.6引入的一项锁优化，意思是偏向于第一个获得它的线程，在接下来的执行过程中，假如该锁没有被其他线程所获取，没有其他线程来竞争该锁，那么持有偏向锁的线程将永远不需要进行同步操作。</p>
-<p>JVM启动时会进行一系列的复杂活动，比如装载配置，系统类初始化等等。在这个过程中会使用大量synchronized关键字对对象加锁，且这些锁大多数都不是偏向锁。为了减少初始化的时间，JVM默认采用延时加载偏向锁的机制，大概4秒左右，应用程序(包括main方法)刚启动的时候直接调用同步代码块，对象锁升级会忽略偏向锁直接升级到轻量级锁。因此我们想要看到偏向锁的头信息，增加jvm启动参数取消延迟加载:-XX:BiasedLockingStartupDelay=0</p>
+<p>JVM启动时会进行一系列的复杂活动，比如装载配置，系统类初始化等等。在这个过程中会使用大量synchronized关键字对对象加锁，且这些锁大多数都不是偏向锁。为了减少初始化的时间，JVM默认采用延时加载偏向锁的机制，大概4秒左右，应用程序(包括main方法)刚启动的时候直接调用临界区代码，对象锁升级会忽略偏向锁直接升级到轻量级锁。因此我们想要看到偏向锁的头信息，就需要增加jvm启动参数取消延迟加载:<br>-XX:BiasedLockingStartupDelay=0</p>
 <p>我们写个测试类:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line">    Person person &#x3D; new Person(&quot;李逍遥&quot;,18);</span><br><span class="line">    person.doSomething();</span><br><span class="line">    System.out.println(ClassLayout.parseInstance(person).toPrintable());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>打印结果:<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
 <p>标注:<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E7%8A%B6%E6%80%81%E6%A0%87%E6%B3%A8%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E7%8A%B6%E6%80%81%E6%A0%87%E6%B3%A8%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>偏向锁工作流程图:<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>第一次看到这个图的时候十分懵逼，如果线程A获取偏向锁成功，在执行同步方法(或代码块)期间，线程B试图访问同步方法(或代码块)，此时使用CAS修改JavaThread是必然成功的(因为现在没其他线程修改JavaThread)，那岂不2个线程同时访问同步方法(或代码块)了？</p>
-<p>只有在001状态下试图升级偏向锁的时候才会进行CAS，多个线程对无锁状态的字段标记CAS只有一个会成功，其他失败的再次尝试时，发现已经升级为偏向锁(101)此次CAS直接失败，开始偏向锁撤销。安全点为jvm时间暂停</p>
-<h2 id="轻量级锁"><a href="#轻量级锁" class="headerlink" title="轻量级锁"></a>轻量级锁</h2><h2 id="重量级锁"><a href="#重量级锁" class="headerlink" title="重量级锁"></a>重量级锁</h2><h2 id="synchronized优缺点"><a href="#synchronized优缺点" class="headerlink" title="synchronized优缺点"></a>synchronized优缺点</h2>
+<p><strong>偏向锁工作流程图:</strong><br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>整个流程图最大的疑问在于CAS获取偏向锁的这一步骤，如果线程A获取偏向锁并开始执行同步代码或方法块期间，线程B试图访问同步方法或代码块，按照我们的理解CAS成功是必然的，因为此刻线程A还在执行临界区代码，不会对标记字段进行修改干扰到线程B，这不就出现2个线程同时进入同步代码了吗？</p>
+<p>实时并非如此，无论是无锁状态(001)下的CAS，还是偏向锁状态下的CAS，期望值参数永远是null，也就意味着多个线程同时对无锁状态的同步代码争夺偏向锁，仅有一个线程会成功并成为偏向线程，之后任何线程在尝试CAS获取偏向锁永远是失败的(因为JavaThread已经非null)，直接进入偏向锁撤销阶段。</p>
+<p>偏向锁撤销的作用很明显了，根据线程对此临界区的访问是否发生竞争，来决定将锁恢复到无锁状态还是升级到轻量级。没有发生竞争的情况下，偏向锁的逻辑仍然能保证很好的性能，一旦发生竞争，就需要更高级的锁来最大化性能。</p>
+<p>如果你仔细看过上面关于字段标记的存储结构图，你会发现偏向锁并没有分出空间来存储hashcode，这是因为在HotSpot虚拟机中，偏向锁与hashcode不可以并存(我估计是JavaThread占用的太多，没地方了…)，如果在无锁状态调用hashcode方法，那么即使升级也是忽略偏向锁直接到轻量级锁，如果是偏向锁状态下调用hashcode()，直接进入偏向锁撤销阶段。这种规则仅限于没有重写hashcode()方法的情况下。</p>
+<p>然而偏向锁在竞争稍微激烈的情况下没什么卵用，如果你觉得你的应用对于大多数锁的竞争都是比较激烈的，偏向锁完全没有存在的必要，可以设置JVM启动参数来禁用偏向锁(默认延迟打开)，这会导致无锁会直接升级到轻量级锁:<br>-XX:-UseBiasedLocking</p>
+<h2 id="轻量级锁"><a href="#轻量级锁" class="headerlink" title="轻量级锁"></a>轻量级锁</h2><p>轻量级锁也是jdk1.6引入的一项锁优化，是在锁发生竞争但竞争不是特别激烈情况下的折中解决方案，降低重量级锁使用过程中的性能消耗。</p>
+<p>我们写个测试类(禁止使用偏向锁):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line">    Person person &#x3D; new Person(&quot;李逍遥&quot;,18);</span><br><span class="line">    person.doSomething();</span><br><span class="line">    System.out.println(ClassLayout.parseInstance(person).toPrintable());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>打印结果:<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>标注:<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81%E7%8A%B6%E6%80%81%E6%A0%87%E6%B3%A8%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81%E7%8A%B6%E6%80%81%E6%A0%87%E6%B3%A8%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p><strong>轻量级锁工作流程图:</strong><br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.png" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>无论是刚升级到轻量级锁，还是在轻量级锁状态下试图获取锁，都需要将标记字段中的Lock Record指向线程栈中的锁记录地址，这是获取轻量级锁的证明。</p>
+<p>在自旋竞争锁过程中，如果自旋执行时间太长，会有大量的线程处于自旋状态占用CPU资源，进而会影响整体系统的性能。这个自旋次数在jdk1.5是写死的参数，到了jdk1.6版本可以通过jvm参数控制:-XX:PreBlockSpin=10，最后到了jdk1.7版本去掉了此jvm参数改由jvm控制。</p>
+<p>另外一个细节就是在解锁的时候还是通过CAS来操作，这是为了防止在解锁的时候，锁由于竞争的激烈程度再次提高，已经升级到重量级锁并且把其他线程阻塞，这种情况下如果不唤醒阻塞的线程，这些线程将永远阻塞在这里。</p>
+<p>轻量级锁关于字段标记存的存储结构相比较无锁和偏向锁，已经变得相当简单清晰，除了刚才纠结的hashcode，现在连age都没了。暂时还没找到答案，貌似和Lock Record有关，以后再更新。</p>
+<h2 id="重量级锁"><a href="#重量级锁" class="headerlink" title="重量级锁"></a>重量级锁</h2><h2 id="synchronized优缺点"><a href="#synchronized优缺点" class="headerlink" title="synchronized优缺点"></a>synchronized优缺点</h2>
   
   
     
@@ -657,10 +671,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-09-30T12:32:55+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-01T22:23:21+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年9月30日</p>
+    <p>更新于：2020年10月1日</p>
   </a>
 </div>
 
@@ -837,9 +851,6 @@
       
     
       
-        
-          <div><p><span id="lc-sv">本站总访问量为 <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span> 次</span> <span id="lc-uv">访客数为 <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span> 人</span></p>
-</div>
         
       
     
