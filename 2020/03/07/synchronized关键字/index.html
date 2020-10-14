@@ -741,8 +741,8 @@
 </tr>
 </tbody></table>
 <p>_cxq与_EntryList区别<br>在_cxq中的队列可以继续自旋等待锁，若达到自旋的阈值仍未获取到锁则会调用park方法挂起，而_EntryList中的线程都是被挂起的线程。</p>
-<p>写个多线程竞争锁的demo:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line">    System.out.println(ClassLayout.parseInstance(person).toPrintable());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>写个重量级锁mode:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args)&#123;</span><br><span class="line"></span><br><span class="line">    Object lockObject &#x3D; new Object();</span><br><span class="line"></span><br><span class="line">    new Thread(new Runnable() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void run() &#123;</span><br><span class="line">            synchronized (lockObject) &#123;</span><br><span class="line">                while (true) &#123;</span><br><span class="line">                    &#x2F;&#x2F; ...</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;).start();</span><br><span class="line"></span><br><span class="line">    new Thread(new Runnable() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void run() &#123;</span><br><span class="line">            synchronized (lockObject) &#123;</span><br><span class="line">                while (true) &#123;</span><br><span class="line">                    &#x2F;&#x2F; ...</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;).start();</span><br><span class="line"></span><br><span class="line">    System.out.println(ClassLayout.parseInstance(lockObject).toPrintable());</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>打印结果:<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
 <p><strong>重量级锁工作流程图:</strong><br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.png" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
@@ -750,7 +750,7 @@
 <p>当锁被释放后，会从_cxq或_EntryList中挑选一个线程唤醒，被选中的线程为假定继承人赋值给_succ，即使_succ重新加入竞争也不能保证会获取到锁，所以synchronized是一种非公平锁，而_succ也只能称为<strong>假定继承人</strong>。</p>
 <p>当竞争发生时，选取一个线程作为_Responsible，_Responsible线程调用的是有时间限制的park方法，估计是考虑到特殊场景下所有线程都处于阻塞导致没有线程进行释放锁操作，出现搁浅情况。</p>
 <h2 id="GC标记"><a href="#GC标记" class="headerlink" title="GC标记"></a>GC标记</h2><p>如果设置finalize()或许还有一线生机，没设置就等死吧….</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>synchronized在1.6版本之前，所有临界资源的访问都是通过monitor实现，monitor本质又是依赖于底层的操作系统的Mutex Lock(互斥锁)来实现的，实现过程涉及到用户态转换到核心态切换，成本非常高。1.6之后引进了锁升级机制，这样能够在很大程度上减少了同步原语或者操作系统底层互斥量带来的性能消耗。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>synchronized在1.6版本之前，所有临界资源的访问都是通过monitor实现，monitor本质又是依赖于底层的操作系统的Mutex来实现的，实现过程涉及到用户态转换到核心态切换，成本非常高。1.6之后引进了锁升级机制，这样能够在很大程度上减少了同步原语或者操作系统底层互斥量带来的性能消耗。</p>
 <p>synchronized完全是jvm去实现的，因此对于是否支持锁降级这个问题也完全各家JVM如何实现，本文讨论的所有技术点均来自HotSpot虚拟机。</p>
 
   
@@ -786,7 +786,7 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-14T17:07:18+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-14T17:34:53+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2020年10月14日</p>
@@ -867,8 +867,10 @@
       
         <a class='prev' href='/2020/03/08/AQS/'>
           <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(八) AQS</p>
-          <p class='content'>AQS的实现原理。
-</p>
+          <p class='content'>AQS详细讲解
+
+
+简介AQS的全称是AbstractQueuedSynchronizer，类内部定义了一套多线程访问共享资源的同步器框架，Java许多同步类的实现都依赖于它，比如常用的Reen...</p>
         </a>
       
       
