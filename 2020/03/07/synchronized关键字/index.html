@@ -775,14 +775,14 @@
 
 <p>打印结果:<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
 <p><strong>阻塞过程</strong><br>monitor对象在轻量级锁膨胀后初始化，并且将状态设置为膨胀中(INFLATING)，在膨胀期间有线程访问直接进入忙等状态。当一个线程尝试获取锁并且获取失败，则将线程封装为ObjectWaiter插入到cxq的队列的队首，进入cxq队列的线程还会再次尝试自旋获取锁，如果还是失败则调用park函数挂起线程。<span class="p red">park函数涉及到内核态的切换，因此比较耗时，也是被称为'重'锁的原因。</span></p>
-<p>争夺锁失败插入cxq队列后仍然会进行自旋的意义在于，防止同步代码块很小的情况下，每次获取释放锁的时间非常短，频繁的park函数调用导致频繁的内核态的切换影响性能。关于自旋次数在JDK1.6之前默认10次，之后版本改成了<span class="p blue">适应性自旋</span>由JVM自己控制。</p>
+<p><strong>自旋目的</strong><br>争夺锁失败插入cxq队列后仍然会进行自旋的目的在于，防止同步块中代代码较少、执行比较快的情况下，频繁的park函数调用导致频繁的内核态的切换影响性能。关于自旋次数在JDK1.6之前默认10次，之后版本改成了<span class="p blue">适应性自旋</span>由JVM自己控制。</p>
 <p><strong>防止搁浅</strong><br>当线程获得锁后，会去查询当前是否还有其他线程等待获取锁，如果没有则将_Responsible设置为自身，在进入cxq后自旋仍然没获取锁会再次判断_Responsible是否为自身，如果是则调用有时间限制的park方法，估计是考虑到特殊场景下所有线程都处于阻塞导致没有线程进行释放锁操作，出现搁浅情况。</p>
 <p><strong>线程释放</strong><br>当锁被释放后，会从_cxq或_EntryList中挑选一个线程唤醒，被选中的线程为假定继承人赋值给_succ，即使_succ重新加入竞争也不能保证会获取到锁，所以_succ也只能称为<span class="p blue">假定继承人</span>。</p>
 <p><strong>重量级锁工作流程图:</strong><br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.png" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
 <p><strong>可重入性</strong><br>monitor通过_owner属性判断线程有无权限进入同步代码块，再根据_recursions属性用来记录重入次数，进入临界代码时+1、退出时-1，由此可以保证重入性。</p>
 <p><strong>非公平性</strong><br>jvm在唤醒线程时会根据内部参数QMode的值决定使用哪种唤醒策略，可能从_cxq中选取一个，也可能从_EntryList中选取一个，_cxq队列的线程也会因为策略被转移到_EntryList队列的首部或尾部。被选中的线程也不保证能拿到锁，因此synchronized是非公平的。</p>
 <h2 id="GC标记"><a href="#GC标记" class="headerlink" title="GC标记"></a>GC标记</h2><p>如果设置finalize()或许还有一线生机，没设置就等死吧….</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>synchronized在jdk1.6版本后引入锁升级机制，很大程度上减少了操作系统底层互斥信号量带来的消耗。</p>
+<h2 id="锁降级"><a href="#锁降级" class="headerlink" title="锁降级"></a>锁降级</h2><p>synchronized是由JVM来实现的，因此锁是否支持降级完全取决于JVM设计者，本文所有技术点均来自HotSpot虚拟机。HotSpot虚拟机在进入安全点的时候，会去检查是否有空闲的monitor，如果有就试图进行降级。在轻量级锁释放锁的时候会将拷贝的markwordCAS修改回去，如果成功，是不是也代表降级为偏向锁了呢？这个问题没有找到答案，以后搞懂了再改。</p>
 
   
   
@@ -817,7 +817,7 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-16T09:23:58+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-16T10:22:06+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2020年10月16日</p>
@@ -953,7 +953,7 @@ AQS简介AQS的全称是AbstractQueuedSynchronizer，类内部定义了一套多
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#synchronized%E4%BD%BF%E7%94%A8"><span class="toc-text">synchronized使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#jvm%E5%AF%B9%E8%B1%A1%E5%A4%B4"><span class="toc-text">jvm对象头</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A0%E9%94%81%E7%8A%B6%E6%80%81"><span class="toc-text">无锁状态</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%81%8F%E5%90%91%E9%94%81"><span class="toc-text">偏向锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81"><span class="toc-text">轻量级锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81"><span class="toc-text">重量级锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GC%E6%A0%87%E8%AE%B0"><span class="toc-text">GC标记</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#synchronized%E4%BD%BF%E7%94%A8"><span class="toc-text">synchronized使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#jvm%E5%AF%B9%E8%B1%A1%E5%A4%B4"><span class="toc-text">jvm对象头</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A0%E9%94%81%E7%8A%B6%E6%80%81"><span class="toc-text">无锁状态</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%81%8F%E5%90%91%E9%94%81"><span class="toc-text">偏向锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81"><span class="toc-text">轻量级锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81"><span class="toc-text">重量级锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GC%E6%A0%87%E8%AE%B0"><span class="toc-text">GC标记</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%94%81%E9%99%8D%E7%BA%A7"><span class="toc-text">锁降级</span></a></li></ol>
     </div>
   </section>
 
