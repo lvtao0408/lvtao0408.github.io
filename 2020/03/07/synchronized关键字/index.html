@@ -630,17 +630,17 @@
 <p><strong>偏向锁工作流程图:</strong><br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.png" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
 <p><strong>CAS获取偏向锁步骤</strong><br>整个流程图最大的疑问在于CAS获取偏向锁的这一步骤，如果线程A获取偏向锁并开始执行同步代码或方法块期间，线程B试图访问同步方法或代码块，按照我们的理解CAS成功是必然的，因为此刻线程A还在执行临界区代码，不会对标记字段进行修改干扰到线程B，这不就出现2个线程同时进入同步代码了吗？</p>
 <p>实时并非如此，无论是无锁状态(001)下的CAS，还是偏向锁状态下的CAS，期望值参数永远是null，也就意味着多个线程同时对无锁状态的同步代码争夺偏向锁，仅有一个线程会成功并成为偏向线程，之后任何线程在尝试CAS获取偏向锁永远是失败的(因为JavaThread已经非null)，直接进入偏向锁撤销阶段。</p>
-<p><strong>撤销</strong><br>偏向锁的撤销需要到达JVM的STW才会执行，这个时间点内所有字节码都不会执行，紧接着挂起偏向线程，根据isAlive()判断偏向线程状态再做后续处理:</p>
+<p><strong>锁撤销</strong><br>偏向锁的撤销需要到达JVM的STW才会执行，这个时间点内所有字节码都不会执行，紧接着挂起偏向线程，根据isAlive()判断偏向线程状态再做后续处理:</p>
 <ul>
 <li>如果处于未活动状态，说明偏向线程已经执行完毕并死亡，<span class="p blue">说明没有发生竞争</span>，直接释放偏向锁。</li>
 <li>如果处于活动状态并且已经退出同步代码块，<span class="p blue">说明没有发生竞争</span>，释放偏向锁后需要唤醒线程继续执行。</li>
 <li>如果处于活动状态并且未退出同步代码块，<span class="p red">说明发生竞争</span>,直接升级到轻量级锁。</li>
 </ul>
-<p><strong>重偏向</strong><br>通过对撤销步骤的了解不难发现，只有在到达安全点后，偏向线程已经死亡或者退出同步代码块，加锁对象的markword中JavaThread和epoch才会被清空，直到下一个线程获得偏向锁，加锁对象重新偏向另一个线程。</p>
-<p><strong>批量撤销</strong><br>JVM会以class为单位，为每个class分配一个偏向锁撤销计数器，每次class的实例被撤销偏向锁时计数器+1，当某个class的计数器达到阈值时(JVM参数控制)，JVM会将该class的所有实例批量撤销偏向锁，并且该class后续创建的所有实例都是不可偏向的(直接是轻量级锁)。</p>
+<p><strong>锁重偏向</strong><br>通过对撤销步骤的了解不难发现，只有在到达安全点后，偏向线程已经死亡或者退出同步代码块，加锁对象的markword中JavaThread和epoch才会被清空，直到下一个线程获得偏向锁，加锁对象重新偏向另一个线程。</p>
+<p><strong>锁批量撤销</strong><br>JVM会以class为单位，为每个class分配一个偏向锁撤销计数器，每次class的实例被撤销偏向锁时计数器+1，当某个class的计数器达到阈值时(JVM参数控制)，JVM会将该class的所有实例批量撤销偏向锁，并且该class后续创建的所有实例都是不可偏向的(直接是轻量级锁)。</p>
 <span class="p blue">批量撤销阈值: -XX:BiasedLockingBulkRevokeThreshold = 40</span>
 
-<p><strong>批量重偏向</strong><br>重偏向操作需要等到安全点才可以触发，如果刚触发锁撤销操作的时候，偏向线程就执行完同步代码块，那么此时等待安全点是没有任何意义的，并且锁撤销也会占用一定的STW时间。由此可以看出频繁的锁撤销会对性能带来一定影响，为了解决这个问题，JVM引入了批量重偏向概念来减少锁撤销的频率。</p>
+<p><strong>锁批量重偏向</strong><br>重偏向操作需要等到安全点才可以触发，如果刚触发锁撤销操作的时候，偏向线程就执行完同步代码块，那么此时等待安全点是没有任何意义的，并且锁撤销也会占用一定的STW时间。由此可以看出频繁的锁撤销会对性能带来一定影响，为了解决这个问题，JVM引入了批量重偏向概念来减少锁撤销的频率。</p>
 <p>与批量撤销的相似，批量重偏向也是在class的计数器达到一定阈值时触发，执行过程:</p>
 <ul>
 <li>当到达安全点时发现偏向次数到达阈值触发批量重偏向，会对class中的epoch进行+1运算得出epoch_new</li>
@@ -649,7 +649,7 @@
 <li>如果一致，根据JavaThread是否为自身ID决定撤销锁还是直接进入同步代码(还是原来的逻辑)</li>
 <li>如果不一致说明偏向锁已经无效，不会因为加锁对象偏向其他线程而触发撤销操作，而是直接尝试CAS获取锁</li>
 </ul>
-<p>注:我猜测此时期望值不在是null而是重新获取加锁对象的markword，获取到锁之后还会把class的epoch归零，因为epoch就2位不可能一直递增，仅个人猜测哟~</p>
+<p>注:我猜测此时期望值不在是null而是重新获取加锁对象的markword，获取到锁之后还会把class的epoch归零，因为epoch就2位不可能一直递增。</p>
 <span class="p blue">批量重偏向阈值: -XX:BiasedLockingBulkRebiasThreshold = 20</span>
 
 <p><strong>锁撤销计数器重置</strong><br>即使在竞争很少发生的应用中，随着时间的流逝，各class的锁撤销计数器总有到达阈值的时候。比如某个class的所有实例对象一小时才触发一次锁撤销，那么默认40小时后会触发批量锁撤销，后续所有对象的创建全都是轻量级锁。这种竞争程度简直毛毛雨，根本没必要使用轻量级锁增加无意义的性能消耗。对此JVM增加了两次批量锁撤销事件触发时差的阈值判断，如果距离上次批量撤销时差小于等于阈值时差就执行批量锁撤销，否则仅仅将锁撤销计数重置为零。</p>
@@ -818,7 +818,7 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-16T09:02:22+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-16T09:12:12+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2020年10月16日</p>
