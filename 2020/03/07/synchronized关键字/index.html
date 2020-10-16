@@ -23,7 +23,7 @@
   
 
   
-    <meta name="description" content="synchronized锁升级原理">
+    <meta name="description" content="对象头结构布局、synchronized锁升级等">
   
 
   <!-- feed -->
@@ -517,7 +517,7 @@
 
 
   
-  <p>synchronized锁升级原理</p>
+  <p>对象头结构布局、synchronized锁升级等</p>
 <a id="more"></a>
 
 <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>如果我们想要保证单个共享变量的原子操作，可以借助CAS来实现，当我们想要保证多个共享变量的原子操作时，那就要把对多个变量的操作代码整合在一起建立临界区，临界区同一时刻只能有一个线程访问。而synchronized关键字就是java老牌的互斥锁，保证操作的原子性、可见性、有序性，同时还保证锁的可重入性。</p>
@@ -595,7 +595,7 @@
 <td>对齐填充，图中对象占用总内存为20字节，因此对齐填充补了4字节确保是8字节倍数</td>
 </tr>
 </tbody></table>
-<p>与synchronized底层原理关联最为密切的就是红色区域了，这个区域也比其他区域更为复杂一点，标记字段拥有8字节的内存大小(也就是64位)，对象锁状态的不同，这64位存储的内容也不同：<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/jvm%E5%AF%B9%E8%B1%A1%E5%A4%B4%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/jvm%E5%AF%B9%E8%B1%A1%E5%A4%B4%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>与synchronized底层原理关联最为密切的就是红色区域了，这个区域也比其他区域更为复杂一点，标记字段拥有8字节的内存大小(也就是64位)，对象锁状态的不同，这64位存储的内容也不同：<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E6%A0%87%E8%AE%B0%E5%AD%97%E6%AE%B5%E5%AD%98%E5%82%A8%E4%BF%A1%E6%81%AF.png" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E6%A0%87%E8%AE%B0%E5%AD%97%E6%AE%B5%E5%AD%98%E5%82%A8%E4%BF%A1%E6%81%AF.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
 <p>标记字段中存储的信息：</p>
 <ul>
 <li>hash:存储对象哈希码，只有在调用hashCode()方法的时候才会生成，默认是没值的</li>
@@ -617,7 +617,7 @@
 <p>随便找个进制转换器就能算出来结果是:2065530879，与main方法打印的一致。</p>
 <h2 id="偏向锁"><a href="#偏向锁" class="headerlink" title="偏向锁"></a>偏向锁</h2><p>偏向锁是jdk1.6引入的一项锁优化，意思是偏向于第一个获得它的线程，在接下来的执行过程中，假如该锁没有被其他线程所获取，没有其他线程来竞争该锁，那么持有偏向锁的线程将永远不需要进行同步操作。</p>
 <p>JVM启动时会进行一系列的复杂活动，比如装载配置，系统类初始化等等。在这个过程中会使用大量synchronized关键字对对象加锁，且这些锁大多数都不是偏向锁。为了减少初始化的时间，JVM默认采用延时加载偏向锁的机制(大概4秒左右)。在延迟时间内是没有偏向锁概念的，对象创建完毕后是无锁状态，即使需要进行锁升级也是直接升级到轻量级锁，当到达延迟时间之后创建出来的对象，锁状态都是偏向锁状态。</p>
-<p>所以我们直接执行main方法是看不到偏向锁信息的，当然也可以在创建对象之前sleep五秒，不过这个方法太low逼了，JVM提供了取消偏向锁延迟加载命令:<span class="p red">-XX:BiasedLockingStartupDelay=0</span></p>
+<p>所以我们直接执行main方法是看不到偏向锁信息的，当然也可以在创建对象之前sleep五秒，不过这个方法太low逼了，JVM提供了取消偏向锁延迟加载命令:<span class="p blue">-XX:BiasedLockingStartupDelay=0</span></p>
 <p>测试类走起:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line">    Object lockObject &#x3D; new Object();</span><br><span class="line">    System.out.println(ClassLayout.parseInstance(lockObject).toPrintable());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -626,25 +626,55 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line">    Object lockObject &#x3D; new Object();</span><br><span class="line">    System.gc();</span><br><span class="line">    synchronized (lockObject)&#123;</span><br><span class="line">        System.out.print(ClassLayout.parseInstance(lockObject).toPrintable());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>打印结果:<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF-2.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF-2.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>GC年龄为0001，如果想要多次执行GC看效果需要搭配VMRuntimerun实例的FinalizationSync()方法。打印结果中并不存在hashcode，这是因为在HotSpot虚拟机中，偏向锁与hashcode不可以并存(我估计是JavaThread占用的太多，没地方了…)，如果在无锁状态调用hashcode方法，<span class="p red">直接升级到轻量级锁</span>，如果是偏向锁状态下调用hashcode()，<span class="p red">直接进入偏向锁撤销阶段</span>。这种规则仅限于没有重写hashcode()方法的情况下。</p>
+<p>打印结果中并不存在hashcode，这是因为在HotSpot虚拟机中，偏向锁与hashcode不可以并存(我估计是JavaThread占用的太多，没地方了…)，如果在无锁状态调用hashcode方法，<span class="p red">直接升级到轻量级锁</span>，如果是偏向锁状态下调用hashcode()，<span class="p red">直接进入偏向锁撤销阶段</span>。这种规则仅限于没有重写hashcode()方法的情况下。</p>
 <p><strong>偏向锁工作流程图:</strong><br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.png" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E5%81%8F%E5%90%91%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>整个流程图最大的疑问在于CAS获取偏向锁的这一步骤，如果线程A获取偏向锁并开始执行同步代码或方法块期间，线程B试图访问同步方法或代码块，按照我们的理解CAS成功是必然的，因为此刻线程A还在执行临界区代码，不会对标记字段进行修改干扰到线程B，这不就出现2个线程同时进入同步代码了吗？</p>
+<p><strong>CAS获取偏向锁步骤</strong><br>整个流程图最大的疑问在于CAS获取偏向锁的这一步骤，如果线程A获取偏向锁并开始执行同步代码或方法块期间，线程B试图访问同步方法或代码块，按照我们的理解CAS成功是必然的，因为此刻线程A还在执行临界区代码，不会对标记字段进行修改干扰到线程B，这不就出现2个线程同时进入同步代码了吗？</p>
 <p>实时并非如此，无论是无锁状态(001)下的CAS，还是偏向锁状态下的CAS，期望值参数永远是null，也就意味着多个线程同时对无锁状态的同步代码争夺偏向锁，仅有一个线程会成功并成为偏向线程，之后任何线程在尝试CAS获取偏向锁永远是失败的(因为JavaThread已经非null)，直接进入偏向锁撤销阶段。</p>
-<p>如果锁竞争比较激烈，就会有很多线程同时发出撤销偏向锁请求，也就是<span class="p red">批量撤销偏向锁</span>。</p>
-<p>偏向锁撤销的作用很明显了，根据线程对此临界代码的访问是否发生竞争，来决定将锁恢复到无锁状态还是升级到轻量级。没有发生竞争的情况下，偏向锁的逻辑仍然能保证很好的性能，一旦发生竞争，就需要更高级的锁来最大化性能。偏向锁在竞争稍微激烈的情况下其实没什么卵用，如果你觉得你的应用对于大多数锁的竞争都是比较频繁的，偏向锁完全没有存在的必要，可以设置JVM启动参数来禁用偏向锁(默认延迟打开):<span class="p red">-XX:-UseBiasedLocking</span></p>
-<p>偏向锁是在没有发生竞争的情况下才存在，线程拿到偏向锁后成为偏向线程，在没有发生偏向锁撤销情况下，后续访问是没有资源消耗的，可以直接执行临界代码，这就代表偏向锁阶段完全支持<span class="p red">可重入</span>。</p>
+<p><strong>撤销</strong><br>偏向锁的撤销需要到达JVM的STW才会执行，这个时间点内所有字节码都不会执行，紧接着挂起偏向线程，根据isAlive()判断偏向线程状态再做后续处理:</p>
+<ul>
+<li>如果处于未活动状态，说明偏向线程已经执行完毕并死亡，<span class="p blue">说明没有发生竞争</span>，直接释放偏向锁。</li>
+<li>如果处于活动状态并且已经退出同步代码块，<span class="p blue">说明没有发生竞争</span>，释放偏向锁后需要唤醒线程继续执行。</li>
+<li>如果处于活动状态并且未退出同步代码块，<span class="p red">说明发生竞争</span>,直接升级到轻量级锁。</li>
+</ul>
+<p><strong>重偏向</strong><br>通过对撤销步骤的了解不难发现，只有在到达安全点后，偏向线程已经死亡或者退出同步代码块，加锁对象的markword中JavaThread和epoch才会被清空，直到下一个线程获得偏向锁，加锁对象重新偏向另一个线程。</p>
+<p><strong>批量撤销</strong><br>JVM会以class为单位，为每个class分配一个偏向锁撤销计数器，每次class的实例被撤销偏向锁时计数器+1，当某个class的计数器达到阈值时(JVM参数控制)，JVM会将该class的所有实例批量撤销偏向锁，并且该class后续创建的所有实例都是不可偏向的(直接是轻量级锁)。</p>
+<span class="p blue">批量撤销阈值: -XX:BiasedLockingBulkRevokeThreshold = 40</span>
+
+<p><strong>批量重偏向</strong><br>重偏向操作需要等到安全点才可以触发，如果刚触发锁撤销操作的时候，偏向线程就执行完同步代码块，那么此时等待安全点是没有任何意义的，并且锁撤销也会占用一定的STW时间。由此可以看出频繁的锁撤销会对性能带来一定影响，为了解决这个问题，JVM引入了批量重偏向概念来减少锁撤销的频率。</p>
+<p>与批量撤销的相似，批量重偏向也是在class的计数器达到一定阈值时触发，执行过程:</p>
+<ul>
+<li>当到达安全点时发现偏向次数到达阈值触发批量重偏向，会对class中的epoch进行+1运算得出epoch_new</li>
+<li>jvm扫描所有该class的实例对象，并筛选出处于偏向锁状态的实例对象，把所有筛选对象的epoch改成epoch_new</li>
+<li>退出安全点后，有线程需要尝试获取偏向锁，检查加锁对象的epoch与对应class的epoch是否一致</li>
+<li>如果一致，根据JavaThread是否为自身ID决定撤销锁还是直接进入同步代码(还是原来的逻辑)</li>
+<li>如果不一致说明偏向锁已经无效，不会因为加锁对象偏向其他线程而触发撤销操作，而是直接尝试CAS获取锁</li>
+</ul>
+<p>注:我猜测此时期望值不在是null而是重新获取加锁对象的markword，获取到锁之后还会把class的epoch归零，因为epoch就2位不可能一直递增，仅个人猜测哟~</p>
+<span class="p blue">批量重偏向阈值: -XX:BiasedLockingBulkRebiasThreshold = 20</span>
+
+<p><strong>锁撤销计数器重置</strong><br>即使在竞争很少发生的应用中，随着时间的流逝，各class的锁撤销计数器总有到达阈值的时候。比如某个class的所有实例对象一小时才触发一次锁撤销，那么默认40小时后会触发批量锁撤销，后续所有对象的创建全都是轻量级锁。这种竞争程度简直毛毛雨，根本没必要使用轻量级锁增加无意义的性能消耗。对此JVM增加了两次批量锁撤销事件触发时差的阈值判断，如果距离上次批量撤销时差小于等于阈值时差就执行批量锁撤销，否则仅仅将锁撤销计数重置为零。</p>
+<span class="p blue">批量锁撤销时差阈值(毫秒): -XX:BiasedLockingBulkRebiasThreshold = 25000</span>
+
+<p><strong>启用禁用</strong><br>偏向锁撤销的作用很明显了，根据线程对此临界代码的访问是否发生竞争，来决定将锁恢复到无锁状态还是升级到轻量级。没有发生竞争的情况下，偏向锁的逻辑仍然能保证很好的性能，一旦发生竞争，就需要更高级的锁来最大化性能。偏向锁在竞争稍微激烈的情况下其实没什么卵用，如果你觉得你的应用对于大多数锁的竞争都是比较频繁的，偏向锁完全没有存在的必要，可以设置JVM启动参数来禁用偏向锁(默认延迟打开):</p>
+<span class="p blue">禁用偏向锁: -XX:-UseBiasedLocking</span>
+
+<p><strong>可重入性</strong><br>偏向锁是在没有发生竞争的情况下才存在，线程拿到偏向锁后成为偏向线程，在没有发生偏向锁撤销情况下，后续访问是没有资源消耗的，可以直接执行临界代码，这就代表偏向锁阶段完全支持可重入。</p>
+<p><strong>非公平性</strong><br>不存在竞争因此也不存在是否公平性可言。</p>
 <h2 id="轻量级锁"><a href="#轻量级锁" class="headerlink" title="轻量级锁"></a>轻量级锁</h2><p>轻量级锁也是jdk1.6引入的一项锁优化，是在锁发生竞争但竞争不是特别激烈情况下的折中解决方案，降低重量级锁使用过程中的性能消耗。</p>
-<p>我们写个测试类(使用 -XX:-UseBiasedLocking命令，禁止偏向锁):</p>
+<p>我们写个测试类(使用 -XX:-UseBiasedLocking命令，禁用偏向锁):</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line">    Object lockObject &#x3D; new Object();</span><br><span class="line">    synchronized (lockObject)&#123;</span><br><span class="line">        System.out.println(ClassLayout.parseInstance(lockObject).toPrintable());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>打印结果:<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
 <p>轻量级锁的标记字段结构很简单，只存储锁标志、锁记录俩个信息，hashcode和age转移到Lock Record中进行存储。</p>
 <p><strong>轻量级锁工作流程图:</strong><br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.png" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>偏向线程执行过程中遇到锁升级信号(已经发出偏向锁撤销请求)，JVM会在该线程栈中分配一个<span class="p red">Lock Record</span>，并把加锁对象的markword拷贝进来，如果已经是轻量级锁情况下，线程访问临界代码前也会执行同样操作。这也就意味着持有轻量级锁过程中，加锁对象的hashcode、age等信息转移到了持锁线程的Lock Record中，持锁线程的Lock Record同样也会保存加锁对象markword的地址，两者是互相引用的关系，这样既能保证加锁对象的hashcode、GC年龄随时可以访问，也可以解决可重入的问题。</p>
-<p>持锁线程执行完释放锁后，将拷贝的markword作为期望值，使用CAS修改加锁对象的markword，可以理解为将hashcode、age等信息还回去。有可能此时已经膨胀到重量级锁，加锁对象的markword已经变更，这种情况下CAS必然失败，这时候直接执行重量级锁的唤醒逻辑。</p>
-<p>在自旋竞争锁过程中，如果自旋执行时间太长，会有大量的线程处于自旋状态占用CPU资源，进而会影响整体系统的性能。这个自旋次数在jdk1.5是写死的参数无法更改，到了jdk1.6版本可以通过jvm参数控制:<span class="p red">-XX:PreBlockSpin=10</span>，jdk1.7版本后又去掉了此参数，因为这个时候的jvm已经相当成熟，会根据内部收集的性能日志自己判定自旋次数，也就是自适应自旋锁。</p>
-<p>另外一个细节就是在解锁的时候还是通过CAS来操作，这是为了防止在解锁的时候，锁由于竞争的激烈程度再次提高，已经升级到重量级锁并且把其他线程阻塞，这种情况下如果不唤醒阻塞的线程，这些线程将永远阻塞在这里。</p>
-<h2 id="重量级锁"><a href="#重量级锁" class="headerlink" title="重量级锁"></a>重量级锁</h2><p>轻量级锁膨胀之后，就升级为重量级锁了。重量级锁是依赖对象内部的monitor锁来实现的，每个java对象都有一个与之对应的monitor对象，随着java对象一起创建一起销毁。而monitor又依赖操作系统的MutexLock(互斥锁)来实现的，所以重量级锁也被成为互斥锁。</p>
+<p><strong>自旋次数</strong><br>在自旋竞争锁过程中，如果自旋执行时间太长，会有大量的线程处于自旋状态占用CPU资源，进而会影响整体系统的性能。这个自旋次数在jdk1.5是写死的参数无法更改，到了jdk1.6版本可以通过jvm参数控制自旋次数(默认10)，jdk1.7版本后又去掉了此参数，因为这个时候的jvm已经相当成熟，会根据内部收集的性能日志自己判定自旋次数。</p>
+<span class="p blue">轻量级锁自旋次数: -XX:PreBlockSpin=10</span>
+
+<p><strong>锁释放</strong><br>持锁线程执行完释放锁后，将拷贝的markword作为期望值，使用CAS修改加锁对象的markword，可以理解为将hashcode、age等信息还回去。有可能此时已经膨胀到重量级锁，加锁对象的markword已经变更，这种情况下CAS必然失败，这时候直接执行重量级锁的唤醒逻辑。</p>
+<p>解锁操作为什么要用CAS来操作呢? 这是为了防止在解锁的时候，锁由于竞争的激烈程度再次提高，已经升级到重量级锁并且把其他线程阻塞，这种情况下如果不唤醒阻塞的线程，这些线程将永远阻塞在这里。</p>
+<p><strong>可重入性</strong><br>偏向线程执行过程中遇到锁升级信号(已经发出偏向锁撤销请求)，JVM会在该线程栈中分配一个<span class="p red">Lock Record</span>，并把加锁对象的markword拷贝进来，如果已经是轻量级锁情况下，线程访问临界代码前也会执行同样操作。这也就意味着持有轻量级锁过程中，加锁对象的hashcode、age等信息转移到了持锁线程的Lock Record中，持锁线程的Lock Record同样也会保存加锁对象markword的地址，两者是互相引用的关系，这样既能保证加锁对象的hashcode、GC年龄随时可以访问，也可以解决可重入的问题。</p>
+<p><strong>非公平性</strong><br>顶多俩线程在竞争，一个在执行，一个在自旋等待，因此也没有是否公平性可言。</p>
+<h2 id="重量级锁"><a href="#重量级锁" class="headerlink" title="重量级锁"></a>重量级锁</h2><p>轻量级锁膨胀之后，就升级为重量级锁了。重量级锁是依赖对象关联的monitor锁来实现的，每个java对象都有一个与之对应的monitor对象，随着java对象一起创建一起销毁。而monitor又依赖操作系统的MutexLock(互斥锁)来实现的，所以重量级锁也被成为互斥锁。</p>
 <p><strong>在HotSpot虚拟机中，Monitor是基于C++实现的，封装成ObjectMonitor对象，具体成员变量:</strong></p>
 <table>
 <thead>
@@ -717,7 +747,7 @@
 <tr>
 <td>_EntryList</td>
 <td>NULL</td>
-<td>处于block状态的线程集合</td>
+<td>处于block状态的线程集合，被notify唤醒后重新加入竞争也是进入此队列</td>
 </tr>
 <tr>
 <td>_SpinFreq</td>
@@ -740,15 +770,17 @@
 <td>上一个获取锁的线程id</td>
 </tr>
 </tbody></table>
-<p>_cxq与_EntryList区别<br>在_cxq中的队列可以继续自旋等待锁，若达到自旋的阈值仍未获取到锁则会调用park方法挂起，而_EntryList中的线程都是被挂起的线程。</p>
 <p>写个重量级锁mode:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args)&#123;</span><br><span class="line"></span><br><span class="line">    Object lockObject &#x3D; new Object();</span><br><span class="line"></span><br><span class="line">    new Thread(new Runnable() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void run() &#123;</span><br><span class="line">            synchronized (lockObject) &#123;</span><br><span class="line">                while (true) &#123;</span><br><span class="line">                    &#x2F;&#x2F; ...</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;).start();</span><br><span class="line"></span><br><span class="line">    new Thread(new Runnable() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void run() &#123;</span><br><span class="line">            synchronized (lockObject) &#123;</span><br><span class="line">                while (true) &#123;</span><br><span class="line">                    &#x2F;&#x2F; ...</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;).start();</span><br><span class="line"></span><br><span class="line">    System.out.println(ClassLayout.parseInstance(lockObject).toPrintable());</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>打印结果:<br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81%E7%8A%B6%E6%80%81%E6%89%93%E5%8D%B0%E4%BF%A1%E6%81%AF.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p><strong>阻塞过程</strong><br>monitor对象在轻量级锁膨胀后初始化，并且将状态设置为膨胀中(INFLATING)，在膨胀期间有线程访问直接进入忙等状态。当一个线程尝试获取锁并且获取失败，则将线程封装为ObjectWaiter插入到cxq的队列的队首，进入cxq队列的线程还会再次尝试自旋获取锁，如果还是失败则调用park函数挂起线程。<span class="p red">park函数涉及到内核态的切换，因此比较耗时，也是被称为'重'锁的原因。</span></p>
+<p>争夺锁失败插入cxq队列后仍然会进行自旋的意义在于，防止同步代码块很小的情况下，每次获取释放锁的时间非常短，频繁的park函数调用导致频繁的内核态的切换影响性能。关于自旋次数在JDK1.6之前默认10次，之后版本改成了<span class="p blue">适应性自旋</span>由JVM自己控制。</p>
+<p><strong>防止搁浅</strong><br>当线程获得锁后，会去查询当前是否还有其他线程等待获取锁，如果没有则将_Responsible设置为自身，在进入cxq后自旋仍然没获取锁会再次判断_Responsible是否为自身，如果是则调用有时间限制的park方法，估计是考虑到特殊场景下所有线程都处于阻塞导致没有线程进行释放锁操作，出现搁浅情况。</p>
+<p><strong>线程释放</strong><br>当锁被释放后，会从_cxq或_EntryList中挑选一个线程唤醒，被选中的线程为假定继承人赋值给_succ，即使_succ重新加入竞争也不能保证会获取到锁，所以_succ也只能称为<span class="p blue">假定继承人</span>。</p>
 <p><strong>重量级锁工作流程图:</strong><br><img src="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.png" class="lazyload" data-srcset="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%9B%BE.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>monitor对象在轻量级锁膨胀后初始化，并且将状态设置为膨胀中(INFLATING)，在膨胀期间有线程访问直接进入忙等状态。当一个线程尝试获取锁并且获取失败，则将线程封装为ObjectWaiter插入到cxq的队列的队首，然后调用park函数挂起线程，涉及到内核态的切换，因此比较耗时。</p>
-<p>当锁被释放后，会从_cxq或_EntryList中挑选一个线程唤醒，被选中的线程为假定继承人赋值给_succ，即使_succ重新加入竞争也不能保证会获取到锁，所以synchronized是一种非公平锁，而_succ也只能称为<strong>假定继承人</strong>。</p>
-<p>当竞争发生时，选取一个线程作为_Responsible，_Responsible线程调用的是有时间限制的park方法，估计是考虑到特殊场景下所有线程都处于阻塞导致没有线程进行释放锁操作，出现搁浅情况。</p>
+<p><strong>可重入性</strong><br>monitor通过_owner属性判断线程有无权限进入同步代码块，再根据_recursions属性用来记录重入次数，进入临界代码时+1、退出时-1，由此可以保证重入性。</p>
+<p><strong>非公平性</strong><br>jvm在唤醒线程时会根据内部参数QMode的值决定使用哪种唤醒策略，可能从_cxq中选取一个，也可能从_EntryList中选取一个，_cxq队列的线程也会因为策略被转移到_EntryList队列的首部或尾部。被选中的线程也不保证能拿到锁，因此synchronized是非公平的。</p>
 <h2 id="GC标记"><a href="#GC标记" class="headerlink" title="GC标记"></a>GC标记</h2><p>如果设置finalize()或许还有一线生机，没设置就等死吧….</p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>synchronized在1.6版本之前，所有临界资源的访问都是通过monitor实现，monitor本质又是依赖于底层的操作系统的Mutex来实现的，实现过程涉及到用户态转换到核心态切换，成本非常高。1.6之后引进了锁升级机制，这样能够在很大程度上减少了同步原语或者操作系统底层互斥量带来的性能消耗。</p>
 <p>synchronized完全是jvm去实现的，因此对于是否支持锁降级这个问题也完全各家JVM如何实现，本文讨论的所有技术点均来自HotSpot虚拟机。</p>
@@ -786,10 +818,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-14T17:34:53+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-16T09:02:22+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年10月14日</p>
+    <p>更新于：2020年10月16日</p>
   </a>
 </div>
 
@@ -811,7 +843,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/&title=多线程(七) synchronized关键字 - 来杯冰镇可乐&summary=synchronized锁升级原理"
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/&title=多线程(七) synchronized关键字 - 来杯冰镇可乐&summary=对象头结构布局、synchronized锁升级等"
           
           >
           
@@ -823,7 +855,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/&title=多线程(七) synchronized关键字 - 来杯冰镇可乐&summary=synchronized锁升级原理"
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/&title=多线程(七) synchronized关键字 - 来杯冰镇可乐&summary=对象头结构布局、synchronized锁升级等"
           
           >
           
@@ -835,7 +867,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/&title=多线程(七) synchronized关键字 - 来杯冰镇可乐&summary=synchronized锁升级原理"
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/&title=多线程(七) synchronized关键字 - 来杯冰镇可乐&summary=对象头结构布局、synchronized锁升级等"
           
           >
           
@@ -870,7 +902,7 @@
           <p class='content'>AQS详细讲解
 
 
-简介AQS的全称是AbstractQueuedSynchronizer，类内部定义了一套多线程访问共享资源的同步器框架，Java许多同步类的实现都依赖于它，比如常用的Reen...</p>
+AQS简介AQS的全称是AbstractQueuedSynchronizer，类内部定义了一套多线程访问共享资源的同步器框架，Java许多同步类的实现都依赖于它，比如常用的R...</p>
         </a>
       
       
