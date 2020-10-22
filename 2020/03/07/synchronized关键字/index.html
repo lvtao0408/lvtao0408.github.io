@@ -23,7 +23,7 @@
   
 
   
-    <meta name="description" content="对象头结构布局、synchronized锁升级等">
+    <meta name="description" content="对象头结构布局、synchronized锁升级(偏向锁 → 轻量级锁 → 重量级锁)">
   
 
   <!-- feed -->
@@ -517,10 +517,7 @@
 
 
   
-  <p>对象头结构布局、synchronized锁升级等</p>
-<a id="more"></a>
-
-<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>如果我们想要保证单个共享变量的原子操作，可以借助CAS来实现，当我们想要保证多个共享变量的原子操作时，那就要把对多个变量的操作代码整合在一起建立临界区，临界区同一时刻只能有一个线程访问。而synchronized关键字就是java老牌的互斥锁，保证操作的原子性、可见性、有序性，同时还保证锁的可重入性。</p>
+  <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>如果我们想要保证单个共享变量的原子操作，可以借助CAS来实现，当我们想要保证多个共享变量的原子操作时，那就要把对多个变量的操作代码整合在一起建立临界区，临界区同一时刻只能有一个线程访问。而synchronized关键字就是java老牌的互斥锁，保证操作的原子性、可见性、有序性，同时还保证锁的可重入性。</p>
 <h2 id="synchronized使用"><a href="#synchronized使用" class="headerlink" title="synchronized使用"></a>synchronized使用</h2><ul>
 <li>修饰方法的时候，如果是普通方法，加锁目标是此实例对象(new出来的、存放在堆中的某个对象)</li>
 <li>修饰方法的时候，如果是静态方法，加锁目标是当前类的class对象(存在方法区的类结构对象)</li>
@@ -817,10 +814,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-16T10:22:06+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-19T15:47:11+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年10月16日</p>
+    <p>更新于：2020年10月19日</p>
   </a>
 </div>
 
@@ -842,7 +839,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/&title=多线程(七) synchronized关键字 - 来杯冰镇可乐&summary=对象头结构布局、synchronized锁升级等"
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/&title=多线程(七) synchronized关键字 - 来杯冰镇可乐&summary="
           
           >
           
@@ -854,7 +851,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/&title=多线程(七) synchronized关键字 - 来杯冰镇可乐&summary=对象头结构布局、synchronized锁升级等"
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/&title=多线程(七) synchronized关键字 - 来杯冰镇可乐&summary="
           
           >
           
@@ -866,7 +863,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/&title=多线程(七) synchronized关键字 - 来杯冰镇可乐&summary=对象头结构布局、synchronized锁升级等"
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/&title=多线程(七) synchronized关键字 - 来杯冰镇可乐&summary="
           
           >
           
@@ -898,19 +895,13 @@
       
         <a class='prev' href='/2020/03/08/AQS/'>
           <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(八) AQS</p>
-          <p class='content'>AQS内部属性、方法详细讲解，利用AQS实现一把简易锁
-
-
-AQS简介AQS的全称是AbstractQueuedSynchronizer，类内部定义了一套多线程访问共享资源的同步器框架，Java...</p>
+          <p class='content'>AQS简介AQS的全称是AbstractQueuedSynchronizer，类内部定义了一套多线程访问共享资源的同步器框架，Java许多同步类的实现都依赖于它，比如常用的ReentrantLo...</p>
         </a>
       
       
         <a class='next' href='/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/'>
           <p class='title'>多线程(六) 锁分类<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>java中五花八门的锁
-
-
-前言java中的锁可谓是五花八门，各种锁功能相似又不同，有的是概念、有的是java接口、有的是实现类，让你很难找到明显的分界线去区分并记住他们。所以学习锁首先要打消一...</p>
+          <p class='content'>前言java中的锁可谓是五花八门，各种锁功能相似又不同，有的是概念、有的是java接口、有的是实现类，让你很难找到明显的分界线去区分并记住他们。所以学习锁首先要打消一种想法，就是一个锁只属于一个...</p>
         </a>
       
     </div>

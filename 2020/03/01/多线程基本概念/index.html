@@ -21,7 +21,7 @@
   
 
   
-    <meta name="description" content="线程进程相关基本概念。">
+    <meta name="description" content="线程、进程、上下文切换等基础知识">
   
 
   <!-- feed -->
@@ -515,10 +515,7 @@
 
 
   
-  <p>线程进程相关基本概念。</p>
-<a id="more"></a>
-
-<h2 id="进程"><a href="#进程" class="headerlink" title="进程"></a>进程</h2><p>操作系统进行资源分配和调度的基本单位，每一个进程都是一个应用程序的执行实例，比如我们启动的一个java项目就是一个jvm进程，操作系统为jvm分配运行内存等资源，进程中包含一个或多个线程，线程之间共享进程的资源(比如堆、栈、方法区等)。</p>
+  <h2 id="进程"><a href="#进程" class="headerlink" title="进程"></a>进程</h2><p>操作系统进行资源分配和调度的基本单位，每一个进程都是一个应用程序的执行实例，比如我们启动的一个java项目就是一个jvm进程，操作系统为jvm分配运行内存等资源，进程中包含一个或多个线程，线程之间共享进程的资源(比如堆、栈、方法区等)。</p>
 <h2 id="线程"><a href="#线程" class="headerlink" title="线程"></a>线程</h2><p>CPU运行的最小单位，线程之间共享进程的资源，也有自己的私有空间，比如虚拟机栈、本地方法栈、程序计数器。</p>
 <h2 id="进程上下文切换"><a href="#进程上下文切换" class="headerlink" title="进程上下文切换"></a>进程上下文切换</h2><h2 id="线程上下文切换"><a href="#线程上下文切换" class="headerlink" title="线程上下文切换"></a>线程上下文切换</h2><p>CPU通过分配时间片来执行任务，当一个任务的时间片用完，就会切换到另一个任务。在切换之前会保存上一个任务的状态，当下次再切换到该任务，就会加载这个状态，任务从保存到再加载的过程就是一次上下文切换。</p>
 <ul>
@@ -572,10 +569,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-09-29T13:50:11+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-19T15:50:50+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年9月29日</p>
+    <p>更新于：2020年10月19日</p>
   </a>
 </div>
 
@@ -594,7 +591,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 来杯冰镇可乐&summary=线程进程相关基本概念。"
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 来杯冰镇可乐&summary="
           
           >
           
@@ -606,7 +603,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 来杯冰镇可乐&summary=线程进程相关基本概念。"
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 来杯冰镇可乐&summary="
           
           >
           
@@ -618,7 +615,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 来杯冰镇可乐&summary=线程进程相关基本概念。"
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/&title=多线程(一) 基本概念 - 来杯冰镇可乐&summary="
           
           >
           
@@ -650,12 +647,15 @@
       
         <a class='prev' href='/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/'>
           <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(二) 并发编程三大特性</p>
-          <p class='content'>JMM在并发编程中，对共享变量读写的原子性、可见性、一致性。
-
-
-CPU读写内存数据计算机中程序的执行，本质上是线程指令在CPU处理器上的执行，并且在执行必然牵涉到数据的读和写，程序运行过程的临...</p>
+          <p class='content'>CPU读写内存数据计算机中程序的执行，本质上是线程指令在CPU处理器上的执行，并且在执行必然牵涉到数据的读和写，程序运行过程的临时数据都是存放在主内存(RAM)中，因此CPU在处理数据的时候也必...</p>
         </a>
       
+      
+        <a class='next' href='/2020/02/01/%E5%AD%97%E8%8A%82%E6%B5%81/'>
+          <p class='title'>IO流(一) 字节流<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>啊锁啊锁大
+</p>
+        </a>
       
     </div>
   

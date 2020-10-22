@@ -5,8 +5,6 @@
   <!-- SEO相关 -->
   
     
-      <meta name="robots" content="noindex,follow">
-    
   
   <!-- 渲染优化 -->
   <meta name="renderer" content="webkit">
@@ -19,9 +17,11 @@
 
   <!-- 页面元数据 -->
   
-  <title>分类：多线程 - 来杯冰镇可乐</title>
+  <title>多线程(九) Lock家族 - 来杯冰镇可乐</title>
   
 
+  
+    <meta name="description" content="Lock继承实现类体系、诸多实现类讲解">
   
 
   <!-- feed -->
@@ -371,7 +371,7 @@
   
     
     
-        <div class='cover-wrapper  search' style="display: none;">
+        <div class='cover-wrapper post search' style="display: none;">
           
             <div class='cover-bg lazyload placeholder' data-bg="https://cdn.jsdelivr.net/gh/volantis-x/cdn-wallpaper-minimalist@1.0.0/2020/001.jpg"></div>
           
@@ -415,8 +415,8 @@
  
  
 <div id="pjax-data" style="display: none"> 
-  <div id="pjax-ispage">false</div> 
-  <div id="pjax-pageTitle"></div> 
+  <div id="pjax-ispage">true</div> 
+  <div id="pjax-pageTitle">多线程(九) Lock家族</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -445,503 +445,235 @@
         
         
 
-
 <div class='l_main'>
-  
-    
-      
-  <section class="post-list">
-    
-      
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-      
-    
-    
-      
-        
-          <div class='post-wrapper'>
-            <div class="post post-v3 white-box reveal shadow">
-  
-  
-  
-  
-    
-    <h2 class="article-title" >
-      <a href="/2020/03/16/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E5%9C%BA%E6%99%AF/">
-        多线程(十五) 常见问题场景
-      </a>
-    </h2>
-  
-  <div class='md'>
-    
-      <p>待更新</p>
-    
-  </div>
-  
-    <div class='meta-v3' line_style='solid'>
-      <div>
-        
-        <time>2020-03-16</time>
-        
-          <span class="dot"></span>
-          <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
-        
-      </div>
-      
-        <div>
-          <a class='readmore' href='/2020/03/16/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E5%9C%BA%E6%99%AF/'>
-            阅读全文
-          </a>
-        </div>
-      
-    </div>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
   
 
-</div>
 
-          </div>
-        
-      
-        
-          <div class='post-wrapper'>
-            <div class="post post-v3 white-box reveal shadow">
   
-  
-  
-  
+  <div class="article-meta" id="top">
     
-    <h2 class="article-title" >
-      <a href="/2020/03/15/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/">
-        多线程(十四) 性能调优
-      </a>
-    </h2>
-  
-  <div class='md'>
     
-      <p>待更新</p>
     
-  </div>
-  
-    <div class='meta-v3' line_style='solid'>
-      <div>
-        
-        <time>2020-03-15</time>
-        
-          <span class="dot"></span>
-          <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
-        
-      </div>
-      
-        <div>
-          <a class='readmore' href='/2020/03/15/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/'>
-            阅读全文
-          </a>
-        </div>
-      
-    </div>
-  
-
-</div>
-
-          </div>
-        
-      
-        
-          <div class='post-wrapper'>
-            <div class="post post-v3 white-box reveal shadow">
-  
-  
-  
-  
-    
-    <h2 class="article-title" >
-      <a href="/2020/03/14/%E5%BC%82%E6%AD%A5%E6%88%96%E5%B9%B6%E8%A1%8C/">
-        多线程(十三) 异步或并行
-      </a>
-    </h2>
-  
-  <div class='md'>
-    
-      <p>待更新</p>
-    
-  </div>
-  
-    <div class='meta-v3' line_style='solid'>
-      <div>
-        
-        <time>2020-03-14</time>
-        
-          <span class="dot"></span>
-          <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
-        
-      </div>
-      
-        <div>
-          <a class='readmore' href='/2020/03/14/%E5%BC%82%E6%AD%A5%E6%88%96%E5%B9%B6%E8%A1%8C/'>
-            阅读全文
-          </a>
-        </div>
-      
-    </div>
-  
-
-</div>
-
-          </div>
-        
-      
-        
-          <div class='post-wrapper'>
-            <div class="post post-v3 white-box reveal shadow">
-  
-  
-  
-  
-    
-    <h2 class="article-title" >
-      <a href="/2020/03/13/%E7%BA%BF%E7%A8%8B%E6%B1%A0/">
-        多线程(十二) 线程池
-      </a>
-    </h2>
-  
-  <div class='md'>
-    
-      <p>待更新</p>
-    
-  </div>
-  
-    <div class='meta-v3' line_style='solid'>
-      <div>
-        
-        <time>2020-03-13</time>
-        
-          <span class="dot"></span>
-          <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
-        
-      </div>
-      
-        <div>
-          <a class='readmore' href='/2020/03/13/%E7%BA%BF%E7%A8%8B%E6%B1%A0/'>
-            阅读全文
-          </a>
-        </div>
-      
-    </div>
-  
-
-</div>
-
-          </div>
-        
-      
-        
-          <div class='post-wrapper'>
-            <div class="post post-v3 white-box reveal shadow">
-  
-  
-  
-  
-    
-    <h2 class="article-title" >
-      <a href="/2020/03/12/ThreadLocal/">
-        多线程(十一) ThreadLocal
-      </a>
-    </h2>
-  
-  <div class='md'>
-    
-      <p>待更新</p>
-    
-  </div>
-  
-    <div class='meta-v3' line_style='solid'>
-      <div>
-        
-        <time>2020-03-12</time>
-        
-          <span class="dot"></span>
-          <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
-        
-      </div>
-      
-        <div>
-          <a class='readmore' href='/2020/03/12/ThreadLocal/'>
-            阅读全文
-          </a>
-        </div>
-      
-    </div>
-  
-
-</div>
-
-          </div>
-        
-      
-        
-          <div class='post-wrapper'>
-            <div class="post post-v3 white-box reveal shadow">
-  
-  
-  
-  
-    
-    <h2 class="article-title" >
-      <a href="/2020/03/11/%E7%BA%BF%E7%A8%8B%E5%8D%8F%E4%BD%9C/">
-        多线程(十) 线程协作
-      </a>
-    </h2>
-  
-  <div class='md'>
-    
-      <p>待更新</p>
-    
-  </div>
-  
-    <div class='meta-v3' line_style='solid'>
-      <div>
-        
-        <time>2020-03-11</time>
-        
-          <span class="dot"></span>
-          <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
-        
-      </div>
-      
-        <div>
-          <a class='readmore' href='/2020/03/11/%E7%BA%BF%E7%A8%8B%E5%8D%8F%E4%BD%9C/'>
-            阅读全文
-          </a>
-        </div>
-      
-    </div>
-  
-
-</div>
-
-          </div>
-        
-      
-        
-          <div class='post-wrapper'>
-            <div class="post post-v3 white-box reveal shadow">
-  
-  
-  
-  
-    
-    <h2 class="article-title" >
-      <a href="/2020/03/10/%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1/">
-        多线程(九) 线程通信
-      </a>
-    </h2>
-  
-  <div class='md'>
-    
-      <p>待更新</p>
-    
-  </div>
-  
-    <div class='meta-v3' line_style='solid'>
-      <div>
-        
-        <time>2020-03-10</time>
-        
-          <span class="dot"></span>
-          <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
-        
-      </div>
-      
-        <div>
-          <a class='readmore' href='/2020/03/10/%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1/'>
-            阅读全文
-          </a>
-        </div>
-      
-    </div>
-  
-
-</div>
-
-          </div>
-        
-      
-        
-          <div class='post-wrapper'>
-            <div class="post post-v3 white-box reveal shadow">
-  
-  
-  
-  
-    
-    <h2 class="article-title" >
-      <a href="/2020/03/09/Lock%E5%AE%B6%E6%97%8F/">
+      <h1 class="title">
         多线程(九) Lock家族
-      </a>
-    </h2>
-  
-  <div class='md'>
-    
-      <p>Lock继承实现类体系、诸多实现类讲解</p>
-    
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+<div class='new-meta-item author'>
+  <a class='author' href="/" rel="nofollow">
+    <img no-lazy src="">
+    <p>lvtao</p>
+  </a>
+</div>
+
+          
+        
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
+    </a>
   </div>
-  
-    <div class='meta-v3' line_style='solid'>
-      <div>
+
+
+          
         
-        <time>2020-03-09</time>
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2020年3月9日</p>
+  </a>
+</div>
+
+          
         
-          <span class="dot"></span>
-          <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
+          
+            
+  <div class="new-meta-item browse leancloud">
+    <a class='notlink'>
+      
+      <div id="lc-pv" data-title="多线程(九) Lock家族" data-path="/2020/03/09/Lock%E5%AE%B6%E6%97%8F/">
+        <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
+        <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
+        次浏览
+      </div>
+    </a>
+  </div>
+
+
+          
         
       </div>
+    
+  </div>
+
+
+  
+  <h2 id="Lock继承体系"><a href="#Lock继承体系" class="headerlink" title="Lock继承体系"></a>Lock继承体系</h2><h2 id="Lock接口"><a href="#Lock接口" class="headerlink" title="Lock接口"></a>Lock接口</h2><p><strong>Lock接口诞生于JDK1.5，接口内部提供了最基本的加锁、释放锁方法:</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">public interface Lock &#123;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 直接加锁 </span><br><span class="line">	void lock();</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 支持可中断的加锁</span><br><span class="line">	void lockInterruptibly() throws InterruptedException;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 尝试一次加锁</span><br><span class="line">	boolean tryLock();</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 尝试一次加锁(支持超时停止阻塞)</span><br><span class="line">	boolean tryLock(long time, TimeUnit unit) throws InterruptedException;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 解锁</span><br><span class="line">	void unlock();</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 创建一个Condition(作用于线程通信，后面会讲)</span><br><span class="line">	Condition newCondition();</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><strong>使用层面</strong><br>既然是接口，就是提供给开发者实现用的，Java自带了ReentrantLock、Condition、ReentrantReadWriteLock实现类供开发者使用。如果这些类无法满足业务需求，开发者可以通过实现Lock接口并利用AQS框架，自己定义一个Lock的具体实现锁(是否公平、是否支持超时、是否支持重入等)，从而提高锁的灵活性。</p>
+<p><strong>与synchronized区别</strong><br>由于Lock可以自己定义是否公平、是否支持超时、是否支持重入等功能，相对于synchronized关键字来说可发挥的空间更多，也更灵活。但是Lock的加锁、释放锁需要开发者自己编写，如果考虑不周很可能造成死锁情况(最好在try中加锁，finally中释放锁)，而synchronized由JVM实现，完全不需要担心这些情况。</p>
+<h2 id="ReentrantLock"><a href="#ReentrantLock" class="headerlink" title="ReentrantLock"></a>ReentrantLock</h2><p>ReentrantLock就是Java自带的Lock实现类，字面的意思就能看出来是一把可重入锁，并且功能几乎与synchronized相似，我们看看源码:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br></pre></td><td class="code"><pre><span class="line">public class ReentrantLock implements Lock, java.io.Serializable &#123;</span><br><span class="line"></span><br><span class="line">	private final Sync sync;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 定义一个顶级同步器(内部包含一个非公平加锁方法，一个释放锁方法)</span><br><span class="line">	abstract static class Sync extends AbstractQueuedSynchronizer &#123;</span><br><span class="line"></span><br><span class="line">		private static final long serialVersionUID &#x3D; -5179523762034025860L;</span><br><span class="line"></span><br><span class="line">		abstract void lock();</span><br><span class="line"></span><br><span class="line">		&#x2F;&#x2F; 非公平方式尝试一次加锁</span><br><span class="line">		final boolean nonfairTryAcquire(int acquires) &#123;</span><br><span class="line"></span><br><span class="line">			&#x2F;&#x2F; 获取试图尝试加锁的线程</span><br><span class="line">			final Thread current &#x3D; Thread.currentThread();</span><br><span class="line"></span><br><span class="line">			&#x2F;&#x2F; 获取公共资源状态</span><br><span class="line">			int c &#x3D; getState();</span><br><span class="line"></span><br><span class="line">			&#x2F;&#x2F; 如果没其他线程持有锁，进行加锁</span><br><span class="line">			if (c &#x3D;&#x3D; 0) &#123;</span><br><span class="line">				&#x2F;&#x2F; 加锁前并没有校验等待队列是否已经有节点在等待了，这个if完全体现了非公平性</span><br><span class="line">				if (compareAndSetState(0, acquires)) &#123;</span><br><span class="line">					setExclusiveOwnerThread(current);</span><br><span class="line">					return true;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			&#x2F;&#x2F; 如果有线程持有锁并且是自身，重入次数递增</span><br><span class="line">			else if (current &#x3D;&#x3D; getExclusiveOwnerThread()) &#123;</span><br><span class="line">				int nextc &#x3D; c + acquires;</span><br><span class="line">				if (nextc &lt; 0) &#x2F;&#x2F; overflow</span><br><span class="line">					throw new Error(&quot;Maximum lock count exceeded&quot;);</span><br><span class="line">				setState(nextc);</span><br><span class="line">				return true;</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			&#x2F;&#x2F; 到这里说明锁被其他线程占了，直接返回false</span><br><span class="line">			return false;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		&#x2F;&#x2F; 释放锁</span><br><span class="line">		protected final boolean tryRelease(int releases) &#123;</span><br><span class="line"></span><br><span class="line">			&#x2F;&#x2F; 计算递减后的重入次数</span><br><span class="line">			int c &#x3D; getState() - releases;</span><br><span class="line"></span><br><span class="line">			&#x2F;&#x2F; 如果释放锁线程不是持有锁线程，抛异常(一般能执行这方法的都是持有锁线程)</span><br><span class="line">			if (Thread.currentThread() !&#x3D; getExclusiveOwnerThread())</span><br><span class="line">				throw new IllegalMonitorStateException();</span><br><span class="line"></span><br><span class="line">			&#x2F;&#x2F; 如果递减后为0，那就是真的释放锁了，清空自己的独占状态并返回</span><br><span class="line">			boolean free &#x3D; false;</span><br><span class="line">			if (c &#x3D;&#x3D; 0) &#123;</span><br><span class="line">				free &#x3D; true;</span><br><span class="line">				setExclusiveOwnerThread(null);</span><br><span class="line">			&#125;</span><br><span class="line">			setState(c);</span><br><span class="line">			return free;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		&#x2F;&#x2F; 返回调用此方法的线程是否持有锁</span><br><span class="line">		protected final boolean isHeldExclusively() &#123;</span><br><span class="line">            return getExclusiveOwnerThread() &#x3D;&#x3D; Thread.currentThread();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 其他方法...</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 定义一个非公平同步器，继承顶级同步器</span><br><span class="line">	static final class NonfairSync extends Sync &#123;</span><br><span class="line"></span><br><span class="line">		private static final long serialVersionUID &#x3D; 7316153563782823691L;</span><br><span class="line"></span><br><span class="line">		&#x2F;&#x2F; 实现顶级同步器的lock加锁方法</span><br><span class="line">		final void lock() &#123;</span><br><span class="line"></span><br><span class="line">			&#x2F;&#x2F; 尝试CAS 如果成功说明之前没线程加锁</span><br><span class="line">			if (compareAndSetState(0, 1))</span><br><span class="line">				setExclusiveOwnerThread(Thread.currentThread());</span><br><span class="line"></span><br><span class="line">			&#x2F;&#x2F; 失败就在尝试获取一次，这里调用AQS的acquire()方法，</span><br><span class="line">			&#x2F;&#x2F; AQS的acquire()方法又调用下面重写的tryAcquire方法</span><br><span class="line">			else</span><br><span class="line">				acquire(1);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		&#x2F;&#x2F; 绕了一大圈，其实就是用非公平锁方式加锁</span><br><span class="line">		protected final boolean tryAcquire(int acquires) &#123;</span><br><span class="line">			return nonfairTryAcquire(acquires);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 定义一个公平同步器，继承顶级同步器</span><br><span class="line">	static final class FairSync extends Sync &#123;</span><br><span class="line"></span><br><span class="line">		private static final long serialVersionUID &#x3D; -3000897897090466540L;</span><br><span class="line"></span><br><span class="line">		final void lock() &#123;</span><br><span class="line">			acquire(1);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		protected final boolean tryAcquire(int acquires) &#123;</span><br><span class="line">			final Thread current &#x3D; Thread.currentThread();</span><br><span class="line">			int c &#x3D; getState();</span><br><span class="line">			if (c &#x3D;&#x3D; 0) &#123;</span><br><span class="line">				if (!hasQueuedPredecessors() &amp;&amp;</span><br><span class="line">					compareAndSetState(0, acquires)) &#123;</span><br><span class="line">					setExclusiveOwnerThread(current);</span><br><span class="line">					return true;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			else if (current &#x3D;&#x3D; getExclusiveOwnerThread()) &#123;</span><br><span class="line">				int nextc &#x3D; c + acquires;</span><br><span class="line">				if (nextc &lt; 0)</span><br><span class="line">					throw new Error(&quot;Maximum lock count exceeded&quot;);</span><br><span class="line">				setState(nextc);</span><br><span class="line">				return true;</span><br><span class="line">			&#125;</span><br><span class="line">			return false;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 无参构造器，默认使用非公平锁</span><br><span class="line">	public ReentrantLock() &#123;</span><br><span class="line">        sync &#x3D; new NonfairSync();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 参数构造器，自行选择是否公平</span><br><span class="line">    public ReentrantLock(boolean fair) &#123;</span><br><span class="line">        sync &#x3D; fair ? new FairSync() : new NonfairSync();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 加锁</span><br><span class="line">    public void lock() &#123;</span><br><span class="line">        sync.lock();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 支持可中断加锁</span><br><span class="line">    public void lockInterruptibly() throws InterruptedException &#123;</span><br><span class="line">        sync.acquireInterruptibly(1);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 尝试一次加锁 </span><br><span class="line">    public boolean tryLock() &#123;</span><br><span class="line">        return sync.nonfairTryAcquire(1);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 支持超时的加锁</span><br><span class="line">    public boolean tryLock(long timeout, TimeUnit unit)</span><br><span class="line">            throws InterruptedException &#123;</span><br><span class="line">        return sync.tryAcquireNanos(1, unit.toNanos(timeout));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 解锁</span><br><span class="line">    public void unlock() &#123;</span><br><span class="line">        sync.release(1);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 其他方法....</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><strong>重入支持</strong><br>ReentrantLock通过state属性控制重入，每次重入state+1、退出state-1，为0时代表释放锁。</p>
+<p><strong>是否公平锁</strong></p>
+<span class="p red">ReentrantLock类支持公平锁与非公平锁</span>，并根据构造器初始化一个Sync(公平锁创建FairSync，非公平锁创建NonfairSync)，后续加锁释放锁等操作完全调用Sync实现。FairSync与NonfairSync除了加锁逻辑不一样，其他的逻辑(比如释放锁等)完全一样。
+
+<p>ReentrantLock加锁是使用Sync的lock()实现，公平锁(FairSync)是直接调用AQS的acquire()方法获取锁，然后调用重写的tryAcquire()方法。在重写方法里面如果可以加锁(state=0)，会先判断等待队列是否有元素在等待，<span class="p red">如果没有元素可以直接加锁，如果加锁失败或存在元素，则加入等待队列尾部等待(按顺序排队)。</span></p>
+<p>非公平锁(NonFairSync)在调用Sync的lock()方法时，只要可以加锁(state=0)，会直接使用CAS进行加锁(无视等待队列是否有元素)，如果插队失败了在调用AQS的acquire()再次加锁，重写的tryAcquire()方法还是会再次尝试插队，如果还是失败才会加入等待队列，<span class="p red">因此非公平锁存在2次插队的操作。</span></p>
+<h2 id="ReadWriteLock接口"><a href="#ReadWriteLock接口" class="headerlink" title="ReadWriteLock接口"></a>ReadWriteLock接口</h2><p>没啥好写的</p>
+<h2 id="ReentrantReadWriteLock"><a href="#ReentrantReadWriteLock" class="headerlink" title="ReentrantReadWriteLock"></a>ReentrantReadWriteLock</h2><p>没啥好写的</p>
+
+  
+  
+    
+    <div class='footer'>
       
-        <div>
-          <a class='readmore' href='/2020/03/09/Lock%E5%AE%B6%E6%97%8F/'>
-            阅读全文
-          </a>
+      
+      
+        <div class='copyright'>
+          <blockquote>
+            
+              
+                <p>博客内容遵循 署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</p>
+
+              
+            
+              
+                <p>本文永久链接是：<a href=http://yoursite.com/2020/03/09/Lock%E5%AE%B6%E6%97%8F/>http://yoursite.com/2020/03/09/Lock%E5%AE%B6%E6%97%8F/</a></p>
+              
+            
+          </blockquote>
         </div>
+      
       
     </div>
   
+  
+    
 
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-22T15:18:17+08:00">
+  <a class='notlink'>
+    <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
+    <p>更新于：2020年10月22日</p>
+  </a>
 </div>
 
-          </div>
         
       
         
-          <div class='post-wrapper'>
-            <div class="post post-v3 white-box reveal shadow">
-  
-  
-  
-  
+          
+
+        
+      
+        
+          
+  <div class="new-meta-item share -mob-share-list">
+  <div class="-mob-share-list share-body">
     
-    <h2 class="article-title" >
-      <a href="/2020/03/08/AQS/">
-        多线程(八) AQS
-      </a>
-    </h2>
-  
-  <div class='md'>
+      
+        <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/09/Lock%E5%AE%B6%E6%97%8F/&title=多线程(九) Lock家族 - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
     
-      <p>AQS多线程同步框架讲解，如何利用AQS自定义一把锁</p>
+      
+        <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/09/Lock%E5%AE%B6%E6%97%8F/&title=多线程(九) Lock家族 - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+        <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/09/Lock%E5%AE%B6%E6%97%8F/&title=多线程(九) Lock家族 - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+    
+      
     
   </div>
-  
-    <div class='meta-v3' line_style='solid'>
-      <div>
+</div>
+
+
+
         
-        <time>2020-03-08</time>
-        
-          <span class="dot"></span>
-          <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
-        
-      </div>
       
-        <div>
-          <a class='readmore' href='/2020/03/08/AQS/'>
-            阅读全文
-          </a>
-        </div>
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2020/03/10/%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(九) 线程通信</p>
+          <p class='content'>简介待更新
+</p>
+        </a>
+      
+      
+        <a class='next' href='/2020/03/08/AQS/'>
+          <p class='title'>多线程(八) AQS<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>AQS简介AQS的全称是AbstractQueuedSynchronizer，类内部定义了一套多线程访问共享资源的同步器框架，Java许多同步类的实现都依赖于它，比如常用的ReentrantLo...</p>
+        </a>
       
     </div>
   
+</article>
 
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
 </div>
 
-          </div>
-        
-      
-        
-          <div class='post-wrapper'>
-            <div class="post post-v3 white-box reveal shadow">
-  
-  
-  
-  
-    
-    <h2 class="article-title" >
-      <a href="/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/">
-        多线程(七) synchronized关键字
-      </a>
-    </h2>
-  
-  <div class='md'>
-    
-      <p>对象头结构布局、synchronized锁升级(偏向锁 → 轻量级锁 → 重量级锁)</p>
-    
-  </div>
-  
-    <div class='meta-v3' line_style='solid'>
-      <div>
-        
-        <time>2020-03-07</time>
-        
-          <span class="dot"></span>
-          <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
-        
-      </div>
-      
-        <div>
-          <a class='readmore' href='/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/'>
-            阅读全文
-          </a>
-        </div>
-      
-    </div>
-  
-
-</div>
-
-          </div>
-        
-      
-    
-  </section>
-  
-    
-      <br>
-      <div class="prev-next">
-        
-        <p class="current">
-          1 / 2
-        </p>
-        
-          <a class="next" rel="next" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/page/2/">
-            <section class="post next white-box shadow">
-              &nbsp;下一页&nbsp;<i class="fas fa-chevron-right" aria-hidden="true"></i>
-            </section>
-          </a>
-        
-      </div>
-    
-  
+  </article>
 
 
-    
-  
+
+
+
+
 </div>
 <aside class='l_side'>
   
@@ -949,163 +681,19 @@
     
     
 
-<section class="widget shadow desktop">
-  
-  <header>
-    
-      <i class="fas fa-award fa-fw" aria-hidden="true"></i><span class='name'>站点信息</span>
-    
-  </header>
 
 
-  <div class='content'>
-    <div class="webinfo">
-      
-        <div class="webinfo-item">
-          <div>文章数目：</div>
-          <div>18 篇</div>
-        </div>
-      
-
-      
-        <div class="webinfo-item">
-          <div>已运行时间：</div>
-          <div id="webinfo-runtime-count" publish_date="03/24/2020 21:34:09"></div>
-        </div>
-        <script>
-          var BirthDay = new Date(new Date('2020/02/01'));
-          var today = new Date();
-          var timeold = (today.getTime() - BirthDay.getTime());
-          var daysold = Math.floor(timeold / (24 * 60 * 60 * 1000));
-          document.getElementById('webinfo-runtime-count').innerHTML = daysold + ' 天';
-        </script>
-      
-
-
-      
-
-      
-        <div class="webinfo-item">
-          <div>本站访客数：</div>
-          
-          <div><span id="lc-uv"><span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span></span> 人</div>
-          
-        </div>
-      
-
-      
-        <div class="webinfo-item">
-          <div>本站总访问量：</div>
-          
-          <div><span id="lc-sv"><span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span></span> 次</div>
-          
-        </div>
-      
-
-      
-        <div class="webinfo-item">
-          <div>最后活动时间：</div>
-          
-            <div id="last-update" style="display: none;">Thu Oct 22 2020 15:18:28 GMT+0800 (China Standard Time)</div>
-            <div id="last-update-show">2020-10-22 日</div>
-          
-        </div>
-        
-        <script>
-          function timeago(dateTimeStamp) {
-              var minute = 1000 * 60; //把分，时，天，周，半个月，一个月用毫秒表示
-              var hour = minute * 60;
-              var day = hour * 24;
-              var week = day * 7;
-              var month = day * 30;
-              var now = new Date().getTime(); //获取当前时间毫秒
-              var diffValue = now - dateTimeStamp; //时间差
-              if (diffValue < 0) {
-                  return;
-              }
-              var minC = diffValue / minute; //计算时间差的分，时，天，周，月
-              var hourC = diffValue / hour;
-              var dayC = diffValue / day;
-              var weekC = diffValue / week;
-              var monthC = diffValue / month;
-              if (monthC >= 1 && monthC <= 3) {
-                  result = " " + parseInt(monthC) + " 月前"
-              } else if (weekC >= 1 && weekC <= 3) {
-                  result = " " + parseInt(weekC) + " 周前"
-              } else if (dayC >= 1 && dayC <= 6) {
-                  result = " " + parseInt(dayC) + " 天前"
-              } else if (hourC >= 1 && hourC <= 23) {
-                  result = " " + parseInt(hourC) + " 小时前"
-              } else if (minC >= 1 && minC <= 59) {
-                  result = " " + parseInt(minC) + " 分钟前"
-              } else if (diffValue >= 0 && diffValue <= minute) {
-                  result = "刚刚"
-              } else {
-                  var datetime = new Date();
-                  datetime.setTime(dateTimeStamp);
-                  var Nyear = datetime.getFullYear();
-                  var Nmonth = datetime.getMonth() + 1 < 10 ? "0" + (datetime.getMonth() + 1) : datetime.getMonth() + 1;
-                  var Ndate = datetime.getDate() < 10 ? "0" + datetime.getDate() : datetime.getDate();
-                  var Nhour = datetime.getHours() < 10 ? "0" + datetime.getHours() : datetime.getHours();
-                  var Nminute = datetime.getMinutes() < 10 ? "0" + datetime.getMinutes() : datetime.getMinutes();
-                  var Nsecond = datetime.getSeconds() < 10 ? "0" + datetime.getSeconds() : datetime.getSeconds();
-                  result = Nyear + "-" + Nmonth + "-" + Ndate
-              }
-              return result;
-          }
-          var lastUpDate = document.getElementById('last-update').innerHTML;
-          try {
-            document.getElementById('last-update-show').innerHTML = timeago(new Date(lastUpDate));
-          } catch (error) {
-            document.getElementById('last-update-show').innerHTML = '2020-10-22 日';
-          }
-        </script>
-        
-      
-    </div>
-  </div>
-</section>
-
-  
-
-  
-    
-    
-  
-
-  <section class="widget category shadow desktop">
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
     
   <header>
     
-      <a href='/blog/categories/'><i class="fas fa-folder-open fa-fw" aria-hidden="true"></i><span class='name'>文章分类</span></a>
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
     
   </header>
 
 
     <div class='content'>
-      <ul class="entry navigation">
-        
-          <li><a class="flat-box"
-            title="/categories/java%E5%9F%BA%E7%A1%80/" href="/categories/java%E5%9F%BA%E7%A1%80/"
-            id="categoriesjavaE59FBAE7A180"
-            ><div class='name'>java基础</div><div class='badge'>(18)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/java%E5%9F%BA%E7%A1%80/IO%E6%B5%81/" href="/categories/java%E5%9F%BA%E7%A1%80/IO%E6%B5%81/"
-            id="categoriesjavaE59FBAE7A180IOE6B581"
-            ><div class='name'>IO流</div><div class='badge'>(1)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/"
-            id="categoriesjavaE59FBAE7A180E5A49AE7BABFE7A88B"
-            ><div class='name'>多线程</div><div class='badge'>(16)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/java%E5%9F%BA%E7%A1%80/%E9%9B%86%E5%90%88/" href="/categories/java%E5%9F%BA%E7%A1%80/%E9%9B%86%E5%90%88/"
-            id="categoriesjavaE59FBAE7A180E99B86E59088"
-            ><div class='name'>集合</div><div class='badge'>(1)</div></a></li>
-        
-      </ul>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Lock%E7%BB%A7%E6%89%BF%E4%BD%93%E7%B3%BB"><span class="toc-text">Lock继承体系</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Lock%E6%8E%A5%E5%8F%A3"><span class="toc-text">Lock接口</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ReentrantLock"><span class="toc-text">ReentrantLock</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ReadWriteLock%E6%8E%A5%E5%8F%A3"><span class="toc-text">ReadWriteLock接口</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ReentrantReadWriteLock"><span class="toc-text">ReentrantReadWriteLock</span></a></li></ol>
     </div>
   </section>
 
@@ -1114,6 +702,7 @@
 
 
 </aside>
+
 
 
         

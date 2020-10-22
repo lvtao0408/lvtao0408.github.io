@@ -21,7 +21,7 @@
   
 
   
-    <meta name="description" content="java中五花八门的锁">
+    <meta name="description" content="锁作为并发共享数据,保证一致性的工具,在JAVA平台的实现">
   
 
   <!-- feed -->
@@ -515,10 +515,7 @@
 
 
   
-  <p>java中五花八门的锁</p>
-<a id="more"></a>
-
-<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>java中的锁可谓是五花八门，各种锁功能相似又不同，有的是概念、有的是java接口、有的是实现类，让你很难找到明显的分界线去区分并记住他们。<span class="p red">所以学习锁首先要打消一种想法，就是一个锁只属于一个分类</span>，比如一个锁可以同时是乐观锁、可重入锁，公平锁，就像一个人可以是男人、程序员、健身爱好者。</p>
+  <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>java中的锁可谓是五花八门，各种锁功能相似又不同，有的是概念、有的是java接口、有的是实现类，让你很难找到明显的分界线去区分并记住他们。<span class="p red">所以学习锁首先要打消一种想法，就是一个锁只属于一个分类</span>，比如一个锁可以同时是乐观锁、可重入锁，公平锁，就像一个人可以是男人、程序员、健身爱好者。</p>
 <h2 id="synchronized与Lock"><a href="#synchronized与Lock" class="headerlink" title="synchronized与Lock"></a>synchronized与Lock</h2><p>java代码中两种加锁方式 一种是用<strong>synchronized关键字</strong>，另一种是用<strong>Lock接口</strong>的实现类。形象地说，synchronized关键字是自动档，可以满足一切日常驾驶需求。但是如果你想要玩漂移或者各种骚操作，就需要手动档了——各种Lock的实现类，因为Lock的实现类可以通过设置不同的参数改变锁的作用达到灵活适应场景的作用，而synchronized是关键字，底层有jvm实现，很多参数都是写死的。</p>
 <h2 id="悲观锁与乐观锁"><a href="#悲观锁与乐观锁" class="headerlink" title="悲观锁与乐观锁"></a>悲观锁与乐观锁</h2><p>锁的一种宏观分类方式是<strong>悲观锁</strong>和<strong>乐观锁</strong>。悲观锁与乐观锁并不是特指某个锁(Java中没有哪个Lock实现类就叫PessimisticLock或OptimisticLock)，而是在并发情况下的两种不同策略。</p>
 <p>悲观锁(Pessimistic Lock)，就是很悲观，每次去拿数据的时候都认为别人会修改。所以每次在拿数据的时候都会上锁，这样别人想拿数据就被挡住，直到悲观锁被释放。比如上面说的synchronized与Lock。</p>
@@ -574,10 +571,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-16T10:23:09+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-19T16:17:40+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年10月16日</p>
+    <p>更新于：2020年10月19日</p>
   </a>
 </div>
 
@@ -596,7 +593,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/&title=多线程(六) 锁分类 - 来杯冰镇可乐&summary=java中五花八门的锁"
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/&title=多线程(六) 锁分类 - 来杯冰镇可乐&summary="
           
           >
           
@@ -608,7 +605,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/&title=多线程(六) 锁分类 - 来杯冰镇可乐&summary=java中五花八门的锁"
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/&title=多线程(六) 锁分类 - 来杯冰镇可乐&summary="
           
           >
           
@@ -620,7 +617,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/&title=多线程(六) 锁分类 - 来杯冰镇可乐&summary=java中五花八门的锁"
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/06/%E9%94%81%E5%88%86%E7%B1%BB/&title=多线程(六) 锁分类 - 来杯冰镇可乐&summary="
           
           >
           
@@ -652,19 +649,13 @@
       
         <a class='prev' href='/2020/03/07/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/'>
           <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(七) synchronized关键字</p>
-          <p class='content'>对象头结构布局、synchronized锁升级等
-
-
-简介如果我们想要保证单个共享变量的原子操作，可以借助CAS来实现，当我们想要保证多个共享变量的原子操作时，那就要把对多个变量的操作代码整合在...</p>
+          <p class='content'>简介如果我们想要保证单个共享变量的原子操作，可以借助CAS来实现，当我们想要保证多个共享变量的原子操作时，那就要把对多个变量的操作代码整合在一起建立临界区，临界区同一时刻只能有一个线程访问。而s...</p>
         </a>
       
       
         <a class='next' href='/2020/03/05/CAS/'>
           <p class='title'>多线程(五) CAS<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>CAS在CPU的实现，以及Java对CAS的封装
-
-
-什么是CASCAS的全称是Compare and Swap(比较和交换)，是一种特殊的修改数据的方式，线程通过CAS修改数据时整个过程涉及到...</p>
+          <p class='content'>什么是CASCAS的全称是Compare and Swap(比较和交换)，是一种特殊的修改数据的方式，线程通过CAS修改数据时整个过程涉及到三个数据：要修改的内存数据V、执行CAS操作前读取V并...</p>
         </a>
       
     </div>
