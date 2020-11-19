@@ -17,7 +17,7 @@
 
   <!-- 页面元数据 -->
   
-  <title>多线程(九) 线程通信 - 来杯冰镇可乐</title>
+  <title>多线程(十) 线程通信 - 来杯冰镇可乐</title>
   
 
   
@@ -416,7 +416,7 @@
  
 <div id="pjax-data" style="display: none"> 
   <div id="pjax-ispage">true</div> 
-  <div id="pjax-pageTitle">多线程(九) 线程通信</div> 
+  <div id="pjax-pageTitle">多线程(十) 线程通信</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -456,7 +456,7 @@
     
     
       <h1 class="title">
-        多线程(九) 线程通信
+        多线程(十) 线程通信
       </h1>
       <div class='new-meta-box'>
         
@@ -498,7 +498,7 @@
   <div class="new-meta-item browse leancloud">
     <a class='notlink'>
       
-      <div id="lc-pv" data-title="多线程(九) 线程通信" data-path="/2020/03/10/%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1/">
+      <div id="lc-pv" data-title="多线程(十) 线程通信" data-path="/2020/03/10/%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1/">
         <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
         <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
         次浏览
@@ -516,16 +516,17 @@
 
   
   <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>线程与线程之间不是相互独立的个体，有些时候需要相互通信来共同完成某个业务场景，多线程之间通信总体来说分为<span class="p red">共享内存和消息通信机制</span>。</p>
-<h2 id="wait-notify"><a href="#wait-notify" class="headerlink" title="wait/notify"></a>wait/notify</h2><p><strong>概念</strong><br>wait/notify采用消息通信机制来进行线程间的通信，某个线程必须达到特定条件才能继续执行下去，没有达到就将自己挂起等待，另一个线程的执行过程中会使条件达成并通知挂起等待的线程继续执行下去。</p>
+<h2 id="wait-notify"><a href="#wait-notify" class="headerlink" title="wait/notify"></a>wait/notify</h2><h3 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h3><p>wait/notify采用消息通信机制来进行线程间的通信，某个线程必须达到特定条件才能继续执行下去，没有达到就将自己挂起等待，另一个线程的执行过程中会使条件达成并通知挂起等待的线程继续执行下去。</p>
 <p>wait/notify都属于Object的方法，利用java自带的对象加锁机制争夺对应monitor，当线程不满足执行条件时调用Object的wait方法将自己挂起在monitor对象的_WaitSet上，其他线程在执行过程中将条件满足，紧接着使用Object的notify或notifyAll方法唤醒前述的等待线程，重新加入锁的竞争。</p>
-<p><strong>使用场景</strong><br>例如线程独有的join()方法就是通过wait/notify实现线程的合并(非异步调用)，在join线程执行过程中调用者线程只能等待，为了避免CPU的浪费，使用wait()方法将自己挂起在join线程的monitor对象的_WaitSet中，当join线程执行完毕后使用notify()唤醒调用者线程，继续往下执行。</p>
+<h3 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h3><p>例如线程独有的join()方法就是通过wait/notify实现线程的合并(非异步调用)，在join线程执行过程中调用者线程只能等待，为了避免CPU的浪费，使用wait()方法将自己挂起在join线程的monitor对象的_WaitSet中，当join线程执行完毕后使用notify()唤醒调用者线程，继续往下执行。</p>
 <p>在例如生产者/消费者模式，消费者线程使用while循环监听消息，如果消息队列为空则使用wait()将自己挂起，同样避免忙等造成CPU的浪费，生产者线程每次生产完数据都必须调用notify()方法，唤醒因消息队列为空而将自己挂起的消费者线程。下面是一段基于wait/notify机制的生产/消费模型：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line">public class Test &#123;</span><br><span class="line"></span><br><span class="line">	private static Object obj &#x3D; new Object();</span><br><span class="line"></span><br><span class="line">    private static final Queue&lt;String&gt; messageQueue &#x3D; new LinkedBlockingDeque&lt;&gt;();</span><br><span class="line"></span><br><span class="line">	public static void main(String[] args) throws Exception &#123;</span><br><span class="line">	</span><br><span class="line">		Thread producerThread &#x3D; new Thread(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line"></span><br><span class="line">                for (int i &#x3D; 1; i &lt;&#x3D; 9; i++) &#123;</span><br><span class="line"></span><br><span class="line">                    &#x2F;&#x2F; 生产消息</span><br><span class="line">                    synchronized (obj) &#123;</span><br><span class="line">                        messageQueue.add(&quot;第&quot; + i + &quot;条消息&quot;);</span><br><span class="line">                        obj.notify();</span><br><span class="line">                    &#125;      </span><br><span class="line"></span><br><span class="line">                    &#x2F;&#x2F; 每生产三条暂停1秒</span><br><span class="line">                    if (i &gt; 1 &amp;&amp; i % 3 &#x3D;&#x3D; 0) &#123;</span><br><span class="line">                        try &#123;</span><br><span class="line">                            System.out.println(&quot;暂停&quot;);</span><br><span class="line">                            Thread.currentThread().sleep(1000L);</span><br><span class="line">                        &#125; catch (InterruptedException e) &#123;</span><br><span class="line">                            e.printStackTrace();</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                    &#x2F;&#x2F; ...</span><br><span class="line"></span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            &#x2F;&#x2F; ...</span><br><span class="line">        &#125;);</span><br><span class="line"></span><br><span class="line">        Thread consumerThread &#x3D; new Thread(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line"></span><br><span class="line">                synchronized (obj) &#123;</span><br><span class="line">                    try &#123;</span><br><span class="line">                        while (true) &#123;</span><br><span class="line"></span><br><span class="line">                            if (messageQueue.isEmpty()) &#123;</span><br><span class="line">                                obj.wait();</span><br><span class="line">                            &#125;</span><br><span class="line"></span><br><span class="line">                            String message &#x3D; messageQueue.poll();</span><br><span class="line">                            System.out.println(&quot;消费者:&quot; + message);</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125; catch (InterruptedException e) &#123;</span><br><span class="line">                        &#x2F;&#x2F; ...</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; ...</span><br><span class="line">        &#125;);</span><br><span class="line"></span><br><span class="line">        producerThread.start();</span><br><span class="line">        consumerThread.start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p><strong>为什么wait()、notify()、notifyAll()必须在同步代码块中？</strong><br>这三个方法都是对对象的monitor中的_WaitSet进行操作，而进入同步代码块意味着已经持有对象锁，也就持有了monitor，才有资格对_WaitSet进行操作，因此必须在同步代码块中。</p>
+<h3 id="使用细节"><a href="#使用细节" class="headerlink" title="使用细节"></a>使用细节</h3><p><strong>为什么wait()、notify()、notifyAll()必须在同步代码块中？</strong><br>这三个方法都是对对象的monitor中的_WaitSet进行操作，而进入同步代码块意味着已经持有对象锁，也就持有了monitor，才有资格对_WaitSet进行操作，因此必须在同步代码块中。</p>
 <p><strong>为什么wait()方法要放在while()循环而不是if中？</strong><br>被唤醒后线程从wait()代码之后继续执行，但是并不能保证每次被唤醒都是符合继续执行条件的，用while()被唤醒还会继续判断，不符合条件永远在while()中，而if不会。在N个线程通信的情况下，不能保证那一时刻条件被某个线程改变。</p>
 <p><strong>为什么wait()、notify()要定义在Object中而不是线程中？</strong><br>wait()与notify()的基本思想是把某个对象作为联络点，利用锁机制拿到monitor进行联络通信，而java提供的锁是对象级的而不是线程级的，锁属于对象而不是线程专有，因此wait()、notify()、notifyAll()这种锁级别操作属于Object而不是线程专有方法。</p>
-<h2 id="lock-condition"><a href="#lock-condition" class="headerlink" title="lock/condition"></a>lock/condition</h2><p>既然java支持使用锁进行线程通信，synchronized可以，Lock必然也可以。lock/condition与wait/notify功能类似，通过Lcok对象创建Condition对象，利用Condition对象的await()与signal()方法来阻塞唤醒。</p>
+<h2 id="lock-condition"><a href="#lock-condition" class="headerlink" title="lock/condition"></a>lock/condition</h2><h3 id="概念-1"><a href="#概念-1" class="headerlink" title="概念"></a>概念</h3><p>既然java支持使用锁进行线程通信，synchronized可以，Lock必然也可以。lock/condition与wait/notify功能类似，通过Lcok对象创建Condition对象，利用Condition对象的await()与signal()方法来阻塞唤醒。</p>
+<h3 id="使用场景-1"><a href="#使用场景-1" class="headerlink" title="使用场景"></a>使用场景</h3><p>无</p>
 <h2 id="简单总结"><a href="#简单总结" class="headerlink" title="简单总结"></a>简单总结</h2>
   
   
@@ -560,10 +561,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-11-06T15:35:42+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-11-10T16:44:22+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年11月6日</p>
+    <p>更新于：2020年11月10日</p>
   </a>
 </div>
 
@@ -582,7 +583,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/10/%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1/&title=多线程(九) 线程通信 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/10/%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1/&title=多线程(十) 线程通信 - 来杯冰镇可乐&summary="
           
           >
           
@@ -594,7 +595,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/10/%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1/&title=多线程(九) 线程通信 - 来杯冰镇可乐&summary="
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/10/%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1/&title=多线程(十) 线程通信 - 来杯冰镇可乐&summary="
           
           >
           
@@ -606,7 +607,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/10/%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1/&title=多线程(九) 线程通信 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/10/%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1/&title=多线程(十) 线程通信 - 来杯冰镇可乐&summary="
           
           >
           
@@ -636,9 +637,9 @@
   
     <div class="prev-next">
       
-        <a class='prev' href='/2020/03/11/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB/'>
-          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(十) 同步工具类</p>
-          <p class='content'>简介在JDK的并发包(java.util.concurrent)中，为我们提供了几个非常重要的并发工具类，分别为CountDownLatch、CyclicBarrier、Semaphore、Ex...</p>
+        <a class='prev' href='/2020/03/11/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CountDownLatch/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(十一) 同步工具类-CountDownLatch</p>
+          <p class='content'>基本概念CountDownLatch是一种线程同步工具类，它允许一个或多个线程等待直到在其他线程中一组操作执行完成。你可以把它理解为一个计数器，对象被创建的时候指定总数，每有一个线程到达指定条件...</p>
         </a>
       
       
@@ -688,7 +689,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#wait-notify"><span class="toc-text">wait&#x2F;notify</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#lock-condition"><span class="toc-text">lock&#x2F;condition</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E5%8D%95%E6%80%BB%E7%BB%93"><span class="toc-text">简单总结</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#wait-notify"><span class="toc-text">wait&#x2F;notify</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A6%82%E5%BF%B5"><span class="toc-text">概念</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">使用场景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%BB%86%E8%8A%82"><span class="toc-text">使用细节</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#lock-condition"><span class="toc-text">lock&#x2F;condition</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A6%82%E5%BF%B5-1"><span class="toc-text">概念</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF-1"><span class="toc-text">使用场景</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E5%8D%95%E6%80%BB%E7%BB%93"><span class="toc-text">简单总结</span></a></li></ol>
     </div>
   </section>
 
@@ -1324,5 +1325,7 @@ const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
 
     
   </div>
+
+  <script src="https://cdn.jsdelivr.net/gh/zyoushuo/Blog/hexo/js/mouse_click.js"></script>
 </body>
 </html>

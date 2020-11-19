@@ -17,11 +17,11 @@
 
   <!-- 页面元数据 -->
   
-  <title>多线程(十二) 线程池 - 来杯冰镇可乐</title>
+  <title>多线程(十一) 同步工具类-CountDownLatch - 来杯冰镇可乐</title>
   
 
   
-    <meta name="description" content="待更新">
+    <meta name="description" content="线程同步工具类CountDownLatch的使用场景以及源码解析">
   
 
   <!-- feed -->
@@ -416,7 +416,7 @@
  
 <div id="pjax-data" style="display: none"> 
   <div id="pjax-ispage">true</div> 
-  <div id="pjax-pageTitle">多线程(十二) 线程池</div> 
+  <div id="pjax-pageTitle">多线程(十一) 同步工具类-CountDownLatch</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -456,7 +456,7 @@
     
     
       <h1 class="title">
-        多线程(十二) 线程池
+        多线程(十一) 同步工具类-CountDownLatch
       </h1>
       <div class='new-meta-box'>
         
@@ -487,7 +487,7 @@
             <div class="new-meta-item date">
   <a class='notlink'>
     <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
-    <p>发布于：2020年3月13日</p>
+    <p>发布于：2020年3月11日</p>
   </a>
 </div>
 
@@ -498,7 +498,7 @@
   <div class="new-meta-item browse leancloud">
     <a class='notlink'>
       
-      <div id="lc-pv" data-title="多线程(十二) 线程池" data-path="/2020/03/13/%E7%BA%BF%E7%A8%8B%E6%B1%A0/">
+      <div id="lc-pv" data-title="多线程(十一) 同步工具类-CountDownLatch" data-path="/2020/03/11/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CountDownLatch/">
         <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
         <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
         次浏览
@@ -515,7 +515,29 @@
 
 
   
-  <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>待更新</p>
+  <h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><p>CountDownLatch是一种线程同步工具类，它允许一个或多个线程等待直到在其他线程中一组操作执行完成。你可以把它理解为一个计数器，对象被创建的时候指定总数，每有一个线程到达指定条件总数减1，当减到为0时代表所有线程都达到条件，所有等待线程被唤醒继续往下执行，因此CountDownlatch也被称为<span class="p red">倒计时锁</span>。</p>
+<h2 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h2><p>例如运营系统的流量、业务等统计功能，页面需要统计展示每日的新增用户量、订单数量、商品销售总量、商品销售总额等。如果每个统计类型的查询需要2秒，4个统计类型就需要8秒的时间才能返回给前端，用户显然是无法接受的。我们只需要将4个统计类型的查询由串行执行改为并行执行，等待所有线程都查询完在组装返回，那么整个请求的响应时间就缩短到的了2秒。</p>
+<p>写个简单的Demo:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><span class="line">public class Test &#123;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line"></span><br><span class="line">        long startTimeMillis &#x3D; System.currentTimeMillis();</span><br><span class="line"></span><br><span class="line">        CountDownLatch countDownLatch &#x3D; new CountDownLatch(4);</span><br><span class="line"></span><br><span class="line">        Map&lt;String, Long&gt; statisticsMap &#x3D; new Hashtable&lt;&gt;();</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 1.查询新增用户量</span><br><span class="line">        new Thread(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line"></span><br><span class="line">                &#x2F;&#x2F; 模拟两秒查询</span><br><span class="line">                try &#123;</span><br><span class="line">                    Thread.sleep(2000L);</span><br><span class="line">                    statisticsMap.put(&quot;addUserCount&quot;, 1000L);</span><br><span class="line">                &#125; catch (InterruptedException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125; finally &#123;</span><br><span class="line">                    &#x2F;&#x2F; 倒计时锁-1</span><br><span class="line">                    countDownLatch.countDown();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 2.查询订单数量</span><br><span class="line">        new Thread(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line"></span><br><span class="line">                &#x2F;&#x2F; 模拟两秒查询</span><br><span class="line">                try &#123;</span><br><span class="line">                    Thread.sleep(2000L);</span><br><span class="line">                    statisticsMap.put(&quot;orderCount&quot;, 248300L);</span><br><span class="line">                &#125; catch (InterruptedException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125; finally &#123;</span><br><span class="line">                    &#x2F;&#x2F; 倒计时锁-1</span><br><span class="line">                    countDownLatch.countDown();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 3.查询商品销售总量</span><br><span class="line">        new Thread(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line"></span><br><span class="line">                &#x2F;&#x2F; 模拟两秒查询</span><br><span class="line">                try &#123;</span><br><span class="line">                    Thread.sleep(2000L);</span><br><span class="line">                    statisticsMap.put(&quot;commodityCount&quot;, 300L);</span><br><span class="line">                &#125; catch (InterruptedException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125; finally &#123;</span><br><span class="line">                    &#x2F;&#x2F; 倒计时锁-1</span><br><span class="line">                    countDownLatch.countDown();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 4.查询商品销售总额</span><br><span class="line">        new Thread(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line"></span><br><span class="line">                &#x2F;&#x2F; 模拟两秒查询</span><br><span class="line">                try &#123;</span><br><span class="line">                    Thread.sleep(2000L);</span><br><span class="line">                    statisticsMap.put(&quot;totalSales&quot;, 9073180L);</span><br><span class="line">                &#125; catch (InterruptedException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125; finally &#123;</span><br><span class="line">                    &#x2F;&#x2F; 倒计时锁-1</span><br><span class="line">                    countDownLatch.countDown();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line"></span><br><span class="line">        try &#123;</span><br><span class="line">            countDownLatch.await();</span><br><span class="line">        &#125; catch (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        long takeTimeMillis &#x3D; System.currentTimeMillis() - startTimeMillis;</span><br><span class="line">        System.out.println(&quot;耗时:&quot; + takeTimeMillis + &quot;ms&quot;);</span><br><span class="line">        System.out.println(&quot;返回值:&quot; + statisticsMap);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>耗时:2006ms<br>返回值:{commodityCount=300, totalSales=9073180, orderCount=248300, addUserCount=1000}</p>
+<h2 id="构造器源码"><a href="#构造器源码" class="headerlink" title="构造器源码"></a>构造器源码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">public CountDownLatch(int count) &#123;</span><br><span class="line">    if (count &lt; 0) throw new IllegalArgumentException(&quot;count &lt; 0&quot;);</span><br><span class="line">    this.sync &#x3D; new Sync(count);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>CountDownLatch底层基于AQS实现，当我们调用CountDownLatch countDownLatch= new CountDownLatch(4) 创建一个实例时，会在对象内部创建一个继承AQS的Sync类，并将构造器的参数值赋值给state，所以state的值也代表CountDownLatch所剩余的计数次数。</p>
+<h2 id="Sync源码"><a href="#Sync源码" class="headerlink" title="Sync源码"></a>Sync源码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">private static final class Sync extends AbstractQueuedSynchronizer &#123;</span><br><span class="line">    private static final long serialVersionUID &#x3D; 4982264981922014374L;</span><br><span class="line"></span><br><span class="line">    Sync(int count) &#123;</span><br><span class="line">        setState(count);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    int getCount() &#123;</span><br><span class="line">        return getState();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 根据计数值是否耗尽(为0就算耗尽)，返回正数(1)或者负数(-1)</span><br><span class="line">    protected int tryAcquireShared(int acquires) &#123;</span><br><span class="line">        return (getState() &#x3D;&#x3D; 0) ? 1 : -1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 共享式释放锁的逻辑重写，主要提供给countDown()使用</span><br><span class="line">    protected boolean tryReleaseShared(int releases) &#123;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 自旋</span><br><span class="line">        for (;;) &#123;</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; 获取当前state值</span><br><span class="line">            int c &#x3D; getState();</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; 如果state&#x3D;0，说明计数值已经耗尽了，不需要继续释放</span><br><span class="line">            if (c &#x3D;&#x3D; 0)</span><br><span class="line">                return false;</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; 使用CAS方式-1</span><br><span class="line">            int nextc &#x3D; c-1;</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; 如果减完为0，证明是最后一个释放的，返回true</span><br><span class="line">            if (compareAndSetState(c, nextc))</span><br><span class="line">                return nextc &#x3D;&#x3D; 0;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Sync除了维护了state值以外，分别重写了tryAcquireShared()与tryReleaseShared()方法，主要提供给CountDownLatch的countDown()与await()方法调用。</p>
+<h2 id="countDown-源码"><a href="#countDown-源码" class="headerlink" title="countDown()源码"></a>countDown()源码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">   &#x2F;&#x2F; 内部调用AQS的共享式释放锁</span><br><span class="line">public void countDown() &#123;</span><br><span class="line">       sync.releaseShared(1);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   &#x2F;&#x2F; AQS的共享式释放锁</span><br><span class="line">   public final boolean releaseShared(int arg) &#123;</span><br><span class="line"></span><br><span class="line">       &#x2F;&#x2F; if中的方法被CountDownLatch重写，仅当state不为0并且修改后为0时才返回true</span><br><span class="line">       if (tryReleaseShared(arg)) &#123;</span><br><span class="line"></span><br><span class="line">           &#x2F;&#x2F; 如果state修改后是0，说明自己是最后一个执行完毕的，需要唤醒所有等待的线程</span><br><span class="line">           doReleaseShared();</span><br><span class="line"></span><br><span class="line">           &#x2F;&#x2F; countDown()方法并没有利用返回值做其他事情，可以无视</span><br><span class="line">           return true;</span><br><span class="line">       &#125;</span><br><span class="line">       return false;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<p>countDown()方法的逻辑非常简单，就是利用静态内部类Sync的重写方法tryReleaseShared()，使用CAS方式对计数值(state)-1操作。如果返回true证明自身是最后一个执行完成的，还需要唤醒所有阻塞的等待线程。</p>
+<h2 id="await-源码"><a href="#await-源码" class="headerlink" title="await()源码"></a>await()源码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">   &#x2F;&#x2F; 内部调用AQS的共享式获取锁方式(支持中断)</span><br><span class="line">public void await() throws InterruptedException &#123;</span><br><span class="line">       sync.acquireSharedInterruptibly(1);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   &#x2F;&#x2F; AQS共享式获取锁方式(支持中断)</span><br><span class="line">   public final void acquireSharedInterruptibly(int arg)</span><br><span class="line">           throws InterruptedException &#123;</span><br><span class="line"></span><br><span class="line">       &#x2F;&#x2F; 如果已经是中断状态，直接抛出来</span><br><span class="line">       if (Thread.interrupted())</span><br><span class="line">           throw new InterruptedException();</span><br><span class="line"></span><br><span class="line">       &#x2F;&#x2F; 调用重写的共享式获取锁方法，如果返回值小于0证明计数值还没有耗尽，需要加入等待队列</span><br><span class="line">       if (tryAcquireShared(arg) &lt; 0)</span><br><span class="line">           &#x2F;&#x2F; AQS的方法，前面已经解释过了，排队的第一个自旋等待，后面的挂起等待，直到tryAcquireShared()&gt;&#x3D;0</span><br><span class="line">           doAcquireSharedInterruptibly(arg);</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<p>await()方法无非就是阻塞，第一个调用此方法的线程是自旋等待，直到计数值耗尽(state=0)跳出，如果有多个线程调用此方法等待，则使用park()函数挂起直到被唤醒。并且提供重载方法支持超时放弃，等待过程中支持中断响应。</p>
+<h2 id="await-timeout-unit-源码"><a href="#await-timeout-unit-源码" class="headerlink" title="await(timeout, unit)源码"></a>await(timeout, unit)源码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&#x2F;&#x2F; 内部调用AQS的共享式获取锁方式(支持超时与中断)</span><br><span class="line">public boolean await(long timeout, TimeUnit unit)</span><br><span class="line">    throws InterruptedException &#123;</span><br><span class="line">    return sync.tryAcquireSharedNanos(1, unit.toNanos(timeout));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; AQS的共享式获取锁方式(支持超时与中断)</span><br><span class="line">public final boolean tryAcquireSharedNanos(int arg, long nanosTimeout)</span><br><span class="line">        throws InterruptedException &#123;</span><br><span class="line">    &#x2F;&#x2F; 先做中断校验</span><br><span class="line">    if (Thread.interrupted())</span><br><span class="line">        throw new InterruptedException();</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 如果tryAcquireShared()方法返回值大于0，也就是已经计数值已耗尽(state&#x3D;0) 直接返回就好了</span><br><span class="line">    &#x2F;&#x2F; 如果没有耗尽，进入阻塞方法，也是AQS源码 不解释了...</span><br><span class="line">    return tryAcquireShared(arg) &gt;&#x3D; 0 ||</span><br><span class="line">        doAcquireSharedNanos(arg, nanosTimeout);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在await()基础上增加超时功能，防止意外情况导致条件永远无法满足，等待线程一直阻塞。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>CountDownLatch的作用是牺牲运行内存(额外创建的线程需要额外的栈空间支出)以及CPU资源(请求过程中会有额外的线程加入CPU使用权争夺)来提高请求的响应效率。因此CountDownLatch不能盲目使用，要参考JVM大小、CPU核数等配置信息，还要估算接口的QPS，避免大量请求导致JVM栈溢出或CPU使用率到100%。</p>
+<p>在创建CountDownLatch时，构造器参数值一定要和处理任务的子线程数相等，避免高于子线程数量造成死锁，或者低于子线程数造成部门数据丢失。子线程的countDown()方法最好放在finally代码块中，避免执行过程中出现异常导致没有被执行。为了保险起见，主线程最好使用支持超时的await()进行等待，彻底解决可能出现的死锁情况。</p>
 
   
   
@@ -533,7 +555,7 @@
               
             
               
-                <p>本文永久链接是：<a href=http://yoursite.com/2020/03/13/%E7%BA%BF%E7%A8%8B%E6%B1%A0/>http://yoursite.com/2020/03/13/%E7%BA%BF%E7%A8%8B%E6%B1%A0/</a></p>
+                <p>本文永久链接是：<a href=http://yoursite.com/2020/03/11/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CountDownLatch/>http://yoursite.com/2020/03/11/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CountDownLatch/</a></p>
               
             
           </blockquote>
@@ -550,10 +572,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-19T16:43:19+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-11-17T22:38:18+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年10月19日</p>
+    <p>更新于：2020年11月17日</p>
   </a>
 </div>
 
@@ -572,7 +594,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/13/%E7%BA%BF%E7%A8%8B%E6%B1%A0/&title=多线程(十二) 线程池 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/11/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CountDownLatch/&title=多线程(十一) 同步工具类-CountDownLatch - 来杯冰镇可乐&summary="
           
           >
           
@@ -584,7 +606,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/13/%E7%BA%BF%E7%A8%8B%E6%B1%A0/&title=多线程(十二) 线程池 - 来杯冰镇可乐&summary="
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/11/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CountDownLatch/&title=多线程(十一) 同步工具类-CountDownLatch - 来杯冰镇可乐&summary="
           
           >
           
@@ -596,7 +618,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/13/%E7%BA%BF%E7%A8%8B%E6%B1%A0/&title=多线程(十二) 线程池 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/11/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CountDownLatch/&title=多线程(十一) 同步工具类-CountDownLatch - 来杯冰镇可乐&summary="
           
           >
           
@@ -626,17 +648,16 @@
   
     <div class="prev-next">
       
-        <a class='prev' href='/2020/03/14/%E5%BC%82%E6%AD%A5%E6%88%96%E5%B9%B6%E8%A1%8C/'>
-          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(十三) 异步或并行</p>
-          <p class='content'>简介待更新
-</p>
+        <a class='prev' href='/2020/03/12/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CyclicBarrier/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(十二) 同步工具类-CyclicBarrier</p>
+          <p class='content'>基本概念CyclicBarrier是一个同步的辅助类，允许一组线程相互之间等待，并设置一个公共屏障点，当组内线程达到这个屏障点的时候阻塞，阻塞在这个屏障点的线程数达到指定数量时，释放所有线程继续...</p>
         </a>
       
       
-        <a class='next' href='/2020/03/12/ThreadLocal/'>
-          <p class='title'>多线程(十一) ThreadLocal<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>简介待更新
-</p>
+        <a class='next' href='/2020/03/10/%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1/'>
+          <p class='title'>多线程(十) 线程通信<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>简介线程与线程之间不是相互独立的个体，有些时候需要相互通信来共同完成某个业务场景，多线程之间通信总体来说分为共享内存和消息通信机制。
+wait/notify概念wait/notify采用消息通信...</p>
         </a>
       
     </div>
@@ -679,7 +700,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toc-text">基本概念</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">使用场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%84%E9%80%A0%E5%99%A8%E6%BA%90%E7%A0%81"><span class="toc-text">构造器源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Sync%E6%BA%90%E7%A0%81"><span class="toc-text">Sync源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#countDown-%E6%BA%90%E7%A0%81"><span class="toc-text">countDown()源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#await-%E6%BA%90%E7%A0%81"><span class="toc-text">await()源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#await-timeout-unit-%E6%BA%90%E7%A0%81"><span class="toc-text">await(timeout, unit)源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol>
     </div>
   </section>
 
@@ -1315,5 +1336,7 @@ const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
 
     
   </div>
+
+  <script src="https://cdn.jsdelivr.net/gh/zyoushuo/Blog/hexo/js/mouse_click.js"></script>
 </body>
 </html>

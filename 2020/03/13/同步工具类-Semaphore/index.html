@@ -17,11 +17,11 @@
 
   <!-- 页面元数据 -->
   
-  <title>多线程(十五) 常见问题场景 - 来杯冰镇可乐</title>
+  <title>多线程(十三) 同步工具类-Semaphore - 来杯冰镇可乐</title>
   
 
   
-    <meta name="description" content="待更新">
+    <meta name="description" content="线程同步工具类Semaphore的使用场景以及源码解析">
   
 
   <!-- feed -->
@@ -416,7 +416,7 @@
  
 <div id="pjax-data" style="display: none"> 
   <div id="pjax-ispage">true</div> 
-  <div id="pjax-pageTitle">多线程(十五) 常见问题场景</div> 
+  <div id="pjax-pageTitle">多线程(十三) 同步工具类-Semaphore</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -456,7 +456,7 @@
     
     
       <h1 class="title">
-        多线程(十五) 常见问题场景
+        多线程(十三) 同步工具类-Semaphore
       </h1>
       <div class='new-meta-box'>
         
@@ -487,7 +487,7 @@
             <div class="new-meta-item date">
   <a class='notlink'>
     <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
-    <p>发布于：2020年3月16日</p>
+    <p>发布于：2020年3月13日</p>
   </a>
 </div>
 
@@ -498,7 +498,7 @@
   <div class="new-meta-item browse leancloud">
     <a class='notlink'>
       
-      <div id="lc-pv" data-title="多线程(十五) 常见问题场景" data-path="/2020/03/16/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E5%9C%BA%E6%99%AF/">
+      <div id="lc-pv" data-title="多线程(十三) 同步工具类-Semaphore" data-path="/2020/03/13/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-Semaphore/">
         <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
         <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
         次浏览
@@ -515,7 +515,30 @@
 
 
   
-  <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>待更新</p>
+  <h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><p>Semaphore也是一个线程同步的辅助类，在多线程环境下用于协调各个线程, 以保证它们能够正确、合理的使用公共资源。信号量维护了一个许可集，我们在初始化Semaphore时需要为这个许可集传入一个数量值，该数量值代表同一时间能访问共享资源的线程数量。</p>
+<h2 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h2><p>这个应用就比较广泛了，主要用于流量控制，例如限制某接口或者静态资源的最大并发访问数，上代码:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">public class Test &#123;</span><br><span class="line"></span><br><span class="line">    private static Semaphore semaphore &#x3D; new Semaphore(2);</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line"></span><br><span class="line">        for(int i &#x3D;1; i &lt;&#x3D; 10; i++)&#123;</span><br><span class="line"></span><br><span class="line">            Thread thread &#x3D; new Thread(new Runnable() &#123;</span><br><span class="line">                @Override</span><br><span class="line">                public void run() &#123;</span><br><span class="line">                    select();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line"></span><br><span class="line">            thread.setName(&quot;线程序号&quot; + i);</span><br><span class="line">            thread.start();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static Object select()&#123;</span><br><span class="line"></span><br><span class="line">        try &#123;</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; 注册</span><br><span class="line">            semaphore.acquire();</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; 模拟查询耗时</span><br><span class="line">            Thread.currentThread().sleep(500L);</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; 打印信息</span><br><span class="line">            StringBuilder info &#x3D; new StringBuilder();</span><br><span class="line">            info.append(Thread.currentThread().getName());</span><br><span class="line">            info.append(&quot;进入查询方法,&quot;);</span><br><span class="line">            info.append(&quot;空闲通道:&quot;).append(semaphore.drainPermits());</span><br><span class="line">            info.append(&quot;,&quot;);</span><br><span class="line">            info.append(&quot;等待线程数:&quot;).append(semaphore.getQueueLength());</span><br><span class="line">            System.out.println(info.toString());</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;finally &#123;</span><br><span class="line">            &#x2F;&#x2F; 释放</span><br><span class="line">            semaphore.release();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        return new Object();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>打印结果:<br>线程序号1进入查询方法,空闲通道:0,等待线程数:8<br>线程序号2进入查询方法,空闲通道:0,等待线程数:8<br>线程序号3进入查询方法,空闲通道:0,等待线程数:6<br>线程序号4进入查询方法,空闲通道:0,等待线程数:6<br>线程序号5进入查询方法,空闲通道:0,等待线程数:4<br>线程序号6进入查询方法,空闲通道:1,等待线程数:4<br>线程序号7进入查询方法,空闲通道:0,等待线程数:3<br>线程序号8进入查询方法,空闲通道:0,等待线程数:2<br>线程序号9进入查询方法,空闲通道:0,等待线程数:1<br>线程序号10进入查询方法,空闲通道:0,等待线程数:0</p>
+<p>打印结果可以看出来，同一时刻只能有2个线程对方法进行访问。</p>
+<h2 id="构造器源码"><a href="#构造器源码" class="headerlink" title="构造器源码"></a>构造器源码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&#x2F;&#x2F; 默认使用非公平锁</span><br><span class="line">public Semaphore(int permits) &#123;</span><br><span class="line">    sync &#x3D; new NonfairSync(permits);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 可以通过构造器参数指定是否公平竞争</span><br><span class="line">public Semaphore(int permits, boolean fair) &#123;</span><br><span class="line">    sync &#x3D; fair ? new FairSync(permits) : new NonfairSync(permits);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Semaphore对象可以通过构造器指定访问限制，还可以指定争夺的公平方式。</p>
+<h2 id="Sync源码"><a href="#Sync源码" class="headerlink" title="Sync源码"></a>Sync源码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">abstract static class Sync extends AbstractQueuedSynchronizer &#123;</span><br><span class="line">    private static final long serialVersionUID &#x3D; 1192457210091910933L;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 初始化访问</span><br><span class="line">    Sync(int permits) &#123;</span><br><span class="line">        setState(permits);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    final int getPermits() &#123;</span><br><span class="line">        return getState();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 非公平方式获取AQS共享式资源</span><br><span class="line">    final int nonfairTryAcquireShared(int acquires) &#123;</span><br><span class="line">        &#x2F;&#x2F; 自旋</span><br><span class="line">        for (;;) &#123;</span><br><span class="line">            &#x2F;&#x2F; 获取state值</span><br><span class="line">            int available &#x3D; getState();</span><br><span class="line">            &#x2F;&#x2F; 计算获取资源后值应该是多少</span><br><span class="line">            int remaining &#x3D; available - acquires;</span><br><span class="line">            &#x2F;&#x2F; 如果大于等于0说明满足条件，将计算后值通过CAS修改后返回，如果小于0直接返回</span><br><span class="line">            if (remaining &lt; 0 ||</span><br><span class="line">                compareAndSetState(available, remaining))</span><br><span class="line">                return remaining;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 释放锁，就是把state加回来</span><br><span class="line">    protected final boolean tryReleaseShared(int releases) &#123;</span><br><span class="line">        for (;;) &#123;</span><br><span class="line">            &#x2F;&#x2F; 获取state值</span><br><span class="line">            int current &#x3D; getState();</span><br><span class="line">            &#x2F;&#x2F; 计算加后的值</span><br><span class="line">            int next &#x3D; current + releases;</span><br><span class="line">            &#x2F;&#x2F; 如果加后值小于当前state值，说明参数为负数，抛异常</span><br><span class="line">            if (next &lt; current) &#x2F;&#x2F; overflow</span><br><span class="line">                throw new Error(&quot;Maximum permit count exceeded&quot;);</span><br><span class="line">            &#x2F;&#x2F; 使用CAS方式修改值</span><br><span class="line">            if (compareAndSetState(current, next))</span><br><span class="line">                return true;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; state减操作</span><br><span class="line">    final void reducePermits(int reductions) &#123;</span><br><span class="line">        &#x2F;&#x2F; 自旋</span><br><span class="line">        for (;;) &#123;</span><br><span class="line">            &#x2F;&#x2F; 获取state值</span><br><span class="line">            int current &#x3D; getState();</span><br><span class="line">            &#x2F;&#x2F; 计算减后的值</span><br><span class="line">            int next &#x3D; current - reductions;</span><br><span class="line">            &#x2F;&#x2F; 如果减后值大于当前state值，说明参数为负数，抛异常</span><br><span class="line">            if (next &gt; current) &#x2F;&#x2F; underflow</span><br><span class="line">                throw new Error(&quot;Permit count underflow&quot;);</span><br><span class="line">            &#x2F;&#x2F; 使用CAS方式修改值</span><br><span class="line">            if (compareAndSetState(current, next))</span><br><span class="line">                return;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 将state归零</span><br><span class="line">    final int drainPermits() &#123;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 自旋</span><br><span class="line">        for (;;) &#123;</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; 获取state</span><br><span class="line">            int current &#x3D; getState();</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; 如果是0直接返回0，不是0使用CAS设置成0在返回0，这是要干啥？</span><br><span class="line">            if (current &#x3D;&#x3D; 0 || compareAndSetState(current, 0))</span><br><span class="line">                return current;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Sync类实现了很多方法:</p>
+<ul>
+<li>nonfairTryAcquireShared():非公平性获取共享式锁，不进行排队直接自旋获取。</li>
+<li>tryReleaseShared():释放共享式锁，使用CAS方式对state执行加操作。</li>
+<li>reducePermits():使用CAS方式对state执行减操作。</li>
+<li>drainPermits():将state设置为0并返回，不知道想干啥?</li>
+</ul>
+<h2 id="公平-非公平Sync源码"><a href="#公平-非公平Sync源码" class="headerlink" title="公平/非公平Sync源码"></a>公平/非公平Sync源码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&#x2F;&#x2F; 非公平</span><br><span class="line">static final class NonfairSync extends Sync &#123;</span><br><span class="line">    private static final long serialVersionUID &#x3D; -2694183684443567898L;</span><br><span class="line"></span><br><span class="line">    NonfairSync(int permits) &#123;</span><br><span class="line">        super(permits);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 调用父类写好的方法，非公平式获取锁</span><br><span class="line">    protected int tryAcquireShared(int acquires) &#123;</span><br><span class="line">        return nonfairTryAcquireShared(acquires);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 公平</span><br><span class="line">static final class FairSync extends Sync &#123;</span><br><span class="line">    private static final long serialVersionUID &#x3D; 2014338818796000944L;</span><br><span class="line"></span><br><span class="line">    FairSync(int permits) &#123;</span><br><span class="line">        super(permits);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 无限自旋直到CAS修改成功</span><br><span class="line">    protected int tryAcquireShared(int acquires) &#123;</span><br><span class="line">        for (;;) &#123;</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; 比非公平锁多了一个步骤，判断前面是否有人,如果前面有人就放弃</span><br><span class="line">            if (hasQueuedPredecessors())</span><br><span class="line">                return -1;</span><br><span class="line">            int available &#x3D; getState();</span><br><span class="line">            int remaining &#x3D; available - acquires;</span><br><span class="line">            if (remaining &lt; 0 ||</span><br><span class="line">                compareAndSetState(available, remaining))</span><br><span class="line">                return remaining;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>公平与非公平Sync逻辑几乎一样，只是公平锁在尝试获取资源的时候会先去判断前面是否已经有人，如果有人就放弃尝试，进入AQS的等待阻塞方法。而非公平锁不管前面有没有人都会尝试获取直到成功。</p>
+<h2 id="acquire-源码"><a href="#acquire-源码" class="headerlink" title="acquire()源码"></a>acquire()源码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">public void acquire() throws InterruptedException &#123;</span><br><span class="line">    sync.acquireSharedInterruptibly(1);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public final void acquireSharedInterruptibly(int arg)</span><br><span class="line">        throws InterruptedException &#123;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 先判断是否已经被中断        </span><br><span class="line">    if (Thread.interrupted())</span><br><span class="line">        throw new InterruptedException();</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 如果访问次数已经耗尽，进入doAcquireSharedInterruptibly()方法阻塞</span><br><span class="line">    if (tryAcquireShared(arg) &lt; 0)</span><br><span class="line"></span><br><span class="line">        &#x2F;*</span><br><span class="line">         * 源码就不贴了，AQS写好的方法:</span><br><span class="line">         * 排在等待队列的第一个，自旋等待直到重写方法tryAcquireShared(arg)返回值大于0跳出自旋</span><br><span class="line">         * 排在等待队列的第二个开始，直接挂起一边呆着去...</span><br><span class="line">         *&#x2F;</span><br><span class="line">        doAcquireSharedInterruptibly(arg);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这没啥好说的，只不过现在都是分布式项目，如果限流的目的是减少数据库或静态资源的访问，单靠Semaphore无法实现，还需要依靠基于Redis或Zookeeper的分布式锁实现，感觉用处不多。</p>
 
   
   
@@ -533,7 +556,7 @@
               
             
               
-                <p>本文永久链接是：<a href=http://yoursite.com/2020/03/16/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E5%9C%BA%E6%99%AF/>http://yoursite.com/2020/03/16/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E5%9C%BA%E6%99%AF/</a></p>
+                <p>本文永久链接是：<a href=http://yoursite.com/2020/03/13/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-Semaphore/>http://yoursite.com/2020/03/13/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-Semaphore/</a></p>
               
             
           </blockquote>
@@ -550,10 +573,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-19T16:45:31+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-11-10T15:43:28+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年10月19日</p>
+    <p>更新于：2020年11月10日</p>
   </a>
 </div>
 
@@ -572,7 +595,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/16/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E5%9C%BA%E6%99%AF/&title=多线程(十五) 常见问题场景 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/13/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-Semaphore/&title=多线程(十三) 同步工具类-Semaphore - 来杯冰镇可乐&summary="
           
           >
           
@@ -584,7 +607,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/16/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E5%9C%BA%E6%99%AF/&title=多线程(十五) 常见问题场景 - 来杯冰镇可乐&summary="
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/13/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-Semaphore/&title=多线程(十三) 同步工具类-Semaphore - 来杯冰镇可乐&summary="
           
           >
           
@@ -596,7 +619,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/16/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E5%9C%BA%E6%99%AF/&title=多线程(十五) 常见问题场景 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/13/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-Semaphore/&title=多线程(十三) 同步工具类-Semaphore - 来杯冰镇可乐&summary="
           
           >
           
@@ -626,11 +649,15 @@
   
     <div class="prev-next">
       
+        <a class='prev' href='/2020/03/14/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-Exchanger/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(十四) 同步工具类-Exchanger</p>
+          <p class='content'>简介Exchanger也是一个线程同步的辅助类，用于两个线程之间交换信息。通过exchange方法相互交换数据，如果第一个执行到exchange方法，会等待第二个线程执行exchange，当两个...</p>
+        </a>
       
-        <a class='next' href='/2020/03/15/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/'>
-          <p class='title'>多线程(十四) 性能调优<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>简介待更新
-</p>
+      
+        <a class='next' href='/2020/03/12/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CyclicBarrier/'>
+          <p class='title'>多线程(十二) 同步工具类-CyclicBarrier<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>基本概念CyclicBarrier是一个同步的辅助类，允许一组线程相互之间等待，并设置一个公共屏障点，当组内线程达到这个屏障点的时候阻塞，阻塞在这个屏障点的线程数达到指定数量时，释放所有线程继续...</p>
         </a>
       
     </div>
@@ -673,7 +700,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toc-text">基本概念</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">使用场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%84%E9%80%A0%E5%99%A8%E6%BA%90%E7%A0%81"><span class="toc-text">构造器源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Sync%E6%BA%90%E7%A0%81"><span class="toc-text">Sync源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AC%E5%B9%B3-%E9%9D%9E%E5%85%AC%E5%B9%B3Sync%E6%BA%90%E7%A0%81"><span class="toc-text">公平&#x2F;非公平Sync源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#acquire-%E6%BA%90%E7%A0%81"><span class="toc-text">acquire()源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol>
     </div>
   </section>
 
@@ -1309,5 +1336,7 @@ const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
 
     
   </div>
+
+  <script src="https://cdn.jsdelivr.net/gh/zyoushuo/Blog/hexo/js/mouse_click.js"></script>
 </body>
 </html>

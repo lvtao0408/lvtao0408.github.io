@@ -17,11 +17,11 @@
 
   <!-- 页面元数据 -->
   
-  <title>多线程(二) 并发编程三大特性 - 来杯冰镇可乐</title>
+  <title>多线程(十二) 同步工具类-CyclicBarrier - 来杯冰镇可乐</title>
   
 
   
-    <meta name="description" content="JMM在并发编程中，对共享变量读写的原子性、可见性、一致性">
+    <meta name="description" content="线程同步工具类CyclicBarrier的使用场景以及源码解析">
   
 
   <!-- feed -->
@@ -416,7 +416,7 @@
  
 <div id="pjax-data" style="display: none"> 
   <div id="pjax-ispage">true</div> 
-  <div id="pjax-pageTitle">多线程(二) 并发编程三大特性</div> 
+  <div id="pjax-pageTitle">多线程(十二) 同步工具类-CyclicBarrier</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -456,7 +456,7 @@
     
     
       <h1 class="title">
-        多线程(二) 并发编程三大特性
+        多线程(十二) 同步工具类-CyclicBarrier
       </h1>
       <div class='new-meta-box'>
         
@@ -487,7 +487,7 @@
             <div class="new-meta-item date">
   <a class='notlink'>
     <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
-    <p>发布于：2020年3月2日</p>
+    <p>发布于：2020年3月12日</p>
   </a>
 </div>
 
@@ -498,7 +498,7 @@
   <div class="new-meta-item browse leancloud">
     <a class='notlink'>
       
-      <div id="lc-pv" data-title="多线程(二) 并发编程三大特性" data-path="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/">
+      <div id="lc-pv" data-title="多线程(十二) 同步工具类-CyclicBarrier" data-path="/2020/03/12/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CyclicBarrier/">
         <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
         <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
         次浏览
@@ -515,56 +515,43 @@
 
 
   
-  <h2 id="CPU读写内存数据"><a href="#CPU读写内存数据" class="headerlink" title="CPU读写内存数据"></a>CPU读写内存数据</h2><p>计算机中程序的执行，本质上是线程指令在CPU处理器上的执行，并且在执行必然牵涉到数据的读和写，程序运行过程的临时数据都是存放在主内存(RAM)中，因此CPU在处理数据的时候也必然牵涉到和主内存的交互。处理器访问内存时，需要先获取内存总线的控制权，任何时刻只能有一个处理器获得内存总线的控制权，可以理解为同一时刻某个内存地址只可能被一个处理器访问。</p>
-<p>随着硬件技术的不断发展，现在的CPU处理速度已经远远超过主内存的访问速度，如果任何时候对数据的操作都要和内存进行交互，会大大降低指令的执行速度，因此就有了CPU高速缓存：<br><img src="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/CPU%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6.jpg" class="lazyload" data-srcset="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/CPU%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>高速缓存的产生大大减少了CPU直接访问主内存的频率，也减少了内存访问速度对CPU的拖累，提高了CPU的执行效率。如果是单核CPU的操作系统中，只有一个高速缓存，没有任何问题。但是在多核CPU的操作系统中，每个处理器都有自己的高速缓存，就带来了<span class="p red">缓存一致性问题</span>。</p>
-<p>比如i++操作，编译成指令后大概有三步骤：<br>1.将i=0从主内存复制到<br>2.对i进行加1运算<br>3.将运算后的值刷回</p>
-<p>在多线程编程情况下，如果我们不做任何措施，会导致运行结果与预期不一致：<br><img src="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/%E5%9B%BE.jpg" class="lazyload" data-srcset="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/%E5%9B%BE.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>对此，早期的解决方案是总线加锁，一个处理器在总线上输出LOCK#信号，使得其他处理器对内存的操作请求都会被阻塞，该处理器独占共享内存。方法简单粗暴，就是锁定范围太大(整个共享内存)，导致CPU利用率急剧下降。</p>
-<p>为了解决总线锁开销过大问题，CPU提出了缓存一致性解决方案，主要有Directory协议、Snoopy协议、MESI协议。这个说下MESI协议，这个协议只会对高速缓存中的某个数据加锁(如果数据不在缓存中，还是会总线加锁)，不会影响到内存中其他数据的读写。MESI协议将数据划分为四种状态，通过总线嗅探机制让所有处理器监听数据状态的变化，缓存一致的目的。</p>
-<p><img src="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/%E5%9B%BE.jpg" class="lazyload" data-srcset="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/%E5%9B%BE.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>我们重点关注一下修改缓存数据的情况，对于E状态的数据，只有自己在读，可以直接把数据设置为M状态，对于S状态的数据，说明有多个处理器在读，必须将其他处理器对此数据的缓存作废，然后才能把数据的状态设置为M。当其他处理器发现自己的缓存是I状态时，就去主内存再次读取，而MESI协议保证其他处理器去主内存读取此数据前，将修改后的数据从高速缓存刷回主内存，并把数据状态改为E。</p>
-<p>高并发情况下可能出现俩个处理器同时修改变量，并同时向总线发出将各自的缓存行更改为M状态的情况，此时总线会采取裁决机制进行裁决，将其中一个置为M状态，另一个置为I状态，且I状态的缓存行修改无效。</p>
-<h2 id="原子性"><a href="#原子性" class="headerlink" title="原子性"></a>原子性</h2><div class="note info"><p>原子性操作是指一个或多个操作，要么全部执行且在执行过程中不被任何因素打断，要么全部不执行。并且针对某个值的原子操作在被执行的过程中，CPU绝不会再去进行其他的针对该值的操作</p></div>
+  <h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><p>CyclicBarrier是一个同步的辅助类，允许一组线程相互之间等待，并设置一个公共屏障点，当组内线程达到这个屏障点的时候阻塞，阻塞在这个屏障点的线程数达到指定数量时，释放所有线程继续往下执行。CyclicBarrier在释放完线程后相当于重置之前的记录可以循环使用，所以称之为Cyclic(循环)Barrier(屏障)。</p>
+<h2 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h2><p>开发经历有限，目前为止还真没用过CyclicBarrier，一般场景使用CountDownLatch就够了，就随便写点吧。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">public class Test &#123;</span><br><span class="line"></span><br><span class="line">    private static CyclicBarrier cyclicBarrier &#x3D; new CyclicBarrier(5, new Runnable() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void run() &#123;</span><br><span class="line">            System.out.println(&quot;屏障点回调线程，执行者:&quot; + Thread.currentThread().getName());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line"></span><br><span class="line">        for(int i &#x3D; 0; i&lt; 5;i++)&#123;</span><br><span class="line"></span><br><span class="line">            Thread thread &#x3D; new Thread(new Runnable() &#123;</span><br><span class="line">                @Override</span><br><span class="line">                public void run() &#123;</span><br><span class="line">                    try &#123;</span><br><span class="line">                        System.out.println(Thread.currentThread().getName() + &quot;开始运行&quot;);</span><br><span class="line">                        cyclicBarrier.await();</span><br><span class="line">                        System.out.println(Thread.currentThread().getName() + &quot;结束运行&quot;);</span><br><span class="line">                    &#125; catch (Exception e) &#123;</span><br><span class="line">                        e.printStackTrace();</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line"></span><br><span class="line">            thread.setName(&quot;线程&quot; + i);</span><br><span class="line">            thread.start();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>java作为一门高级语言，一个可执行线程会被编译成多条指令序列交由CPU执行，既然是多条指令，在执行过程中就存在被上下文切换打断的可能。在多线程编程中如果有的操作不具有原子性，会导致运行结果与预期的不一致，比如i++操作：<br><img src="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/%E6%9A%82%E6%97%A0.jpg" class="lazyload" data-srcset="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/%E6%9A%82%E6%97%A0.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>CPU如何保证原子性？<br>首先，处理器自动保证单条指令、基本内存操作的原子性，因此中断只会发生在指令之间。在单核CPU中保证操作原子性非常简单，只要禁止CPU在原子操作过程中发生上下文切换，那么就可以保证多线程对某个公共变量的多步骤操作都是串行的。嗯，有点线程安全的味道了。到了多核CPU时代，仅仅保证原子操作的执行不被CPU打断已经没什么卵用了，因为多个线程可以并行执行修改一个公共变量，线程之间又出现了干扰。对此，CPU又提出了CAS来解决这个问题(CAS下一章会讲)。</p>
-<p>Java自带的原子性操作：</p>
-<ul>
-<li>基本数据类型的赋值(long、double无法保证)</li>
-<li>所有引用类型的赋值</li>
-<li>synchronized关键字(采用jvm的monitor，monitor底层采用CPU的CAS)</li>
-<li>Lock相关类(采用aqs，aqs底层采用CPU的CAS)</li>
-<li>java.concurrent.Atomic包下所有类(采用CPU的CAS)</li>
-</ul>
-<p>注:CPU和Java(内存读写)的原子性与数据库的原子性还是有区别的，CPU和Java(内存读写)执行原子操作过程中发生中断的唯一可能就是断电，这时候所有内存数据全部消失，也就没讨论的意义了。而数据库的增删改操作涉及的都是持久化的磁盘数据，就算执行过程发生断电，持久化的数据仍然存在，因此数据库的原子操作增加了事务回滚概念，只要事务没提交，就相当于没执行。无论CPU还是Java还是数据库，都是强调整体的成败，不允许仅执行部分操作的存在。</p>
-<h2 id="可见性"><a href="#可见性" class="headerlink" title="可见性"></a>可见性</h2><div class="note info"><p>可见性是指一个线程对共享变量的修改，其他线程可以立即感知到这个变化</p></div>
+<p>打印结果:<br>线程1开始运行<br>线程0开始运行<br>线程2开始运行<br>线程3开始运行<br>线程4开始运行<br>屏障点回调线程，执行者:线程4<br>线程4结束运行<br>线程1结束运行<br>线程0结束运行<br>线程2结束运行<br>线程3结束运行</p>
+<p>打印结果可以看出来，当指定数量(构造器参数决定)的线程到达屏障点(await代码行)后，才能继续往下执行。如果在构造器中指定了回调线程，还需要等待回调线程执行完才可以往下执行，回调线程由最后一个阻塞的线程执行。</p>
+<h2 id="构造器源码"><a href="#构造器源码" class="headerlink" title="构造器源码"></a>构造器源码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&#x2F;&#x2F; 设置屏障阈值</span><br><span class="line">public CyclicBarrier(int parties) &#123;</span><br><span class="line">    this(parties, null);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 设置屏障阈值，同时增加回调线程功能</span><br><span class="line">public CyclicBarrier(int parties, Runnable barrierAction) &#123;</span><br><span class="line">    if (parties &lt;&#x3D; 0) throw new IllegalArgumentException();</span><br><span class="line">    this.parties &#x3D; parties;</span><br><span class="line">    this.count &#x3D; parties;</span><br><span class="line">    this.barrierCommand &#x3D; barrierAction;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>可见性问题主要发生在多核CPU的场景中，如果线程对数据的读取都是通过内存实现，不会有任何可见性问题，因为上面说过某个内存地址任何时刻只会被一个处理器访问，但是高速缓存的诞生打破了这个规则，如果高速缓存中存在就从缓存访问，这就意味着某个内存数据可以被多个处理器同时访问。处理器对数据的修改在没有做任何措施的情况下，不会及时通知到其他处理器的缓存，这就导致其他处理器的数据是脏数据。比如i++操作：<br><img src="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/%E6%9A%82%E6%97%A0.jpg" class="lazyload" data-srcset="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/%E6%9A%82%E6%97%A0.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>CPU如何保证可见性？<br>这个很明显了，MESI缓存一致协议。</p>
-<p>Java自带的可见性操作：</p>
-<ul>
-<li>volatile关键字(采用MESI协议保证，如果数据不在缓存中就用总线锁)</li>
-<li>synchronized关键字(同一时刻就一个线程操作，还有啥不可见的)</li>
-<li>Lock相关类(跟synchronized一个套路)</li>
-</ul>
-<h2 id="有序性"><a href="#有序性" class="headerlink" title="有序性"></a>有序性</h2><div class="note info"><p>有序性是指程序按照写代码的顺序执行</p></div>
+<h2 id="成员变量"><a href="#成员变量" class="headerlink" title="成员变量"></a>成员变量</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&#x2F;&#x2F; lock对象</span><br><span class="line">private final ReentrantLock lock &#x3D; new ReentrantLock();</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 跳闸，可以理解为打开屏障</span><br><span class="line">private final Condition trip &#x3D; lock.newCondition();</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 屏障阈值</span><br><span class="line">private final int parties;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 回调线程</span><br><span class="line">private final Runnable barrierCommand;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 每次使用屏障都会生成，内部的broken标记屏障是否破损</span><br><span class="line">private Generation generation &#x3D; new Generation();</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 默认设置false</span><br><span class="line">private static class Generation &#123;</span><br><span class="line">    boolean broken &#x3D; false;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>处理器和编译器为了提高程序运行效率，可能会对输入代码进行优化，并且不保证程序中各个语句的执行先后顺序同代码中的顺序一致。当然，CPU和编译器是在遵循as-if-serial语意的前提下对指令重排，而不是随意重排。首先CPU保证调度线程过程中，单线程的执行结果不会受指令重排影响导致结果不一致，编译器保证编译过程中不会对有依赖关系的数据进行指令重排。由此看出多线程情况下还是会有问题：<br><img src="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/%E6%9A%82%E6%97%A0.jpg" class="lazyload" data-srcset="/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/%E6%9A%82%E6%97%A0.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>CPU如何保证有序性？<br>处理器主要通过内存屏障机制来解决有序性问题，如果不想让它重排，在两条指令中间加一道屏障。拿X86平台来说，有几种主要的内存屏障：</p>
-<ul>
-<li>lfence，是一种Load Barrier(读屏障)，在lfence指令前的所有读操作当必须在lfence指令后的所有读操作前完成</li>
-<li>sfence, 是一种Store Barrier(写屏障)，在sfence指令前的所有写操作当必须在sfence指令后的所有写操作前完成</li>
-<li>mfence, 是一种General Barrier(通用屏障)，在mfence指令前的所有读写操作当必须在mfence指令后的所有读写操作前完成</li>
-<li>除了内存屏障，也可以使用原子指令，如x86上的”lock…”前缀</li>
-</ul>
-<p>Java自带的有序性操作：</p>
-<ul>
-<li>volatile关键字(内存屏障)</li>
-<li>synchronized关键字(单线程操作，as-if-serial语意自动保证)</li>
-<li>Lock相关类(单线程操作，as-if-serial语意自动保证)</li>
-</ul>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>原子性、可见性、有序性问题是一切线程安全问题的根源，单纯的保证操作具有某一种特性只能解决某一部分场景问题。Java提供了很多类以及修饰符，提供了不同维度的保证，底层也都是封装CPU提供的措施来实现。</p>
+<h2 id="await-源码"><a href="#await-源码" class="headerlink" title="await()源码"></a>await()源码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 内部调用dowait()方法，并且参数传false，不支持超时</span><br><span class="line">    public int await() throws InterruptedException, BrokenBarrierException &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            return dowait(false, 0L);</span><br><span class="line">        &#125; catch (TimeoutException toe) &#123;</span><br><span class="line">            throw new Error(toe); &#x2F;&#x2F; cannot happen</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 真正进入等待的逻辑</span><br><span class="line">    private int dowait(boolean timed, long nanos)</span><br><span class="line">        throws InterruptedException, BrokenBarrierException,</span><br><span class="line">               TimeoutException &#123;</span><br><span class="line">    final ReentrantLock lock &#x3D; this.lock;</span><br><span class="line">    &#x2F;&#x2F; 获取排他锁</span><br><span class="line">    lock.lock();</span><br><span class="line">    try &#123;</span><br><span class="line">        final Generation g &#x3D; generation;</span><br><span class="line">        &#x2F;&#x2F; 屏障被破坏则抛异常</span><br><span class="line">        if (g.broken)</span><br><span class="line">            throw new BrokenBarrierException();</span><br><span class="line"></span><br><span class="line">        if (Thread.interrupted()) &#123;</span><br><span class="line">            &#x2F;&#x2F; 线程中断 则退出屏障</span><br><span class="line">            breakBarrier();</span><br><span class="line">            throw new InterruptedException();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 到达屏障的计数-1</span><br><span class="line">        int index &#x3D; --count;      </span><br><span class="line">        if (index &#x3D;&#x3D; 0) &#123;  &#x2F;&#x2F; tripped</span><br><span class="line">            &#x2F;&#x2F; index &#x3D;&#x3D; 0, 说明指定 count 的线程均到达屏障，此时可以打开屏障</span><br><span class="line">            boolean ranAction &#x3D; false;</span><br><span class="line">            try &#123;</span><br><span class="line">                final Runnable command &#x3D; barrierCommand;</span><br><span class="line">                if (command !&#x3D; null)</span><br><span class="line">                    &#x2F;&#x2F; 若指定了 barrierCommand 则执行</span><br><span class="line">                    command.run();</span><br><span class="line">                ranAction &#x3D; true;</span><br><span class="line">                &#x2F;&#x2F; 唤醒阻塞在屏障的线程并重置 generation</span><br><span class="line">                nextGeneration();</span><br><span class="line">                return 0;</span><br><span class="line">            &#125; finally &#123;</span><br><span class="line">                if (!ranAction)</span><br><span class="line">                    breakBarrier();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; loop until tripped, broken, interrupted, or timed out</span><br><span class="line">        for (;;) &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                if (!timed)</span><br><span class="line">                    &#x2F;&#x2F; 若未指定阻塞在屏障处的等待时间，则一直等待；直至最后一个线程到达屏障处的时候被唤醒</span><br><span class="line">                    trip.await();</span><br><span class="line">                else if (nanos &gt; 0L)</span><br><span class="line">                    &#x2F;&#x2F; 若指定了阻塞在屏障处的等待时间，则在指定时间到达时会返回</span><br><span class="line">                    nanos &#x3D; trip.awaitNanos(nanos);</span><br><span class="line">            &#125; catch (InterruptedException ie) &#123;</span><br><span class="line">                if (g &#x3D;&#x3D; generation &amp;&amp; ! g.broken) &#123;</span><br><span class="line">                    &#x2F;&#x2F; 若等待过程中，线程发生了中断，则退出屏障</span><br><span class="line">                    breakBarrier();</span><br><span class="line">                    throw ie;</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    &#x2F;&#x2F; We&#39;re about to finish waiting even if we had not</span><br><span class="line">                    &#x2F;&#x2F; been interrupted, so this interrupt is deemed to</span><br><span class="line">                    &#x2F;&#x2F; &quot;belong&quot; to subsequent execution.</span><br><span class="line">                    Thread.currentThread().interrupt();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; 屏障被破坏 则抛出异常</span><br><span class="line">            if (g.broken)</span><br><span class="line">                throw new BrokenBarrierException();</span><br><span class="line"></span><br><span class="line">            if (g !&#x3D; generation)</span><br><span class="line">                &#x2F;&#x2F; g !&#x3D; generation 说明所有线程均到达屏障处 可直接返回</span><br><span class="line">                &#x2F;&#x2F; 因为所有线程到达屏障处的时候，会重置 generation</span><br><span class="line">                &#x2F;&#x2F; 参考 nextGeneration</span><br><span class="line">                return index;</span><br><span class="line"></span><br><span class="line">            if (timed &amp;&amp; nanos &lt;&#x3D; 0L) &#123;</span><br><span class="line">                &#x2F;&#x2F; 说明指定时间内，还有线程未到达屏障处，也就是等待超时</span><br><span class="line">                &#x2F;&#x2F; 退出屏障</span><br><span class="line">                breakBarrier();</span><br><span class="line">                throw new TimeoutException();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; finally &#123;</span><br><span class="line">        lock.unlock();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="nextGeneration-源码"><a href="#nextGeneration-源码" class="headerlink" title="nextGeneration()源码"></a>nextGeneration()源码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">private void nextGeneration() &#123;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 唤醒阻塞在等待队列的线程</span><br><span class="line">    trip.signalAll();</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 重置 count</span><br><span class="line">    count &#x3D; parties;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 重置 generation</span><br><span class="line">    generation &#x3D; new Generation();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="breakBarrier-源码"><a href="#breakBarrier-源码" class="headerlink" title="breakBarrier()源码"></a>breakBarrier()源码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">private void breakBarrier() &#123;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; broken 设置为 true</span><br><span class="line">    generation.broken &#x3D; true;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 重置 count</span><br><span class="line">    count &#x3D; parties;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 唤醒等待队列的线程</span><br><span class="line">    trip.signalAll();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="reset-源码"><a href="#reset-源码" class="headerlink" title="reset()源码"></a>reset()源码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">final ReentrantLock lock &#x3D; this.lock;</span><br><span class="line">lock.lock();</span><br><span class="line">try &#123;</span><br><span class="line">    &#x2F;&#x2F; 唤醒阻塞的线程</span><br><span class="line">    breakBarrier();   &#x2F;&#x2F; break the current generation</span><br><span class="line">    &#x2F;&#x2F; 重新设置 generation</span><br><span class="line">    nextGeneration(); &#x2F;&#x2F; start a new generation</span><br><span class="line">&#125; finally &#123;</span><br><span class="line">    lock.unlock();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>CyclicBarrier依赖与Lock与Condition实现，await()方法使用Lock进行互斥，Condition对象负责挂起被屏障挡住的线程。Lock与Condition底层是基于AQS的，所以CyclicBarrier还是通过AQS实现。</p>
+<p>CyclicBarrier内部有个屏障是否被打破的概念，维护在内部类Generation的broken属性中(默认是false)，并且可以通过breakBarrier()方法进行打破(修改为true)，调用这个方法的地方有三个，检测到中断、等待超时、reset()方法。当某个线程在等待过程中被中断或超时，会直接抛中断异常退出等待，不会对count执行-1操作，这会导致同一组线程会无限等待下去，因为count值永远无法到达0。使用reset()方法会重置count值，为了避免重置时还有残余线程没执行到await()方法，干扰重置后的count值导致下一轮提前结束。当遇到这些情况时，CyclicBarrier会修改broken=true来通知其他线程不要再等下去了。</p>
+<p>CountDownLatch与CyclicBarrier区别:</p>
+<table>
+<thead>
+<tr>
+<th>CountDownLatch</th>
+<th>CyclicBarrier</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一个线程(或多个)线程等待另N个线程完成某事后才能继续执行</td>
+<td>N个线程相互在某个点等待，知道所有线程都到达这个点解除等待</td>
+</tr>
+<tr>
+<td>无法重复利用，没有提供state属性的重置方法</td>
+<td>可以重复利用，提供reset()方法重置</td>
+</tr>
+</tbody></table>
 
   
   
@@ -582,7 +569,7 @@
               
             
               
-                <p>本文永久链接是：<a href=http://yoursite.com/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/>http://yoursite.com/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/</a></p>
+                <p>本文永久链接是：<a href=http://yoursite.com/2020/03/12/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CyclicBarrier/>http://yoursite.com/2020/03/12/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CyclicBarrier/</a></p>
               
             
           </blockquote>
@@ -599,10 +586,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-19T15:51:20+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-11-10T15:19:10+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年10月19日</p>
+    <p>更新于：2020年11月10日</p>
   </a>
 </div>
 
@@ -621,7 +608,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/&title=多线程(二) 并发编程三大特性 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/12/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CyclicBarrier/&title=多线程(十二) 同步工具类-CyclicBarrier - 来杯冰镇可乐&summary="
           
           >
           
@@ -633,7 +620,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/&title=多线程(二) 并发编程三大特性 - 来杯冰镇可乐&summary="
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/12/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CyclicBarrier/&title=多线程(十二) 同步工具类-CyclicBarrier - 来杯冰镇可乐&summary="
           
           >
           
@@ -645,7 +632,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/&title=多线程(二) 并发编程三大特性 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/12/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CyclicBarrier/&title=多线程(十二) 同步工具类-CyclicBarrier - 来杯冰镇可乐&summary="
           
           >
           
@@ -675,21 +662,15 @@
   
     <div class="prev-next">
       
-        <a class='prev' href='/2020/03/03/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%92%8C%E5%B8%B8%E7%94%A8%E6%96%B9%E6%B3%95/'>
-          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(三) 生命周期和常用方法</p>
-          <p class='content'>线程状态以及转化NEW(新建)
-使用new创建出线程后，进入新建状态
-此时jvm为其分配内存以及其成员变量
-除此之外没有任何特征，方法也不会被执行
-
-RUNNABLE(就绪)
-调用对象的star...</p>
+        <a class='prev' href='/2020/03/13/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-Semaphore/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(十三) 同步工具类-Semaphore</p>
+          <p class='content'>基本概念Semaphore也是一个线程同步的辅助类，在多线程环境下用于协调各个线程, 以保证它们能够正确、合理的使用公共资源。信号量维护了一个许可集，我们在初始化Semaphore时需要为这个许...</p>
         </a>
       
       
-        <a class='next' href='/2020/03/01/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/'>
-          <p class='title'>多线程(一) 基本概念<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>进程操作系统进行资源分配和调度的基本单位，每一个进程都是一个应用程序的执行实例，比如我们启动的一个java项目就是一个jvm进程，操作系统为jvm分配运行内存等资源，进程中包含一个或多个线程，线...</p>
+        <a class='next' href='/2020/03/11/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-CountDownLatch/'>
+          <p class='title'>多线程(十一) 同步工具类-CountDownLatch<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>基本概念CountDownLatch是一种线程同步工具类，它允许一个或多个线程等待直到在其他线程中一组操作执行完成。你可以把它理解为一个计数器，对象被创建的时候指定总数，每有一个线程到达指定条件...</p>
         </a>
       
     </div>
@@ -732,7 +713,7 @@ RUNNABLE(就绪)
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#CPU%E8%AF%BB%E5%86%99%E5%86%85%E5%AD%98%E6%95%B0%E6%8D%AE"><span class="toc-text">CPU读写内存数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8E%9F%E5%AD%90%E6%80%A7"><span class="toc-text">原子性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E8%A7%81%E6%80%A7"><span class="toc-text">可见性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%89%E5%BA%8F%E6%80%A7"><span class="toc-text">有序性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toc-text">基本概念</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">使用场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%84%E9%80%A0%E5%99%A8%E6%BA%90%E7%A0%81"><span class="toc-text">构造器源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F"><span class="toc-text">成员变量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#await-%E6%BA%90%E7%A0%81"><span class="toc-text">await()源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#nextGeneration-%E6%BA%90%E7%A0%81"><span class="toc-text">nextGeneration()源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#breakBarrier-%E6%BA%90%E7%A0%81"><span class="toc-text">breakBarrier()源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#reset-%E6%BA%90%E7%A0%81"><span class="toc-text">reset()源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol>
     </div>
   </section>
 

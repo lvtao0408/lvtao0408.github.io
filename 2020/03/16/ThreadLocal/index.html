@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.0.0'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+
+  <!-- 页面元数据 -->
+  
+  <title>多线程(十六) ThreadLocal - 来杯冰镇可乐</title>
+  
+
+  
+    <meta name="description" content="ThreadLocal线程局部变量的使用以及原理">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css">
+
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/l-lin/font-awesome-animation/dist/font-awesome-animation.min.css">
+
+  
+
+  
+
+  
+    <link rel="shortcut icon" type='image/x-icon' href="https://cdn.jsdelivr.net/gh/xaoxuu/assets@master/favicon/favicon.ico">
+  
+
+  
+
+  
+
+  <!-- import link -->
+  
+
+  
+  
+    
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  <!-- 脚本懒加载函数 -->
+  <script>
+  function loadScript(src, cb) {
+    var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+    var script = document.createElement('script');
+    script.setAttribute('type','text/javascript');
+    if (cb) script.onload = cb;
+    script.setAttribute('src', src);
+    HEAD.appendChild(script);
+  }
+  //https://github.com/filamentgroup/loadCSS
+  !function(c){"use strict";var e=function(e,t,n,r){var o,i=c.document,a=i.createElement("link");if(t)o=t;else{var d=(i.body||i.getElementsByTagName("head")[0]).childNodes;o=d[d.length-1]}var f=i.styleSheets;if(r)for(var l in r)r.hasOwnProperty(l)&&a.setAttribute(l,r[l]);a.rel="stylesheet",a.href=e,a.media="only x",function e(t){if(i.body)return t();setTimeout(function(){e(t)})}(function(){o.parentNode.insertBefore(a,t?o:o.nextSibling)});var s=function(e){for(var t=a.href,n=f.length;n--;)if(f[n].href===t)return e();setTimeout(function(){s(e)})};function u(){a.addEventListener&&a.removeEventListener("load",u),a.media=n||"all"}return a.addEventListener&&a.addEventListener("load",u),(a.onloadcssdefined=s)(u),a};"undefined"!=typeof exports?exports.loadCSS=e:c.loadCSS=e}("undefined"!=typeof global?global:this);
+  </script>
+  <script id="loadcss"></script>
+</head>
+
+<body>
+  <header class="l_header auto shadow blur " style='opacity: 0' >
+  <div class='container'>
+  <div class='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a class="s-comment fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+          
+            <i class='fas fa-anchor'></i>
+          
+          
+            Zoke
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-home fa-fw'></i>首页
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-bug fa-fw'></i>日记
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" 
+                  
+                  
+                  >
+                  <i class='fas fa-bahai fa-fw'></i>娱乐
+                </a>
+                
+                  <ul class="list-v">
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-camera-retro fa-fw'></i>相册
+                </a>
+                
+              </li>
+            
+          
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-guitar fa-fw'></i>视频
+                </a>
+                
+              </li>
+            
+          
+                    
+                  </ul>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-home fa-fw'></i>首页
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-bug fa-fw'></i>日记
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" 
+                  
+                  
+                  >
+                  <i class='fas fa-bahai fa-fw'></i>娱乐
+                </a>
+                
+                  <ul class="list-v">
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-camera-retro fa-fw'></i>相册
+                </a>
+                
+              </li>
+            
+          
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-guitar fa-fw'></i>视频
+                </a>
+                
+              </li>
+            
+          
+                    
+                  </ul>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+  <div class="l_body">
+    <div class="l_cover">
+  
+    
+    
+        <div class='cover-wrapper post search' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://cdn.jsdelivr.net/gh/volantis-x/cdn-wallpaper-minimalist@1.0.0/2020/001.jpg"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">冰镇可乐</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <input type="text" class="input u-search-input" placeholder="search you want .." />
+          <i class="icon fas fa-search fa-fw"></i>
+        </form>
+      </div>
+    
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div class="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+  
+    <div class='safearea'>
+      <div class='body-wrapper' id="pjax-container">
+        
+          <!--此文件用来存放一些不方便取值的变量--> 
+<!--思路大概是将值藏到重加载的区域内--> 
+ 
+ 
+ 
+<div id="pjax-data" style="display: none"> 
+  <div id="pjax-ispage">true</div> 
+  <div id="pjax-pageTitle">多线程(十六) ThreadLocal</div> 
+  <div id="pjax-enable-cover">true</div> 
+  <div id="pjax-comment-path"></div> 
+  <div id="pjax-comment-placeholder"></div> 
+</div> 
+ 
+ 
+<script> 
+  // 处理封面 此时 jquery 还没加载 
+  if ("none" == "none") { // 移除封面 
+    document.getElementsByClassName('cover-wrapper')[0].style.display = "none"; 
+    document.getElementsByClassName('l_header', 'cover-wrapper')[0].classList.add("show"); 
+  } else { 
+    if ("none" == "half") { // 半屏 
+      document.getElementsByClassName('cover-wrapper')[0].setAttribute('id', 'half'); 
+      document.getElementsByClassName('scroll-down')[0].style.display = "none"; 
+    } else if ("none" == "full") { // 全屏 
+      document.getElementsByClassName('cover-wrapper')[0].setAttribute('id', 'full'); 
+      document.getElementsByClassName('scroll-down')[0].style.display = ""; 
+    } 
+    document.getElementsByClassName('cover-wrapper')[0].style.display = ""; 
+    document.getElementsByClassName('l_header', 'cover-wrapper')[0].classList.remove("show"); 
+  } 
+</script> 
+ 
+
+        
+        
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        多线程(十六) ThreadLocal
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+<div class='new-meta-item author'>
+  <a class='author' href="/" rel="nofollow">
+    <img no-lazy src="">
+    <p>lvtao</p>
+  </a>
+</div>
+
+          
+        
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
+    </a>
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2020年3月16日</p>
+  </a>
+</div>
+
+          
+        
+          
+            
+  <div class="new-meta-item browse leancloud">
+    <a class='notlink'>
+      
+      <div id="lc-pv" data-title="多线程(十六) ThreadLocal" data-path="/2020/03/16/ThreadLocal/">
+        <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
+        <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
+        次浏览
+      </div>
+    </a>
+  </div>
+
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>ThreadLocal用于存储线程的局部变量，通过为每个线程提供一个独立的变量副本解决了变量并发访问的冲突问题，每个线程都可以通过set()和get()来对这个局部变量进行操作，但不会和其他线程的局部变量进行冲突，实现了线程的数据隔离。ThreadLocal诞生于JDK 1.2，直到JDK5.0开始支持范型。</p>
+<h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h2><p>ThreadLocal的应用场景比较广泛，例如web项目中登陆信息的存储、IOC中Request作用域的实现、Spring事物管理的实现、线程同步工具Exchanger的实现等。除了登录信息的存储以外，其他的多多少少都是涉及到底层的源码，写出来篇幅太大，所以下面简单讲述一下如何使用ThreadLocal存储登陆信息。</p>
+<p>一般浏览器发送http请求到后端服务器，都会将用户信息的token以cookie或header形式携带过去，并在后端拦截器中对token校验是否合法。如果请求的接口中需要用到一次或多次用户信息(比如ID、名称、生日、职级等)进行业务处理，这就需要将用户信息从controller一层一层作为参数传递下去，这无疑增加了代码的复杂程度，重点是不够优雅，使用ThreadLocal完全可以避免这个问题。</p>
+<p><strong>1.用户信息对象:</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">@Data</span><br><span class="line">@ToString</span><br><span class="line">public class UserInfo &#123;</span><br><span class="line"></span><br><span class="line">    private Long id;</span><br><span class="line"></span><br><span class="line">    private Long deptId;</span><br><span class="line"></span><br><span class="line">    private String name;</span><br><span class="line"></span><br><span class="line">    private String phone;</span><br><span class="line"></span><br><span class="line">    private String email;</span><br><span class="line"></span><br><span class="line">    private String birthday;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>2.创建一个ThreadLocal封装类，内部定义一个私有ThreadLocal并对外提供get、set方法:</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">public class UserInfoThreadLocal &#123;</span><br><span class="line"></span><br><span class="line">    private static final ThreadLocal&lt;UserInfo&gt; threadLocal &#x3D; new ThreadLocal&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    public static void set(UserInfo value)&#123;</span><br><span class="line">        threadLocal.set(value);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static UserInfo get()&#123;</span><br><span class="line">        return threadLocal.get();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static UserInfo getAndValidate()&#123;</span><br><span class="line"></span><br><span class="line">        UserInfo userInfo &#x3D; get();</span><br><span class="line">        if(userInfo &#x3D;&#x3D; null)&#123;</span><br><span class="line">            &#x2F;&#x2F; 抛业务异常</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        return userInfo;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>3.拦截器负责校验信息，并将合法的用户信息注册到ThreadLocal中:</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">@Component</span><br><span class="line">public class LoginInfoInterceptor implements HandlerInterceptor &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">        String token &#x3D; request.getHeader(&quot;token&quot;);</span><br><span class="line">        if(StringUtils.isEmpty(token))&#123;</span><br><span class="line">            &#x2F;&#x2F; 抛业务异常</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 模拟查询用户信息</span><br><span class="line">        UserInfo userInfo &#x3D; new UserInfo();</span><br><span class="line">        userInfo.setId(323L);</span><br><span class="line">        userInfo.setDeptId(542L);</span><br><span class="line">        userInfo.setPhone(&quot;110&quot;);</span><br><span class="line">        userInfo.setEmail(&quot;110@163.com&quot;);</span><br><span class="line">        userInfo.setBirthday(&quot;1995-12-20&quot;);</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 放入UserInfoThreadLocal</span><br><span class="line">        UserInfoThreadLocal.set(userInfo);</span><br><span class="line"></span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>4.web项目的controller层，获取并打印拦截器查询并校验通过的用户信息:</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">@RestController</span><br><span class="line">public class TestController &#123;</span><br><span class="line"></span><br><span class="line">    @Autowired</span><br><span class="line">    private TestService testService;</span><br><span class="line"></span><br><span class="line">    @RequestMapping(&quot;&#x2F;test&quot;)</span><br><span class="line">    public void test()&#123;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 获取用户信息并打印</span><br><span class="line">        UserInfo userInfo &#x3D; UserInfoThreadLocal.getAndValidate();</span><br><span class="line">        System.out.println(&quot;controller:&quot; + JSONObject.toJSONString(userInfo));</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 调用service</span><br><span class="line">        testService.testQuery();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>5.web项目的service层，获取并打印拦截器查询并校验通过的用户信息:</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">@Service</span><br><span class="line">public class TestServiceImpl implements TestService &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void testQuery() &#123;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 获取用户信息并打印</span><br><span class="line">        UserInfo userInfo &#x3D; UserInfoThreadLocal.getAndValidate();</span><br><span class="line">        System.out.println(&quot;testQuery:&quot; + JSONObject.toJSONString(userInfo));</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 调用私有方法</span><br><span class="line">        testMethod();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void testMethod()&#123;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 获取用户信息并打印</span><br><span class="line">        UserInfo userInfo &#x3D; UserInfoThreadLocal.getAndValidate();</span><br><span class="line">        System.out.println(&quot;testMethod:&quot; + JSONObject.toJSONString(userInfo));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p><strong>打印结果:</strong><br>controller:{“birthday”:”1995-12-20”,”deptId”:542,”email”:”<a href="mailto:&#49;&#49;&#x30;&#x40;&#x31;&#54;&#x33;&#46;&#x63;&#111;&#109;">&#49;&#49;&#x30;&#x40;&#x31;&#54;&#x33;&#46;&#x63;&#111;&#109;</a>“,”id”:323,”phone”:”110”}<br>testQuery:{“birthday”:”1995-12-20”,”deptId”:542,”email”:”<a href="mailto:&#x31;&#49;&#x30;&#64;&#x31;&#54;&#x33;&#x2e;&#99;&#x6f;&#109;">&#x31;&#49;&#x30;&#64;&#x31;&#54;&#x33;&#x2e;&#99;&#x6f;&#109;</a>“,”id”:323,”phone”:”110”}<br>testMethod:{“birthday”:”1995-12-20”,”deptId”:542,”email”:”<a href="mailto:&#49;&#x31;&#x30;&#x40;&#49;&#x36;&#x33;&#46;&#99;&#x6f;&#109;">&#49;&#x31;&#x30;&#x40;&#49;&#x36;&#x33;&#46;&#99;&#x6f;&#109;</a>“,”id”:323,”phone”:”110”}</p>
+<span class="p red">从上面的Demo代码可以看出来，只要在拦截器层面对token的验证通过，并将用户信息存储在创建的ThreadLocal<UserInfo>对象中，就可以在任何逻辑层、任何方法直接获取用户信息，提高了代码的简介程度。</UserInfo></span>
+
+<h2 id="存储原理"><a href="#存储原理" class="headerlink" title="存储原理"></a>存储原理</h2><p>Thread类中有个成员变量threadLocals，这个变量的引用类型是ThreadLocal中的一个内部类ThreadLocalMap，这个类没有实现Map接口，本质上是一个table数组，数组中每个元素都是K-V键值对组成的Entry对象，其中K就是ThreadLocal实例，V就是要存储的局部变量对象。<br><img src="/2020/03/16/ThreadLocal/threadLocals-%E7%BB%93%E6%9E%84%E5%9B%BE.png" class="lazyload" data-srcset="/2020/03/16/ThreadLocal/threadLocals-%E7%BB%93%E6%9E%84%E5%9B%BE.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<h2 id="源码解析"><a href="#源码解析" class="headerlink" title="源码解析"></a>源码解析</h2><h3 id="hash算法"><a href="#hash算法" class="headerlink" title="hash算法"></a>hash算法</h3><p>ThreadLocalMap的存储逻辑和HashMap有一些相似的地方，内部都是维护一个Entry类型数组，然后通过对key的哈希码进行位与运算，定位出存储的数组坐标。ThreadLocal作为key提供的哈希码查询方法并非hashCode()，而是通过成员变量threadLocalHashCode去表达。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">public class ThreadLocal&lt;T&gt; &#123;</span><br><span class="line">    &#x2F;&#x2F; 哈希码</span><br><span class="line">    private final int threadLocalHashCode &#x3D; nextHashCode();</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 下一个哈希码</span><br><span class="line">    private static AtomicInteger nextHashCode &#x3D;</span><br><span class="line">        new AtomicInteger();</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 哈希码递增跨度值</span><br><span class="line">    private static final int HASH_INCREMENT &#x3D; 0x61c88647;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 哈希码递增方法 </span><br><span class="line">    private static int nextHashCode() &#123;</span><br><span class="line">        return nextHashCode.getAndAdd(HASH_INCREMENT);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>存储哈希码的成员变量threadLocalHashCode被final修饰，也就意味着实例被创建时内部threadLocalHashCode固定为nextHashCode()方法返回的值。这个方法很有意思，每次调用都是将nextHashCode递增0x61c88647，并返回递增后的值。按照这个设计逻辑，每次创建的ThreadLocal实例的哈希值都是不同的，都会比上一次的哈希值高0x61c88647，并且考虑到会被多个线程创建，使用AtomicInteger维护递增值确保线程安全。</p>
+<p>因此线程的threadLocals值必须由同一个实例进行存取，这样才能定位到同一个数组下坐标，这也是上述的例子中把ThreadLocal设计成static、final的原因。</p>
+<h3 id="set-源码"><a href="#set-源码" class="headerlink" title="set()源码"></a>set()源码</h3><p>ThreadLocal的set方法:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">public void set(T value) &#123;</span><br><span class="line">    &#x2F;&#x2F; 获取调用set方法的当前线程</span><br><span class="line">    Thread t &#x3D; Thread.currentThread();</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 获取当前线程的threadLocals属性</span><br><span class="line">    ThreadLocalMap map &#x3D; getMap(t);</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 如果已经初始化，继续往里面增加键值对</span><br><span class="line">    if (map !&#x3D; null)</span><br><span class="line">        map.set(this, value);</span><br><span class="line">    &#x2F;&#x2F; 如果没有初始化，创建一个ThreadLocalMap并增加一个键值对</span><br><span class="line">    else</span><br><span class="line">        createMap(t, value);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果ThreadLocalMap为null，调用createMap()初始化:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&#x2F;&#x2F; 为调用set方法的当前线程初始化threadLocals属性</span><br><span class="line">void createMap(Thread t, T firstValue) &#123;</span><br><span class="line">    &#x2F;&#x2F; 使用带参数构造器</span><br><span class="line">    t.threadLocals &#x3D; new ThreadLocalMap(this, firstValue);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; ThreadLocalMap重载构造器 </span><br><span class="line">ThreadLocalMap(ThreadLocal&lt;?&gt; firstKey, Object firstValue) &#123;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 初始化table数组容量为16</span><br><span class="line">    table &#x3D; new Entry[INITIAL_CAPACITY];</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 对key的hashCode进行位与运算取余数，计算出存储到table数组的坐标</span><br><span class="line">    int i &#x3D; firstKey.threadLocalHashCode &amp; (INITIAL_CAPACITY - 1);</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 将Entry插入ThreadLocalMap中，Entry构造器没啥复杂逻辑，不写了</span><br><span class="line">    table[i] &#x3D; new Entry(firstKey, firstValue);</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 此时长度固定为1，因为就一个Entry</span><br><span class="line">    size &#x3D; 1;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 这个方法是设置ThreadLocalMap扩容的阈值(固定为容量的2&#x2F;3)，类似HashMap的负载因子</span><br><span class="line">    setThreshold(INITIAL_CAPACITY);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果Map已经被初始化，调用set()方法添加一个键值对:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">private void set(ThreadLocal&lt;?&gt; key, Object value) &#123;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 获取Entry类型数组</span><br><span class="line">    Entry[] tab &#x3D; table;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 获取数组长度</span><br><span class="line">    int len &#x3D; tab.length;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 对哈希值使用位与运算定位到存储的数组坐标计作i</span><br><span class="line">    int i &#x3D; key.threadLocalHashCode &amp; (len-1);</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 将i坐标在数据中的值取出，赋值给e</span><br><span class="line">    &#x2F;&#x2F; 即使ThreadLocal实例的哈希值不同，位与运算后仍然会计算出相同的数组坐标，只要计算出的坐标已存储元素，for循环就继续下去</span><br><span class="line">    &#x2F;&#x2F; 每次循环完将i值重新赋值为i+1(如果+1后下标越界则赋值0)，并将新赋值的i坐标对应的数组元素赋值给e</span><br><span class="line"></span><br><span class="line">    &#x2F;**</span><br><span class="line">     * 1.每次循环取出数组坐标i对应的值，赋值给e</span><br><span class="line">     * 2.虽然每个ThreadLocal实例的哈希值不同，但是经过位于运算后仍然会冲突，并且数组中每个坐标只会存储一个对象，</span><br><span class="line">     *   不会像HashMap那样相同坐标使用链表或红黑树存储。</span><br><span class="line">     * 3.如果通过i取出的Entry为空，则跳出for循环</span><br><span class="line">     * 4.如果通过i取出的Entry不为空，进入循环体的逻辑处理，并且在处理完后对i+1操作(如果+1之后大于等于数组长度则设置为0)</span><br><span class="line">     *&#x2F;</span><br><span class="line">    for (Entry e &#x3D; tab[i];     </span><br><span class="line">    e !&#x3D; null; </span><br><span class="line">    e &#x3D; tab[i &#x3D; nextIndex(i, len)]) &#123;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 执行到这里，说明数组下坐标i对应的Entry不为空，将Entry的key提取出来</span><br><span class="line">        ThreadLocal&lt;?&gt; k &#x3D; e.get();</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 如果提取出来的key与需要set的key地址一致，直接覆盖其value</span><br><span class="line">        if (k &#x3D;&#x3D; key) &#123;</span><br><span class="line">            e.value &#x3D; value;</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 如果e!&#x3D;null &amp;&amp; k&#x3D;&#x3D;null，说明k已经被垃圾回收了(涉及到弱引用后面讲)</span><br><span class="line">        if (k &#x3D;&#x3D; null) &#123;</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; k被回收，所在的e也没有存在的意义了，将需要设置的key、value覆盖到e中，覆盖完返回</span><br><span class="line">        replaceStaleEntry(key, value, i);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 到这里说明i的值已经递增到对应下坐标为null了，直接new一个Entry存储进去</span><br><span class="line">    tab[i] &#x3D; new Entry(key, value);</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 数组长度+1</span><br><span class="line">    int sz &#x3D; ++size;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 如果新增后数组的长度超过阈值，进行扩容</span><br><span class="line">    if (!cleanSomeSlots(i, sz) &amp;&amp; sz &gt;&#x3D; threshold)</span><br><span class="line">        rehash();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果Entry不是null，但是内部的key(ThreadLocal实例)已经为null，那么这个Entry也没有任何存在的意义，因为没有任何途径能拿到此Entry的value。这时候就需要调用replaceStaleEntry()方法将此Entry重新利用起来:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">private void replaceStaleEntry(ThreadLocal&lt;?&gt; key, Object value,int staleSlot) &#123;</span><br><span class="line"></span><br><span class="line">    Entry[] tab &#x3D; table;</span><br><span class="line">    int len &#x3D; tab.length;</span><br><span class="line">    Entry e;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; staleSlot代表key为null的Entry所在的数组坐标，赋值给slotToExpunge</span><br><span class="line">    int slotToExpunge &#x3D; staleSlot;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 对数组从slotToExpunge坐标向前遍历，查询所有Entry不为null的元素</span><br><span class="line">    for (int i &#x3D; prevIndex(staleSlot, len);</span><br><span class="line">        (e &#x3D; tab[i]) !&#x3D; null;</span><br><span class="line">        i &#x3D; prevIndex(i, len))</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; 如果此Entry的key引用是null，则将当前坐标赋值给slotToExpunge，</span><br><span class="line">        &#x2F;&#x2F; 可以理解为循环结束后，slotToExpunge的值会变为table数组中，key为null的元素中，对应数组坐标最小的那个</span><br><span class="line">        if (e.get() &#x3D;&#x3D; null)</span><br><span class="line">            slotToExpunge &#x3D; i;</span><br><span class="line"></span><br><span class="line">    for (int i &#x3D; nextIndex(staleSlot, len);</span><br><span class="line">        (e &#x3D; tab[i]) !&#x3D; null;</span><br><span class="line">        i &#x3D; nextIndex(i, len)) &#123;</span><br><span class="line">        ThreadLocal&lt;?&gt; k &#x3D; e.get();</span><br><span class="line"></span><br><span class="line">        if (k &#x3D;&#x3D; key) &#123;</span><br><span class="line">            e.value &#x3D; value;</span><br><span class="line"></span><br><span class="line">            tab[i] &#x3D; tab[staleSlot];</span><br><span class="line">            tab[staleSlot] &#x3D; e;</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; Start expunge at preceding stale entry if it exists</span><br><span class="line">            if (slotToExpunge &#x3D;&#x3D; staleSlot)</span><br><span class="line">                slotToExpunge &#x3D; i;</span><br><span class="line">            cleanSomeSlots(expungeStaleEntry(slotToExpunge), len);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (k &#x3D;&#x3D; null &amp;&amp; slotToExpunge &#x3D;&#x3D; staleSlot)</span><br><span class="line">            slotToExpunge &#x3D; i;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; If key not found, put new entry in stale slot</span><br><span class="line">    tab[staleSlot].value &#x3D; null;</span><br><span class="line">    tab[staleSlot] &#x3D; new Entry(key, value);</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; If there are any other stale entries in run, expunge them</span><br><span class="line">    if (slotToExpunge !&#x3D; staleSlot)</span><br><span class="line">        cleanSomeSlots(expungeStaleEntry(slotToExpunge), len);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="get-源码"><a href="#get-源码" class="headerlink" title="get()源码"></a>get()源码</h3><h2 id="内存泄漏"><a href="#内存泄漏" class="headerlink" title="内存泄漏"></a>内存泄漏</h2>
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+        <div class='copyright'>
+          <blockquote>
+            
+              
+                <p>博客内容遵循 署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</p>
+
+              
+            
+              
+                <p>本文永久链接是：<a href=http://yoursite.com/2020/03/16/ThreadLocal/>http://yoursite.com/2020/03/16/ThreadLocal/</a></p>
+              
+            
+          </blockquote>
+        </div>
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-11-19T22:54:07+08:00">
+  <a class='notlink'>
+    <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
+    <p>更新于：2020年11月19日</p>
+  </a>
+</div>
+
+        
+      
+        
+          
+
+        
+      
+        
+          
+  <div class="new-meta-item share -mob-share-list">
+  <div class="-mob-share-list share-body">
+    
+      
+        <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/03/16/ThreadLocal/&title=多线程(十六) ThreadLocal - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+        <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/03/16/ThreadLocal/&title=多线程(十六) ThreadLocal - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+        <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/03/16/ThreadLocal/&title=多线程(十六) ThreadLocal - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2020/03/17/%E7%BA%BF%E7%A8%8B%E6%B1%A0/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(十七) 线程池</p>
+          <p class='content'>简介待更新
+</p>
+        </a>
+      
+      
+        <a class='next' href='/2020/03/15/%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7%E7%B1%BB-Phaser/'>
+          <p class='title'>多线程(十五) 同步工具类-Phaser<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>简介Phaser表示阶段器，用来解决控制多个线程分阶段共同完成任务的情景问题。它的功能与 CyclicBarrier和CountDownLatch有些类似，类似于一个多阶段的栅栏，并且功能更强大。
+</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">应用场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E5%8E%9F%E7%90%86"><span class="toc-text">存储原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90"><span class="toc-text">源码解析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#hash%E7%AE%97%E6%B3%95"><span class="toc-text">hash算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#set-%E6%BA%90%E7%A0%81"><span class="toc-text">set()源码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#get-%E6%BA%90%E7%A0%81"><span class="toc-text">get()源码</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F"><span class="toc-text">内存泄漏</span></a></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+        
+      </div>
+      
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+          
+            
+          
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.0.0" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p><a href="/">Copyright © 2017-2020 XXX</a></p>
+
+        </div>
+      
+    
+  </footer>
+
+
+      <a class="s-top fas fa-arrow-up fa-fw" href='javascript:void(0)'></a>
+    </div>
+  </div>
+  <div>
+    <!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    setTimeout(function() {
+      loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+    }, 1);
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+</script>
+
+
+<!-- internal -->
+
+
+
+
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+  
+    <script>
+      window.FPConfig = {
+        delay: 0,
+        ignoreKeywords: [],
+        maxRPS: 5,
+        hoverDelay: 25
+      };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  var GUEST_INFO = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link'.split(',').filter(function (item) {
+    return GUEST_INFO.indexOf(item) > -1
+  });
+  var REQUIRED_FIELDS = ['nick', 'mail', 'link'];
+  var requiredFields = 'nick,mail'.split(',').filter(function (item) {
+    return REQUIRED_FIELDS.indexOf(item) > -1
+  });
+
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+
+    let pagePlaceholder = $.trim($('#pjax-comment-placeholder').text()) || "快来评论吧~";
+
+    let path = $.trim($('#pjax-comment-path').text());
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+
+    var valine = new Valine();
+    valine.init({
+      el: '#valine_container',
+      meta: meta,
+      placeholder: pagePlaceholder,
+      path: path,
+      appId: "",
+      appKey: "",
+      pageSize: '10',
+      avatar: 'robohash',
+      lang: 'zh-cn',
+      visitor: 'true',
+      highlight: 'true',
+      mathJax: 'false',
+      enableQQ: 'true',
+      recordIP: 'false',
+      requiredFields: requiredFields,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps
+    })
+  }
+
+  $(function () {
+    pjax_valine();
+  });
+</script>
+
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+
+  
+    
+<script src="/js/search.js"></script>
+
+  
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+(function ($) {
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+})(jQuery);
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'http://yoursite.com' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'http://yoursite.com' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'http://yoursite.com' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+<!-- more -->
+
+
+    
+      
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+<!-- 样式位于：source/css/_third-party/pjaxanimate.styl -->
+
+<div class="pjax-animate">
+  
+    <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
+    <div id="loading-bar-wrapper"><script>NProgress.configure({parent:"#loading-bar-wrapper",trickleSpeed: 100})</script></div>
+    <script>
+      window.ShowLoading = function() {
+        NProgress.start();
+      };
+      window.HideLoading = function() {
+        NProgress.done();
+      }
+    </script>
+  
+</div>
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+      $('.l_header .switcher .s-search').removeClass('active'); // 关闭移动端激活的搜索框
+      $('.l_header').removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      $('.wrapper').removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      $('.s-top').unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+      window.ShowLoading();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      // 关于百度统计对 SPA 页面的处理：
+      // 方案一：百度统计>管理>单页应用设置中，打开开启按钮即可对SPA进行统计。 https://tongji.baidu.com/web/help/article?id=324
+      // 方案二：取消注释下列代码。 https://tongji.baidu.com/web/help/article?id=235
+      // 
+
+      // 关于谷歌统计对 SPA 页面的处理：
+      // 当应用以动态方式加载内容并更新地址栏中的网址时，也应该更新通过 gtag.js 存储的网页网址。
+      // https://developers.google.cn/analytics/devguides/collection/gtagjs/single-page-applications?hl=zh-cn
+      
+
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+          if (typeof $.fancybox == "undefined") {
+            SCload_fancybox();
+          } else {
+            pjax_fancybox();
+          }
+        
+        
+        
+        
+        
+        
+          pjax_valine();
+        
+        
+        
+        
+        
+      } catch (e) {
+        console.log(e);
+      }
+      window.HideLoading();
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+      window.HideLoading();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+
+    
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/gh/zyoushuo/Blog/hexo/js/mouse_click.js"></script>
+</body>
+</html>
