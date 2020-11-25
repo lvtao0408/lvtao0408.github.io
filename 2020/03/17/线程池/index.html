@@ -542,7 +542,7 @@
 <p><font size="4"><b>ThreadPoolExecutor:</b></font></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public class ThreadPoolExecutor extends AbstractExecutorService&#123;</span><br><span class="line">	&#x2F;&#x2F; 各种方法...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>ThreadPoolExecutor是一个普通类，也是我们使用线程池时需要创建的实例，内部继承了AbstractExecutorService抽象类，也就意味着它包含了以上介绍的所有接口(除了ScheduledExecutorService)的处理逻辑，也是本章节要着重要分析的类。</p>
+<p>ThreadPoolExecutor是一个普通类，也是我们使用线程池时需要创建的实例，内部集成了AbstractExecutorService抽象类，也就意味着它包含了以上介绍的所有接口(除了ScheduledExecutorService)的处理逻辑，也是本章节要着重要分析的类。</p>
 <p><font size="4"><b>ScheduledThreadPoolExecutor:</b></font></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public class ScheduledThreadPoolExecutor</span><br><span class="line">	extends ThreadPoolExecutor</span><br><span class="line">	implements ScheduledExecutorService &#123;</span><br><span class="line">	&#x2F;&#x2F; 属性方法..</span><br><span class="line">       &#125;</span><br></pre></td></tr></table></figure>
 
@@ -582,7 +582,7 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-11-25T15:39:42+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-11-25T15:42:15+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2020年11月25日</p>
