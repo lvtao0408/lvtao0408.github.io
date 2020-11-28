@@ -534,7 +534,7 @@
 <h2 id="并发与并行"><a href="#并发与并行" class="headerlink" title="并发与并行"></a>并发与并行</h2><p>单CPU操作系统中多个线程同时运行，实质上是交替占有CPU使用权的过程，同时运行只是CPU处理过快造成的错觉，这种现象可以称作为<span class="p red">线程并发运行</span>。</p>
 <p>到了多CPU时代才实现真正意义上的多线程同时运行，比如4颗CPU的操作系统可以做到4个线程的同时运行，但是操作系统中可能有很多线程需要被执行，比如有16个线程在运行，那么平均4个线程仍然要争夺一个CPU的使用权，只是同一时刻必然有4个争夺到使用权，这种现象称作为<span class="p red">线程并行运行</span>。</p>
 <p>由此可以看出，操作系统中CPU的数量对多线程编程非常重要。因此项目开发中要尽量参考所在服务器的CPU配置，作出适当的线程池参数以避免频繁的上下文切换带来的性能损耗。同样在选取机器配置上尽量考虑放置服务的线程特点，比如存放redis服务选用多处理器的CPU没有任何意义，redis永远只在一个处理器上面运行。</p>
-<h2 id="线程安全"><a href="#线程安全" class="headerlink" title="线程安全"></a>线程安全</h2><p>线程安全问题</p>
+<h2 id="线程安全"><a href="#线程安全" class="headerlink" title="线程安全"></a>线程安全</h2><p>在开发中使用过线程都知道，多线程编程需要面对线程安全问题，而线程安全问题归根结底就三个方面:可见性、原子性、有序性，下一章节会详细讲解这些问题。</p>
 
   
   
@@ -569,10 +569,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-19T15:50:50+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-11-28T17:15:11+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年10月19日</p>
+    <p>更新于：2020年11月28日</p>
   </a>
 </div>
 
@@ -647,7 +647,9 @@
       
         <a class='prev' href='/2020/03/02/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7/'>
           <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(二) 并发编程三大特性</p>
-          <p class='content'>CPU读写内存数据计算机中程序的执行，本质上是线程指令在CPU处理器上的执行，并且在执行必然牵涉到数据的读和写，程序运行过程的临时数据都是存放在主内存(RAM)中，因此CPU在处理数据的时候也必...</p>
+          <p class='content'>可见性可见性是指一个线程对共享变量的修改，其他线程可以立即感知到这个变化
+
+计算机中程序的执行，本质上是线程指令在CPU处理器上的执行，并且在执行必然牵涉到数据的读和写，程序运行过程的临时数据都...</p>
         </a>
       
       

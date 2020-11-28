@@ -568,13 +568,29 @@
 <p><font size="4"><b>DelayQueue(延迟队列):</b></font><br>此队列中在长度方面没有任何限制，因此往队列插入元素时不会产生任何阻塞，如果线程池任务想要加入此队列除了要实现Runnable接口外，还需要实现Delayed接口。获取元素时，只有当元素的延迟时间到了才可以从队列中获取到该元素，否则会进入阻塞。</p>
 <p><font size="4"><b>PriorityBlockingQueue(优先级队列):</b></font><br>此队列在长度方面仍然没有限制，插入元素操作也不会产生任何阻塞，如果线程池任务想要加入此队列除了要实现Runnable接口外，还需要实现Compator接口。在使用没有容量限制的队列时一定要注意，插入元素的速度绝对不能大于消费元素的速度，否则随着时间的积累，会耗尽系统的内存资源造成内存泄漏。</p>
 <p><font size="4"><b>SynchronousQueue(无缓冲等待队列):</b></font><br>队列中仅保存一个元素，只有对列为空才可以添加元素，之后只有等待元素被消费才可以继续添加。拥有公平(FIFO)和非公平(LIFO)策略，可以在创建时指定。</p>
-<h2 id="拒绝策略"><a href="#拒绝策略" class="headerlink" title="拒绝策略"></a>拒绝策略</h2><p>线程池的饱和策略，当阻塞队列满了，且没有空闲的工作线程，如果继续提交任务，必须采取一种策略处理该任务，线程池提供了4种策略:</p>
-<p><font size="4"><b>AbortPolicy:</b></font></p>
-<p><font size="4"><b>DiscardPolicy:</b></font></p>
-<p><font size="4"><b>DiscardOldestPolicy:</b></font></p>
-<p><font size="4"><b>CallerRunsPolicy:</b></font></p>
-<p><font size="4"><b>自定义:</b></font></p>
-<h2 id="参数调优"><a href="#参数调优" class="headerlink" title="参数调优"></a>参数调优</h2><h2 id="springboot集成"><a href="#springboot集成" class="headerlink" title="springboot集成"></a>springboot集成</h2><h2 id="多个线程池兼容"><a href="#多个线程池兼容" class="headerlink" title="多个线程池兼容"></a>多个线程池兼容</h2>
+<h2 id="拒绝策略"><a href="#拒绝策略" class="headerlink" title="拒绝策略"></a>拒绝策略</h2><p>线程池的饱和策略，当阻塞队列满了，且没有空闲的工作线程，如果继续提交任务，必须采取一种策略处理该任务。拒绝策略并不是设置就一定生效，比如阻塞队列选择无界的情况下，基本上队列堆积的任务没有到达Inteher.MAX_VALUE时，内存就爆了。java提供了四种线程池拒绝策略，当然你也可以通过继承这四个策略类，或者实现RejectedExecutionHandler接口自定义拒绝策略:</p>
+<p><font size="4"><b>AbortPolicy(异常中止策略):</b></font><br>直接抛出RejectedExecutionException异常，也是线程池的默认拒绝策略。这种策略使用的时候要处理好抛出的异常，避免调用线程池的主线程因为异常打断后续的执行流程。</p>
+<p><font size="4"><b>DiscardPolicy(丢弃策略):</b></font><br>直接丢弃任务，因为此类在实现RejectedExecutionHandler接口并重写的rejectedExecution方法中啥都没做。如果你提交的任务无关紧要，可以选择使用此策略，我个人感觉这个策略几乎用不上，但凡有点良心的开发都会打印一行日志意思意思…</p>
+<p><font size="4"><b>DiscardOldestPolicy(弃老策略):</b></font><br>放弃阻塞队列中最靠前的任务，并尝试让线程池执行当前线程。这种策略仍然会悄悄的丢掉任务，只不过保证新产生的任务优先执行，应该是满足特定场景使用的吧。</p>
+<p><font size="4"><b>CallerRunsPolicy(调用者运行策略):</b></font><br>当触发拒绝策略时，只要线程池没有关闭，就由提交任务的当前线程处理。原理是直接运行Runnable的run()方法，直接调用run()的方式都懂得，会阻塞调用者直到执行完毕。<br>这种方式看似比较稳妥，能保证所有的任务都会被执行，但是拒绝策略的rejectedExecution()方法是包含在线程池的execute()方法中调用，execute()在执行过程中会占用一条线程，如果多个线程进入此阻塞策略并且线程执行时间过长，会严重影响线程池处理任务的吞吐量。因此这种策略一般在不允许失败、对性能要求不高、并发亮较小的场景下使用。</p>
+<p><font size="4"><b>自定义:</b></font><br>如果以上四种策略无法满足你的需求，那就需要考虑自定义策略了。比如dubbo的工作线程池自定义的拒绝策略是继承AbortPolicy类，打印完日志后调用父类抛异常、比如ActiveMQ中的拒绝策略属于最大努力执行任务型，当触发拒绝策略时，在尝试一分钟的时间重新将任务塞进任务队列，当一分钟超时还没成功时，就抛出异常。</p>
+<h2 id="参数设置"><a href="#参数设置" class="headerlink" title="参数设置"></a>参数设置</h2><p>线程池的使用难度不大，但用好线程池就需要对常用参数的含义有一定的理解，并且要考虑到应用程序所在服务器的CPU配置、任务的执行特点、任务执行过程中的内存使用率等，如果任务中涉及下游服务的调用，还要考虑到下游服务的抗并发能力等。可以将线程池要执行的任务进行分类:</p>
+<p><font size="4"><b>CPU密集型:</b></font><br>例如内存中的计算、比较、转化等，尽量使用较小的线程池，一般为CPU核心数+1。即使当计算密集型的线程偶尔由于缺失故障或者其他原因而暂停时，这个额外的线程也能确保CPU的时钟周期不会被浪费。因为CPU密集型任务使得CPU使用率很高，尽量减少线程之间竞争引起的上下文切换带来的资源浪费。</p>
+<p><font size="4"><b>IO密集型:</b></font><br>例如网络IO(调用其他服务或接口)、磁盘IO(读写文件)等，可以使用稍大的线程池，一般为2*CPU核心数+1(如果调用下游服务还要考虑抗并发因素)。因为IO操作期间不占用CPU，不要让CPU闲下来，应加大线程数量，因此可以让CPU在等待IO的时候去处理别的任务，充分利用CPU时间。</p>
+<p><font size="4"><b>混合型:</b></font><br>可以将任务分成IO密集型和CPU密集型任务，然后分别用不同的线程池去处理。只要分完之后两个任务的执行时间相差不大，那么就会比串行执行来的高效。 </p>
+<span class="p red">注:通过公式推算出的线程池参数仅仅只是理想状态下的最优方案，实际最优参数需要根据服务器运行情况比，如线程执行过程中占用CPU时间、最大线程数峰值、拒绝策略出现频率等不断调整参数。</span>
+
+<h2 id="springboot线程池"><a href="#springboot线程池" class="headerlink" title="springboot线程池"></a>springboot线程池</h2><p><font size="4"><b>配置自定义线程池:</b></font></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">@Configuration</span><br><span class="line">@EnableAsync</span><br><span class="line">public class ThreadPoolConfig implements AsyncConfigurer &#123;</span><br><span class="line"></span><br><span class="line">	&#x2F;**</span><br><span class="line">     * 自定义线程池，若不重写会使用默认的线程池</span><br><span class="line">     *&#x2F;</span><br><span class="line">    @Bean(&quot;asyncExecutor&quot;)</span><br><span class="line">    @Override</span><br><span class="line">    public Executor getAsyncExecutor() &#123;</span><br><span class="line">        ThreadPoolTaskExecutor asyncExecutor &#x3D; new ThreadPoolTaskExecutor();</span><br><span class="line">        asyncExecutor.setCorePoolSize(16);</span><br><span class="line">        asyncExecutor.setMaxPoolSize(32);</span><br><span class="line">        asyncExecutor.setKeepAliveSeconds(180);</span><br><span class="line">        asyncExecutor.setQueueCapacity(200);</span><br><span class="line">        asyncExecutor.setThreadNamePrefix(&quot;buss-thread&quot;); &#x2F;&#x2F; 线程命名前缀</span><br><span class="line">        asyncExecutor.initialize();</span><br><span class="line">        return asyncExecutor;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;**</span><br><span class="line">     * 自定义拒绝策略</span><br><span class="line">     *&#x2F;</span><br><span class="line">    @Override</span><br><span class="line">    public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() &#123;</span><br><span class="line"></span><br><span class="line">        return new AbortPolicy();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<span class="p red">注: @EnableAsync注解一定要加，否则线程池异步调用不生效。</span>
+
+<p><font size="4"><b>配置异步任务:</b></font></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">@Service</span><br><span class="line">public class UserServiceImpl implements UserService &#123;</span><br><span class="line"></span><br><span class="line">	@Override</span><br><span class="line">    public void updateById(UserTo to) &#123;</span><br><span class="line">        &#x2F;&#x2F; ...</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">	@Async</span><br><span class="line">    @Override</span><br><span class="line">    public void asyncUpdateById(UserTo to) &#123;</span><br><span class="line">        updateById(to);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Async</span><br><span class="line">    @Override</span><br><span class="line">    public Future&lt;Boolean&gt; asyncUpdateById(UserTo to) &#123;</span><br><span class="line"></span><br><span class="line">    	try&#123;</span><br><span class="line">			updateById(to);</span><br><span class="line">		&#125; catch()&#123;</span><br><span class="line">			return new AsyncResult&lt;&gt;(Boolean.FALSE);</span><br><span class="line">		&#125;</span><br><span class="line">		return new AsyncResult&lt;&gt;(Boolean.TRUE);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果想要使用异步方式调用某个方法，只需要加上@Async注解即可，如果需要返回值必须使用Future<T>，其他返回值类型在调用后会立刻返回null，如果不需要返回值直接将方法返回值设置为void。最好封装一个异步方法，减少对原始方法的破坏，避免其他非异步使用的线程调用后返回null导致程序错误。</T></p>
+<span class="p red">注:如果应用配置了多个线程池，则需要在@Async注解的value属性中指定线程池Bean名称，没有指定的情况下使用默认线程池(@primary注解的bean)</span>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2>
   
   
     
@@ -608,10 +624,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-11-27T14:15:48+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-11-28T13:59:53+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年11月27日</p>
+    <p>更新于：2020年11月28日</p>
   </a>
 </div>
 
@@ -684,12 +700,6 @@
   
     <div class="prev-next">
       
-        <a class='prev' href='/2020/03/18/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/'>
-          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>多线程(十八) 性能调优</p>
-          <p class='content'>简介待更新
-</p>
-        </a>
-      
       
         <a class='next' href='/2020/03/16/ThreadLocal/'>
           <p class='title'>多线程(十六) ThreadLocal<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
@@ -736,7 +746,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%A7%E6%89%BF%E4%BD%93%E7%B3%BB"><span class="toc-text">继承体系</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%84%E9%80%A0%E5%99%A8%E5%8F%82%E6%95%B0"><span class="toc-text">构造器参数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97"><span class="toc-text">阻塞队列</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8B%92%E7%BB%9D%E7%AD%96%E7%95%A5"><span class="toc-text">拒绝策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E6%95%B0%E8%B0%83%E4%BC%98"><span class="toc-text">参数调优</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#springboot%E9%9B%86%E6%88%90"><span class="toc-text">springboot集成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E4%B8%AA%E7%BA%BF%E7%A8%8B%E6%B1%A0%E5%85%BC%E5%AE%B9"><span class="toc-text">多个线程池兼容</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%A7%E6%89%BF%E4%BD%93%E7%B3%BB"><span class="toc-text">继承体系</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%84%E9%80%A0%E5%99%A8%E5%8F%82%E6%95%B0"><span class="toc-text">构造器参数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97"><span class="toc-text">阻塞队列</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8B%92%E7%BB%9D%E7%AD%96%E7%95%A5"><span class="toc-text">拒绝策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E6%95%B0%E8%AE%BE%E7%BD%AE"><span class="toc-text">参数设置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#springboot%E7%BA%BF%E7%A8%8B%E6%B1%A0"><span class="toc-text">springboot线程池</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol>
     </div>
   </section>
 
