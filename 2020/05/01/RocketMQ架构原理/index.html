@@ -5,8 +5,6 @@
   <!-- SEO相关 -->
   
     
-      <meta name="robots" content="noindex,follow">
-    
   
   <!-- 渲染优化 -->
   <meta name="renderer" content="webkit">
@@ -19,9 +17,11 @@
 
   <!-- 页面元数据 -->
   
-  <title>归档：2020/2 - 来杯冰镇可乐</title>
+  <title>RocketMQ(一)架构原理 - 来杯冰镇可乐</title>
   
 
+  
+    <meta name="description" content="RocketMQ的核心组件、消息领域模型、架构图讲解">
   
 
   <!-- feed -->
@@ -371,7 +371,7 @@
   
     
     
-        <div class='cover-wrapper  search' style="display: none;">
+        <div class='cover-wrapper post search' style="display: none;">
           
             <div class='cover-bg lazyload placeholder' data-bg="https://cdn.jsdelivr.net/gh/volantis-x/cdn-wallpaper-minimalist@1.0.0/2020/001.jpg"></div>
           
@@ -415,8 +415,8 @@
  
  
 <div id="pjax-data" style="display: none"> 
-  <div id="pjax-ispage">false</div> 
-  <div id="pjax-pageTitle"></div> 
+  <div id="pjax-ispage">true</div> 
+  <div id="pjax-pageTitle">RocketMQ(一)架构原理</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -446,70 +446,241 @@
         
 
 <div class='l_main'>
-	
-		
-  <section class="post-list">
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
     
-      
+    
+    
+      <h1 class="title">
+        RocketMQ(一)架构原理
+      </h1>
+      <div class='new-meta-box'>
         
           
+            
+<div class='new-meta-item author'>
+  <a class='author' href="/" rel="nofollow">
+    <img no-lazy src="">
+    <p>lvtao</p>
+  </a>
+</div>
+
+          
         
-      
-    
-    
-      
-        
-          <div class='post-wrapper'>
-            <div class="post post-v3 white-box reveal shadow">
-  
-  
-  
-  
-    
-    <h2 class="article-title" >
-      <a href="/2020/02/01/%E5%AD%97%E8%8A%82%E6%B5%81/">
-        IO流(一) 字节流
-      </a>
-    </h2>
-  
-  <div class='md'>
-    
-      <p>测试用</p>
-    
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/">消息中间件</a><span class="sep"></span><a class="category-link" href="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/RocketMQ/">RocketMQ</a>
+    </a>
   </div>
-  
-    <div class='meta-v3' line_style='solid'>
-      <div>
+
+
+          
         
-        <time>2020-02-01</time>
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2020年5月1日</p>
+  </a>
+</div>
+
+          
         
-          <span class="dot"></span>
-          <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/IO%E6%B5%81/">IO流</a>
+          
+            
+  <div class="new-meta-item browse leancloud">
+    <a class='notlink'>
+      
+      <div id="lc-pv" data-title="RocketMQ(一)架构原理" data-path="/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/">
+        <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
+        <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
+        次浏览
+      </div>
+    </a>
+  </div>
+
+
+          
         
       </div>
+    
+  </div>
+
+
+  
+  <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>RocketMQ是阿里巴巴开源的消息中间件，使用Java语言开发，具有高吞吐量、高可用性，适合大规模分布式系统应用的特点。设计方面参考了kafka的整体机制和架构设计，并在此基础上添加了分布式事务、定时消息、消费失败重试、回溯消息等功能，虽然在吞吐量上无法企及kafka，但是扩展的诸多功能相对于kafka来说，更能胜任电商、金融等领域的复杂业务场景。</p>
+<h2 id="核心组件"><a href="#核心组件" class="headerlink" title="核心组件"></a>核心组件</h2><p><font size="4"><b>Broker:</b></font><br>Broker是集群中最核心的，也是最复杂的组件，负责消息的存储、投递、查询，以及保证服务的高可用，支持容错机制、灾备机制、报警机制和丰富的监控指标。</p>
+<p><font size="4"><b>NameServer:</b></font><br>NameServer可以看作是RocketMQ的注册中心，类似于Dubbo、kafka的注册中心zookeeper，broker启动后会将自身管理的topic-queue信息注册到NameServer，为Producer或Consumer提供路由。</p>
+<p>Name Server集群实例之间不会互相通讯，但是Broker会向所有的Name注册路由信息，所以每个NameServer实例上都保存了完整的路由信息。</p>
+<p><font size="4"><b>Producer:</b></font><br>Producer是发布消息的角色，在程序启动后通过NameServer获取所有Broker的路由信息，通过多种负载均衡的方式，选择相应的Broker Server 集群中的Queue发送消息。Producer 在发送消息时，支持快速失败，并且是低延迟的。</p>
+<p><font size="4"><b>Consumer:</b></font><br>Consumer是消费消息的角色，支持PUSH和PULL两种获取消息模式，支持集群和广播两种消费消息模式。</p>
+<h2 id="消息领域模型"><a href="#消息领域模型" class="headerlink" title="消息领域模型"></a>消息领域模型</h2><p><font size="4"><b>Topic:</b></font><br>Topic的作用是将整个RocketMQ集群的消息进行划分，使不同类型的消息区分开来，以便于消费者针对不同的消息类型做不同的业务处理。</p>
+<p><font size="4"><b>Tag:</b></font><br>Tag可以看作是消息的二级分类，一般在相同业务模块中通过引入标签来标记不同用途的消息，另外RocketMQ允许消费者按照Tag对消息进行过滤，也可以通过Tag过滤不需要的数据。</p>
+<p><font size="4"><b>Message:</b></font><br>Message就是我们发送或消费的消息，用户在发送消息的时候可以设置messageKey，也就是消息的唯一识别MessageId，便于后续的查询和追踪。</p>
+<p><font size="4"><b>Producer Group:</b></font><br>开发者在启动Producer时可以指定一个生产组，如果没有指定会自动生成一个。Producer Group的作用是将多个Producer融合成一个整体，将发送消息的任务负载均衡到多个Producer并行执行，提高生产者的执行效率，也方便后续的水平扩展。</p>
+<p><font size="4"><b>Consumer Group:</b></font><br>Consumer Group的基本思想与Producer Group一致，不过消费者可以指定消息模式为广播，脱离消费组的束缚。</p>
+<h2 id="部署模型"><a href="#部署模型" class="headerlink" title="部署模型"></a>部署模型</h2><p><img src="/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/RocketMQ%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%E5%9B%BE.png" class="lazyload" data-srcset="/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/RocketMQ%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%E5%9B%BE.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p><font size="4"><b>Broker特点:</b></font><br>Broker服务分为Master与Slave，一个Master可以对应多个Slaver，Master与Slaver的对应关系通过指定相同的BrokerName、不同的BrokerId来定义，BrokerId为0表示Master，非0表示Slaver。</p>
+<p><font size="4"><b>Producer特点:</b></font><br>Producer服务会随机与NameServer集群中的一个节点建立长连接，定期从NameServer获取topic-queue路由信息，然后与topic-queue所在的 BrokerServer的Master节点建立长连接，并且会定时向Master发送心跳。Producer集群完全是无状态的，可以随意集群部署。</p>
+<p><font size="4"><b>Consumer特点:</b></font><br>Consumer服务会随机与NameServer集群中的一个节点建立长连接，定期从NameServer获取topic-queue路由信息，然后与topic-queue所在的BrokerServer的Master节点建立长连接，并且会定时向Master和Salve发送心跳。</p>
+<p>Consumer既可以从Master订阅消息，也可以从Salve订阅消息，Consumer在获取消息的时候，BrokerServer的Master节点会根据获取消息的偏移量与最大偏移量的距离、服务器是否可读等因素建议Consumer下次是从 Master或者Salve获取消息(太TM会玩了)。</p>
+<h2 id="topic分布"><a href="#topic分布" class="headerlink" title="topic分布"></a>topic分布</h2><p>待写</p>
+<h2 id="消息流转"><a href="#消息流转" class="headerlink" title="消息流转"></a>消息流转</h2><p>待写</p>
+<h2 id="与kafka对比"><a href="#与kafka对比" class="headerlink" title="与kafka对比"></a>与kafka对比</h2><p>任何技术的好与坏、快与慢等评价维度都是相对的，这就需要我们在学习一项技术时尽量寻找一个与之相似的技术对比学习，很显然Kakfa是学习RocketMQ的最佳比较对象，本篇文章介绍的是RocketMQ的架构原理，就从这个层面总结一下区别:</p>
+<p><font size="4"><b>注册中心:</b></font><br>待写</p>
+<p><font size="4"><b>副本机制:</b></font><br>待写</p>
+
+  
+  
+    
+    <div class='footer'>
       
-        <div>
-          <a class='readmore' href='/2020/02/01/%E5%AD%97%E8%8A%82%E6%B5%81/'>
-            阅读全文
-          </a>
+      
+      
+        <div class='copyright'>
+          <blockquote>
+            
+              
+                <p>博客内容遵循 署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</p>
+
+              
+            
+              
+                <p>本文永久链接是：<a href=http://yoursite.com/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/>http://yoursite.com/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/</a></p>
+              
+            
+          </blockquote>
         </div>
+      
       
     </div>
   
+  
+    
 
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-01T21:29:49+08:00">
+  <a class='notlink'>
+    <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
+    <p>更新于：2020年12月1日</p>
+  </a>
 </div>
 
-          </div>
         
       
+        
+          
+
+        
+      
+        
+          
+  <div class="new-meta-item share -mob-share-list">
+  <div class="-mob-share-list share-body">
     
-  </section>
-  
+      
+        <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/&title=RocketMQ(一)架构原理 - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
     
-  
+      
+        <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/&title=RocketMQ(一)架构原理 - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+        <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/&title=RocketMQ(一)架构原理 - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
 
 
-	
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2020/05/03/RocketMQ%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>RocketMQ(二)服务部署</p>
+          <p class='content'>前言坎坎坷坷坎坎坷坷坎坎坷坷坎坎坷坷看看看坎坎坷坷坎坎坷坷坎坎坷坷坎坎坷坷看看看坎坎坷坷坎坎坷坷坎坎坷坷坎坎坷坷看看看坎坎坷坷坎坎坷坷坎坎坷坷坎坎坷坷看看看坎坎坷坷坎坎坷坷坎坎坷坷坎坎坷坷看看看
+</p>
+        </a>
+      
+      
+        <a class='next' href='/2020/03/17/%E7%BA%BF%E7%A8%8B%E6%B1%A0/'>
+          <p class='title'>多线程(十七) 线程池<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>简介解释线程池之前要先说一下池化技术，池化技术简单点来说，就是提前保存大量的资源，以备不时之需。而线程池就是利用池化技术保存线程资源的容器，同样也是Java多线程编程的重要基础。
+多线程优点:
+...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
 </div>
 <aside class='l_side'>
   
@@ -517,173 +688,19 @@
     
     
 
-<section class="widget shadow desktop">
-  
-  <header>
-    
-      <i class="fas fa-award fa-fw" aria-hidden="true"></i><span class='name'>站点信息</span>
-    
-  </header>
 
 
-  <div class='content'>
-    <div class="webinfo">
-      
-        <div class="webinfo-item">
-          <div>文章数目：</div>
-          <div>24 篇</div>
-        </div>
-      
-
-      
-        <div class="webinfo-item">
-          <div>已运行时间：</div>
-          <div id="webinfo-runtime-count" publish_date="03/24/2020 21:34:09"></div>
-        </div>
-        <script>
-          var BirthDay = new Date(new Date('2020/02/01'));
-          var today = new Date();
-          var timeold = (today.getTime() - BirthDay.getTime());
-          var daysold = Math.floor(timeold / (24 * 60 * 60 * 1000));
-          document.getElementById('webinfo-runtime-count').innerHTML = daysold + ' 天';
-        </script>
-      
-
-
-      
-
-      
-        <div class="webinfo-item">
-          <div>本站访客数：</div>
-          
-          <div><span id="lc-uv"><span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span></span> 人</div>
-          
-        </div>
-      
-
-      
-        <div class="webinfo-item">
-          <div>本站总访问量：</div>
-          
-          <div><span id="lc-sv"><span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span></span> 次</div>
-          
-        </div>
-      
-
-      
-        <div class="webinfo-item">
-          <div>最后活动时间：</div>
-          
-            <div id="last-update" style="display: none;">Tue Dec 01 2020 21:29:54 GMT+0800 (China Standard Time)</div>
-            <div id="last-update-show">2020-12-01 日</div>
-          
-        </div>
-        
-        <script>
-          function timeago(dateTimeStamp) {
-              var minute = 1000 * 60; //把分，时，天，周，半个月，一个月用毫秒表示
-              var hour = minute * 60;
-              var day = hour * 24;
-              var week = day * 7;
-              var month = day * 30;
-              var now = new Date().getTime(); //获取当前时间毫秒
-              var diffValue = now - dateTimeStamp; //时间差
-              if (diffValue < 0) {
-                  return;
-              }
-              var minC = diffValue / minute; //计算时间差的分，时，天，周，月
-              var hourC = diffValue / hour;
-              var dayC = diffValue / day;
-              var weekC = diffValue / week;
-              var monthC = diffValue / month;
-              if (monthC >= 1 && monthC <= 3) {
-                  result = " " + parseInt(monthC) + " 月前"
-              } else if (weekC >= 1 && weekC <= 3) {
-                  result = " " + parseInt(weekC) + " 周前"
-              } else if (dayC >= 1 && dayC <= 6) {
-                  result = " " + parseInt(dayC) + " 天前"
-              } else if (hourC >= 1 && hourC <= 23) {
-                  result = " " + parseInt(hourC) + " 小时前"
-              } else if (minC >= 1 && minC <= 59) {
-                  result = " " + parseInt(minC) + " 分钟前"
-              } else if (diffValue >= 0 && diffValue <= minute) {
-                  result = "刚刚"
-              } else {
-                  var datetime = new Date();
-                  datetime.setTime(dateTimeStamp);
-                  var Nyear = datetime.getFullYear();
-                  var Nmonth = datetime.getMonth() + 1 < 10 ? "0" + (datetime.getMonth() + 1) : datetime.getMonth() + 1;
-                  var Ndate = datetime.getDate() < 10 ? "0" + datetime.getDate() : datetime.getDate();
-                  var Nhour = datetime.getHours() < 10 ? "0" + datetime.getHours() : datetime.getHours();
-                  var Nminute = datetime.getMinutes() < 10 ? "0" + datetime.getMinutes() : datetime.getMinutes();
-                  var Nsecond = datetime.getSeconds() < 10 ? "0" + datetime.getSeconds() : datetime.getSeconds();
-                  result = Nyear + "-" + Nmonth + "-" + Ndate
-              }
-              return result;
-          }
-          var lastUpDate = document.getElementById('last-update').innerHTML;
-          try {
-            document.getElementById('last-update-show').innerHTML = timeago(new Date(lastUpDate));
-          } catch (error) {
-            document.getElementById('last-update-show').innerHTML = '2020-12-01 日';
-          }
-        </script>
-        
-      
-    </div>
-  </div>
-</section>
-
-  
-
-  
-    
-    
-  
-
-  <section class="widget category shadow desktop">
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
     
   <header>
     
-      <a href='/blog/categories/'><i class="fas fa-folder-open fa-fw" aria-hidden="true"></i><span class='name'>文章分类</span></a>
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
     
   </header>
 
 
     <div class='content'>
-      <ul class="entry navigation">
-        
-          <li><a class="flat-box"
-            title="/categories/java%E5%9F%BA%E7%A1%80/" href="/categories/java%E5%9F%BA%E7%A1%80/"
-            id="categoriesjavaE59FBAE7A180"
-            ><div class='name'>java基础</div><div class='badge'>(19)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/java%E5%9F%BA%E7%A1%80/IO%E6%B5%81/" href="/categories/java%E5%9F%BA%E7%A1%80/IO%E6%B5%81/"
-            id="categoriesjavaE59FBAE7A180IOE6B581"
-            ><div class='name'>IO流</div><div class='badge'>(1)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/"
-            id="categoriesjavaE59FBAE7A180E5A49AE7BABFE7A88B"
-            ><div class='name'>多线程</div><div class='badge'>(17)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/java%E5%9F%BA%E7%A1%80/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" href="/categories/java%E5%9F%BA%E7%A1%80/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"
-            id="categoriesjavaE59FBAE7A180E695B0E68DAEE7BB93E69E84"
-            ><div class='name'>数据结构</div><div class='badge'>(1)</div></a></li>
-        
-          <li><a class="flat-box"
-            title="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/" href="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/"
-            id="categoriesE6B688E681AFE4B8ADE997B4E4BBB6"
-            ><div class='name'>消息中间件</div><div class='badge'>(5)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/RocketMQ/" href="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/RocketMQ/"
-            id="categoriesE6B688E681AFE4B8ADE997B4E4BBB6RocketMQ"
-            ><div class='name'>RocketMQ</div><div class='badge'>(5)</div></a></li>
-        
-      </ul>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6"><span class="toc-text">核心组件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E9%A2%86%E5%9F%9F%E6%A8%A1%E5%9E%8B"><span class="toc-text">消息领域模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%9E%8B"><span class="toc-text">部署模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#topic%E5%88%86%E5%B8%83"><span class="toc-text">topic分布</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E6%B5%81%E8%BD%AC"><span class="toc-text">消息流转</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8Ekafka%E5%AF%B9%E6%AF%94"><span class="toc-text">与kafka对比</span></a></li></ol>
     </div>
   </section>
 
@@ -692,6 +709,7 @@
 
 
 </aside>
+
 
 
         
