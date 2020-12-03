@@ -531,7 +531,7 @@
 <p><font size="4"><b>Producer特点:</b></font><br>Producer服务会随机与NameServer集群中的一个节点建立长连接，定期从NameServer获取topic-queue路由信息，然后与topic-queue所在的 BrokerServer的Master节点建立长连接，并且会定时向Master发送心跳。Producer集群完全是无状态的，可以随意集群部署。</p>
 <p><font size="4"><b>Consumer特点:</b></font><br>Consumer服务会随机与NameServer集群中的一个节点建立长连接，定期从NameServer获取topic-queue路由信息，然后与topic-queue所在的BrokerServer的Master节点建立长连接，并且会定时向Master和Salve发送心跳。</p>
 <p>Consumer既可以从Master订阅消息，也可以从Salve订阅消息，Consumer在获取消息的时候，BrokerServer的Master节点会根据获取消息的偏移量与最大偏移量的距离、服务器是否可读等因素建议Consumer下次是从 Master或者Salve获取消息(太TM会玩了)。</p>
-<h2 id="topic分布"><a href="#topic分布" class="headerlink" title="topic分布"></a>topic分布</h2><p>集群中所有topic都是以queue的形式存储在broker中，换句话说每个topic会划分为多个queue分散在broker集群的各个节点，也就意味着每个queue仅仅保存一部分消息数据。这么设计的目的是尽可能提高消息的吞吐速度，因为queue的数量代表此topic可以并行处理的数量，另一个优点是方便水平扩展，可以根据消息量适当的控制queue数量。</p>
+<h2 id="topic分布"><a href="#topic分布" class="headerlink" title="topic分布"></a>topic分布</h2><p>集群中所有topic都是以queue的形式存储在broker中，换句话说每个topic会划分为多个queue分散在broker集群的各个节点，也就意味着每个queue仅仅保存topic的一部分消息数据。这么设计的目的是尽可能提高消息的吞吐速度，因为queue的数量代表此topic可以并行处理的数量，另一个优点是方便水平扩展，可以根据消息量适当的控制queue数量。</p>
 <p>假设一个Broker集群有3个节点，并且整个集群存储了3个topic:</p>
 <table>
 <thead>
@@ -553,10 +553,12 @@
 <td>6</td>
 </tr>
 </tbody></table>
-<h2 id="消息流转"><a href="#消息流转" class="headerlink" title="消息流转"></a>消息流转</h2><p>待写</p>
+<p>topic在Broker的分布图(主节点与从节点存储结构一致):<br><img src="/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/topic%E5%88%86%E5%B8%83%E5%9B%BE.png" class="lazyload" data-srcset="/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/topic%E5%88%86%E5%B8%83%E5%9B%BE.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<h2 id="消息流转"><a href="#消息流转" class="headerlink" title="消息流转"></a>消息流转</h2><p>我们以</p>
 <h2 id="与kafka对比"><a href="#与kafka对比" class="headerlink" title="与kafka对比"></a>与kafka对比</h2><p>任何技术的好与坏、快与慢等评价维度都是相对的，这就需要我们在学习一项技术时尽量寻找一个与之相似的技术对比学习，很显然Kakfa是学习RocketMQ的最佳比较对象，本篇文章介绍的是RocketMQ的架构原理，就从这个层面总结一下区别:</p>
-<p><font size="4"><b>注册中心:</b></font><br>待写</p>
-<p><font size="4"><b>副本机制:</b></font><br>待写</p>
+<p><font size="4"><b>队列/分区存储机制:</b></font><br>RocketMQ的broker主从节点存储的队列内容完全一致，是真正broker层面的主从。Kafka的broker没有主从概念，真正的主从是broker内的分区，分区主节点与从节点会尽量保证不再一个broker内。</p>
+<p>RocketMQ的队列主从在项目启动时就固定。Kafka分区的master、slave节点是动态的，master所在的broker宕机以后，集群会从slave切换为master。</p>
+<p><font size="4"><b>注册中心:</b></font><br>Kafka采用Zookeeper作为注册中心，RocketMQ采用自己的NameServer作为注册中心。这主要是因为kafka需要进行选举这种复杂操作，zookeeper对这方面的处理比较成熟，而NameServer的Master/Slave角色是固定的，不需要在Master宕机后重新切换，因此不需要Zookeeper这种复杂依赖。</p>
 
   
   
@@ -591,7 +593,7 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-03T17:00:46+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-03T18:23:40+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2020年12月3日</p>
