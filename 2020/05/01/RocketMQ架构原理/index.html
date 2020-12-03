@@ -554,11 +554,11 @@
 </tr>
 </tbody></table>
 <p>topic在Broker的分布图(主节点与从节点存储结构一致):<br><img src="/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/topic%E5%88%86%E5%B8%83%E5%9B%BE.png" class="lazyload" data-srcset="/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/topic%E5%88%86%E5%B8%83%E5%9B%BE.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<h2 id="消息流转"><a href="#消息流转" class="headerlink" title="消息流转"></a>消息流转</h2><p>我们以</p>
 <h2 id="与kafka对比"><a href="#与kafka对比" class="headerlink" title="与kafka对比"></a>与kafka对比</h2><p>任何技术的好与坏、快与慢等评价维度都是相对的，这就需要我们在学习一项技术时尽量寻找一个与之相似的技术对比学习，很显然Kakfa是学习RocketMQ的最佳比较对象，本篇文章介绍的是RocketMQ的架构原理，就从这个层面总结一下区别:</p>
-<p><font size="4"><b>队列/分区存储机制:</b></font><br>RocketMQ的broker主从节点存储的队列内容完全一致，是真正broker层面的主从。Kafka的broker没有主从概念，真正的主从是broker内的分区，分区主节点与从节点会尽量保证不再一个broker内。</p>
+<p><font size="4"><b>副本机制:</b></font><br>RocketMQ的broker主从节点分为不同的机器部署，是真正broker层面的主从模式；Kafka的主从是分区层面的主从，同一个broker既可以存master节点，也可以存slave节点，kafka会将同一topic的master、slave节点尽量分散到不同的broker中。</p>
 <p>RocketMQ的队列主从在项目启动时就固定。Kafka分区的master、slave节点是动态的，master所在的broker宕机以后，集群会从slave切换为master。</p>
-<p><font size="4"><b>注册中心:</b></font><br>Kafka采用Zookeeper作为注册中心，RocketMQ采用自己的NameServer作为注册中心。这主要是因为kafka需要进行选举这种复杂操作，zookeeper对这方面的处理比较成熟，而NameServer的Master/Slave角色是固定的，不需要在Master宕机后重新切换，因此不需要Zookeeper这种复杂依赖。</p>
+<p><font size="4"><b>注册中心:</b></font><br>Kafka采用Zookeeper作为注册中心，这主要是因为kafka运行过程中，如果分区的master节点所在broker宕机，会利用ZK从对应的slave节点中选择一个接任master角色，这就需要进行选举这种复杂操作，zookeeper对这方面的处理比较成熟。</p>
+<p>RocketMQ中Broker的Master/Slave角色是固定的，不需要在Master宕机后重新切换，因此不需要Zookeeper这种复杂依赖，自己的NameServer作为注册中心已经足够。</p>
 
   
   
@@ -593,7 +593,7 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-03T18:23:40+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-03T21:28:44+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2020年12月3日</p>
@@ -723,7 +723,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6"><span class="toc-text">核心组件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E9%A2%86%E5%9F%9F%E6%A8%A1%E5%9E%8B"><span class="toc-text">消息领域模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%9E%8B"><span class="toc-text">部署模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#topic%E5%88%86%E5%B8%83"><span class="toc-text">topic分布</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E6%B5%81%E8%BD%AC"><span class="toc-text">消息流转</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8Ekafka%E5%AF%B9%E6%AF%94"><span class="toc-text">与kafka对比</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6"><span class="toc-text">核心组件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E9%A2%86%E5%9F%9F%E6%A8%A1%E5%9E%8B"><span class="toc-text">消息领域模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2%E6%A8%A1%E5%9E%8B"><span class="toc-text">部署模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#topic%E5%88%86%E5%B8%83"><span class="toc-text">topic分布</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8Ekafka%E5%AF%B9%E6%AF%94"><span class="toc-text">与kafka对比</span></a></li></ol>
     </div>
   </section>
 
