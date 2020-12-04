@@ -21,7 +21,7 @@
   
 
   
-    <meta name="description" content="NameServer作为RocketMQ的注册中心，如何实现集群的Topic-Queue的路由配置与Broker的实时配置信息">
+    <meta name="description" content="NameServer如何实现集群的Topic-Queue的路由配置与Broker的实时配置信息">
   
 
   <!-- feed -->
@@ -515,8 +515,22 @@
 
 
   
-  <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>坎坎坷坷坎坎坷坷坎坎坷坷坎坎坷坷看看看坎坎坷坷坎坎坷坷坎坎坷坷坎坎坷坷看看看坎坎坷坷坎坎坷坷坎坎坷坷坎坎坷坷看看看坎坎坷坷坎坎坷坷坎坎坷坷坎坎坷坷看看看坎坎坷坷坎坎坷坷坎坎坷坷坎坎坷坷看看看</p>
+  <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><h2 id="高可用性"><a href="#高可用性" class="headerlink" title="高可用性"></a>高可用性</h2><p>NameServer作为一个十分重要的核心组件，在整个RockteMQ集群运作过程中发挥着重要作用，NameServer服务一旦宕机，整个集群就无法正常运转。因此NameServer一定要集群部署，这样才能保证高可用性。NameServer集群各节点彼此之间互不通信，也就是某一刻NameServer节点之间的数据并不完全相同，但这对消息发送不会造成任何影响。</p>
+<h2 id="路由信息"><a href="#路由信息" class="headerlink" title="路由信息"></a>路由信息</h2><p>在RocketMQ源码中，namesrv模块的org.apache.rocketmq.namesrv.routeinfo.RouteInfoManager类负责存储Broker集群各节点注册的路由信息:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">public class RouteInfoManager &#123;</span><br><span class="line">	private final static long BROKER_CHANNEL_EXPIRED_TIME &#x3D; 1000 * 60 * 2;</span><br><span class="line">    private final ReadWriteLock lock &#x3D; new ReentrantReadWriteLock();</span><br><span class="line">    private final HashMap&lt;String&#x2F;* topic *&#x2F;, List&lt;QueueData&gt;&gt; topicQueueTable;</span><br><span class="line">    private final HashMap&lt;String&#x2F;* brokerName *&#x2F;, BrokerData&gt; brokerAddrTable;</span><br><span class="line">    private final HashMap&lt;String&#x2F;* clusterName *&#x2F;, Set&lt;String&#x2F;* brokerName *&#x2F;&gt;&gt; clusterAddrTable;</span><br><span class="line">    private final HashMap&lt;String&#x2F;* brokerAddr *&#x2F;, BrokerLiveInfo&gt; brokerLiveTable;</span><br><span class="line">    private final HashMap&lt;String&#x2F;* brokerAddr *&#x2F;, List&lt;String&gt;&#x2F;* Filter Server *&#x2F;&gt; filterServerTable;</span><br><span class="line"></span><br><span class="line">    public RouteInfoManager() &#123;</span><br><span class="line">        this.topicQueueTable &#x3D; new HashMap&lt;String, List&lt;QueueData&gt;&gt;(1024);</span><br><span class="line">        this.brokerAddrTable &#x3D; new HashMap&lt;String, BrokerData&gt;(128);</span><br><span class="line">        this.clusterAddrTable &#x3D; new HashMap&lt;String, Set&lt;String&gt;&gt;(32);</span><br><span class="line">        this.brokerLiveTable &#x3D; new HashMap&lt;String, BrokerLiveInfo&gt;(256);</span><br><span class="line">        this.filterServerTable &#x3D; new HashMap&lt;String, List&lt;String&gt;&gt;(256);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; 各种方法...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
+<p><font size="4"><b>lock:</b></font><br>lock是一把读写锁，保证下面几个HashMap部分操作的原子性。</p>
+<p><font size="4"><b>topicQueueTable:</b></font><br>主要负责存储topic以及queue信息，每个queue的详细信息使用QueueData类表示:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public class QueueData implements Comparable&lt;QueueData&gt; &#123;</span><br><span class="line">    &#x2F;&#x2F; 队列所属的Broker名称 </span><br><span class="line">    private String brokerName;</span><br><span class="line">    &#x2F;&#x2F; 读队列数量 </span><br><span class="line">    private int readQueueNums;</span><br><span class="line">    &#x2F;&#x2F; 写队列数量 </span><br><span class="line">    private int writeQueueNums;</span><br><span class="line">    &#x2F;&#x2F; Topic的读写权限(2是写 4是读 6是读写) </span><br><span class="line">    private int perm;</span><br><span class="line">    &#x2F;&#x2F; 同步复制还是异步复制标记</span><br><span class="line">    private int topicSynFlag;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<p><font size="4"><b>brokerAddrTable:</b></font></p>
+<p><font size="4"><b>clusterAddrTable:</b></font></p>
+<p><font size="4"><b>brokerLiveTable:</b></font></p>
+<p><font size="4"><b>filterServerTable:</b></font></p>
+<h2 id="服务注册"><a href="#服务注册" class="headerlink" title="服务注册"></a>服务注册</h2><h2 id="服务发现"><a href="#服务发现" class="headerlink" title="服务发现"></a>服务发现</h2><h2 id="故障剔除"><a href="#故障剔除" class="headerlink" title="故障剔除"></a>故障剔除</h2>
   
   
     
@@ -550,10 +564,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-01T15:25:10+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-04T17:28:09+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年12月1日</p>
+    <p>更新于：2020年12月4日</p>
   </a>
 </div>
 
@@ -679,7 +693,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AB%98%E5%8F%AF%E7%94%A8%E6%80%A7"><span class="toc-text">高可用性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B7%AF%E7%94%B1%E4%BF%A1%E6%81%AF"><span class="toc-text">路由信息</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C"><span class="toc-text">服务注册</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0"><span class="toc-text">服务发现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%85%E9%9A%9C%E5%89%94%E9%99%A4"><span class="toc-text">故障剔除</span></a></li></ol>
     </div>
   </section>
 
