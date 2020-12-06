@@ -530,11 +530,35 @@
 <p><font size="4"><b>Broker特点:</b></font><br>Broker服务分为Master与Slave，一个Master可以对应多个Slaver，Master与Slaver的对应关系通过指定相同的BrokerName、不同的BrokerId来定义，BrokerId为0表示Master，非0表示Slaver。</p>
 <p><font size="4"><b>Producer特点:</b></font><br>Producer服务会随机与NameServer集群中的一个节点建立长连接，定期从NameServer获取topic-queue路由信息，然后与topic-queue所在的 BrokerServer的Master节点建立长连接，并且会定时向Master发送心跳。Producer集群完全是无状态的，可以随意集群部署。</p>
 <p><font size="4"><b>Consumer特点:</b></font><br>Consumer服务会随机与NameServer集群中的一个节点建立长连接，定期从NameServer获取topic-queue路由信息，然后与topic-queue所在的BrokerServer的Master节点建立长连接，并且会定时向Master和Salve发送心跳。</p>
-<p>Consumer既可以从Master订阅消息，也可以从Salve订阅消息，Consumer在获取消息的时候，BrokerServer的Master节点会根据获取消息的偏移量与最大偏移量的距离、服务器是否可读等因素建议Consumer下次是从 Master或者Salve获取消息(太TM会玩了)。</p>
-<h2 id="topic分布"><a href="#topic分布" class="headerlink" title="topic分布"></a>topic分布</h2><p>集群中所有topic都是以queue的形式存储在broker中，换句话说每个topic会划分为多个queue分散在broker集群的各个节点，也就意味着每个queue仅仅保存topic的一部分消息数据。这么设计的目的是尽可能提高消息的吞吐速度，因为queue的数量代表此topic可以并行处理的数量，另一个优点是方便水平扩展，可以根据消息量适当的控制queue数量。</p>
+<p>Consumer既可以从Master订阅消息，也可以从Salve订阅消息，Consumer在获取消息的时候，BrokerServer的Master节点会根据获取消息的偏移量与最大偏移量的距离、服务器是否可读等因素建议Consumer下次是从 Master或者Salve获取消息。</p>
+<h2 id="topic分布"><a href="#topic分布" class="headerlink" title="topic分布"></a>topic分布</h2><p>集群中所有topic都是以queue(1个或多个)的形式分散存储在各broker节点中，其中每个queue仅仅保存topic的一部分消息数据。这种架构设计与redis、elasticsearch的分片模式很相似，可以在整个RocketMQ集群服务运行过程中动态改变queue的数量，来控制同一时刻topic的并行处理能力。</p>
 <p>假设一个Broker集群有3个节点，并且整个集群存储了3个topic:</p>
-<p>| topic名称 | queue数量 | queue数量 |<br>|  —-  | —-  |<br>| red  | 4 | 4 |<br>| blue | 5 | 5 |<br>| green | 6 | 6 |</p>
+<table>
+<thead>
+<tr>
+<th>topic名称</th>
+<th>queue数量</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>red</td>
+<td>4</td>
+</tr>
+<tr>
+<td>blue</td>
+<td>5</td>
+</tr>
+<tr>
+<td>green</td>
+<td>6</td>
+</tr>
+</tbody></table>
 <p>topic在Broker的分布图:<br><img src="/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/topic%E5%88%86%E5%B8%83%E5%9B%BE.png" class="lazyload" data-srcset="/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/topic%E5%88%86%E5%B8%83%E5%9B%BE.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<span class="p red">注:不同的master节点负责的topic-queue完全不一致，而master与对应的slave节点负责的数据完全一致</span>
+
+
+
+
 
   
   
@@ -569,10 +593,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-04T17:33:49+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-05T23:26:37+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年12月4日</p>
+    <p>更新于：2020年12月5日</p>
   </a>
 </div>
 
