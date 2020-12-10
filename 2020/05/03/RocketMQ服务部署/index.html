@@ -554,7 +554,7 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">JAVA_OPT&#x3D;&quot;$&#123;JAVA_OPT&#125; -server -Xms256m -Xmx256m -Xmn512m -XX:MetaspaceSize&#x3D;128m -XX:MaxMetaspaceSize&#x3D;320m&quot;</span><br></pre></td></tr></table></figure>
 
 <h2 id="NameServer-a"><a href="#NameServer-a" class="headerlink" title="NameServer-a"></a>NameServer-a</h2><p>将下载解压好的包移动到/apply/rocketmq文件夹，并重新命名为namesrv-a:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mv &#x2F;usr&#x2F;local&#x2F;rocketmq&#x2F;rocketmq-all-4.7.1-source-release &#x2F;apply&#x2F;rocketmq&#x2F;namesrv-a</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mv &#123;解压的文件路径&#125; &#x2F;apply&#x2F;rocketmq&#x2F;namesrv-a</span><br></pre></td></tr></table></figure>
 
 <p>创建日志文件:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">touch &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;logs&#x2F;namesrv-a.log</span><br></pre></td></tr></table></figure>
@@ -563,13 +563,13 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">touch &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;namesrv-a.properties</span><br></pre></td></tr></table></figure>
 
 <p>修改配置文件内容:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;nameserver-a&#x2F;conf&#x2F;namesrv-a.properties</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;namesrv-a.properties</span><br></pre></td></tr></table></figure>
 
 <p>添加属性(自定义启动端口):</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">listenPort&#x3D;9876</span><br></pre></td></tr></table></figure>
 
 <p>进入执行文件夹:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd &#x2F;usr&#x2F;local&#x2F;rocketmq&#x2F;namesrv-a&#x2F;distribution&#x2F;target&#x2F;rocketmq-4.7.1&#x2F;rocketmq-4.7.1&#x2F;bin</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd &#x2F;apply&#x2F;rocketmq&#x2F;namesrv-a&#x2F;distribution&#x2F;target&#x2F;rocketmq-4.7.1&#x2F;rocketmq-4.7.1&#x2F;bin</span><br></pre></td></tr></table></figure>
 
 <p>启动:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nohup sh mqnamesrv -c &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;namesrv-a.properties &gt;&#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;logs&#x2F;namesrv-a.log 2&gt;&amp;1 &amp;</span><br></pre></td></tr></table></figure>
@@ -634,7 +634,7 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-10T17:46:37+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-10T17:58:56+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2020年12月10日</p>
