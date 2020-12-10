@@ -5,8 +5,6 @@
   <!-- SEO相关 -->
   
     
-      <meta name="robots" content="noindex,follow">
-    
   
   <!-- 渲染优化 -->
   <meta name="renderer" content="webkit">
@@ -19,9 +17,11 @@
 
   <!-- 页面元数据 -->
   
-  <title>分类：IO流 - 来杯冰镇可乐</title>
+  <title>RocketMQ(四)主题创建与调整 - 来杯冰镇可乐</title>
   
 
+  
+    <meta name="description" content="topic的创建方式以及在Broker中的分布">
   
 
   <!-- feed -->
@@ -371,7 +371,7 @@
   
     
     
-        <div class='cover-wrapper  search' style="display: none;">
+        <div class='cover-wrapper post search' style="display: none;">
           
             <div class='cover-bg lazyload placeholder' data-bg="https://cdn.jsdelivr.net/gh/volantis-x/cdn-wallpaper-minimalist@1.0.0/2020/001.jpg"></div>
           
@@ -415,8 +415,8 @@
  
  
 <div id="pjax-data" style="display: none"> 
-  <div id="pjax-ispage">false</div> 
-  <div id="pjax-pageTitle"></div> 
+  <div id="pjax-ispage">true</div> 
+  <div id="pjax-pageTitle">RocketMQ(四)主题创建与调整</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -445,74 +445,255 @@
         
         
 
-
 <div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
   
+
+
+  
+  <div class="article-meta" id="top">
     
-      
-  <section class="post-list">
     
-      
+    
+      <h1 class="title">
+        RocketMQ(四)主题创建与调整
+      </h1>
+      <div class='new-meta-box'>
         
           
+            
+<div class='new-meta-item author'>
+  <a class='author' href="/" rel="nofollow">
+    <img no-lazy src="">
+    <p>lvtao</p>
+  </a>
+</div>
+
+          
         
-      
-    
-    
-      
-        
-          <div class='post-wrapper'>
-            <div class="post post-v3 white-box reveal shadow">
-  
-  
-  
-  
-    
-    <h2 class="article-title" >
-      <a href="/2020/02/01/%E5%AD%97%E8%8A%82%E6%B5%81/">
-        IO流(一) 字节流
-      </a>
-    </h2>
-  
-  <div class='md'>
-    
-      <p>测试用</p>
-    
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/">消息中间件</a><span class="sep"></span><a class="category-link" href="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/RocketMQ/">RocketMQ</a>
+    </a>
   </div>
-  
-    <div class='meta-v3' line_style='solid'>
-      <div>
+
+
+          
         
-        <time>2020-02-01</time>
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2020年5月5日</p>
+  </a>
+</div>
+
+          
         
-          <span class="dot"></span>
-          <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/IO%E6%B5%81/">IO流</a>
+          
+            
+  <div class="new-meta-item browse leancloud">
+    <a class='notlink'>
+      
+      <div id="lc-pv" data-title="RocketMQ(四)主题创建与调整" data-path="/2020/05/05/RocketMQ%E4%B8%BB%E9%A2%98%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4/">
+        <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
+        <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
+        次浏览
+      </div>
+    </a>
+  </div>
+
+
+          
         
       </div>
+    
+  </div>
+
+
+  
+  <h2 id="自动创建"><a href="#自动创建" class="headerlink" title="自动创建"></a>自动创建</h2><p>topic在默认情况下支持自动创建，开关由配置文件的autoCreateTopicEnable(默认true)属性决定，在项目启动后存储在BrokerConfig类中。如果某个Broker的自动创建设置为true，则Broker在启动后会在topicManager中创建名为TBW102的topic并向所有NameServer进行注册。</p>
+<p>当Producer向某个topic投递消息时，首先会访问NameServer获取此topic的路由列表，这里假设此topic之前并没有被创建，那么得到的将是一个空列表，Producer会再次访问NameServer获取名为TBW102的topic的路由列表，如果整个集群中没有任何Broker支持自动创建，那么这个路由列表仍然是空的，此时会抛出No route info of this topic异常，如果集群中存在支持自动创建的Broker，那么就返回这些Broker的路由信息。</p>
+<p>Producer拿到TBW102的路由列表后，会从中选择(默认轮询)一个Broker进行投递，Broker接收到此消息后会调用msgCheck方法对topic进行校验，先去topicConfigTable中查询此topic是否存在，在目前讨论的场景下是肯定不存在的，那么会以这个不存在的tpoic名称创建一个TopicConfig。这个类包含了topic的具体信息包括队列数、读写权限、同步/异步复制等，基本上沿用TBW102的属性，创建完毕后存入topicConfigTable中，然后将topicConfigTable中的所有数据同步到NameServer中。</p>
+<p>topic自动创建流程图:<br><img src="/2020/05/05/RocketMQ%E4%B8%BB%E9%A2%98%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4/topic%E8%87%AA%E5%8A%A8%E5%88%9B%E5%BB%BA.png" class="lazyload" data-srcset="/2020/05/05/RocketMQ%E4%B8%BB%E9%A2%98%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4/topic%E8%87%AA%E5%8A%A8%E5%88%9B%E5%BB%BA.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>流程图可以看出，自动创建的topic仅仅在消息投递到的Broker节点中生成queue，一旦刷回注册中心，此topic的负载均衡能力就被固定(排除手动修改的情况)。如果某一时刻不存在的topic被多个Producer同时投递，且集群中支持自动创建的Broker节点数量还算可观，考虑到从投递消息开始直到刷回注册中心这段时间的并发情况，可能会有多个Broker都被分配此topic的queue，此topic仍然有很可观的并行执行能力。</p>
+<p>这里换一种假设，不存在的topic第一次被Producer投递时，没有其他Producer同时进行，导致此topic仅仅分配在某一个Broker中。这就相当危险了，并行能力太差，如果消息量上来很容易造成积压。说这么多就是想表达自动创建的topic的配置信息，因为场景的不确定性很难达到理想值，因此在生产环境中最好关闭自动创建，所有topic都由开发人员根据业务场景主观判断并创建。</p>
+<h2 id="手动创建"><a href="#手动创建" class="headerlink" title="手动创建"></a>手动创建</h2><p>topic的手动创建可以通过linux命令来实现，也可以在console页面进行操作，命令操作相对于页面来说较麻烦一些，并且生产环境除非运维基本上不会有访问服务器的权限，所以这里只写控制台如何创建。</p>
+<p>topic在控制台的创建界面:<br><img src="/2020/05/05/RocketMQ%E4%B8%BB%E9%A2%98%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4/topic%E5%88%9B%E5%BB%BA%E7%95%8C%E9%9D%A2.jpg" class="lazyload" data-srcset="/2020/05/05/RocketMQ%E4%B8%BB%E9%A2%98%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4/topic%E5%88%9B%E5%BB%BA%E7%95%8C%E9%9D%A2.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>每个选项的描述:</p>
+<table>
+<thead>
+<tr>
+<th>列名</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>clusterName</td>
+<td>集群名</td>
+</tr>
+<tr>
+<td>BROKER_NAME</td>
+<td>broker名称,一直没看懂这个选项，无论如何选择最终所有的Broker都会创建topic的队列</td>
+</tr>
+<tr>
+<td>topicName</td>
+<td>topic名称</td>
+</tr>
+<tr>
+<td>writeQueueNums</td>
+<td>写队列数，Producer只能连接到写队列，每个写队列只能被一个Producer连接</td>
+</tr>
+<tr>
+<td>readQueueNums</td>
+<td>读队列数，Consumer只能连接到读队列，每个读队列只能被一个Consumer连接</td>
+</tr>
+<tr>
+<td>perm</td>
+<td>2禁读、4禁写、6同时支持读写，一般情况这里填写6</td>
+</tr>
+</tbody></table>
+<p>点击提交后，集群中每个Broker都会创建writeQueueNums个队列，可以理解为被创建的topic的队列总数为writeQueueNums*Broker(master)数量，</p>
+<h2 id="调整"><a href="#调整" class="headerlink" title="调整"></a>调整</h2>
+  
+  
+    
+    <div class='footer'>
       
-        <div>
-          <a class='readmore' href='/2020/02/01/%E5%AD%97%E8%8A%82%E6%B5%81/'>
-            阅读全文
-          </a>
+      
+      
+        <div class='copyright'>
+          <blockquote>
+            
+              
+                <p>博客内容遵循 署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</p>
+
+              
+            
+              
+                <p>本文永久链接是：<a href=http://yoursite.com/2020/05/05/RocketMQ%E4%B8%BB%E9%A2%98%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4/>http://yoursite.com/2020/05/05/RocketMQ%E4%B8%BB%E9%A2%98%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4/</a></p>
+              
+            
+          </blockquote>
         </div>
+      
       
     </div>
   
+  
+    
 
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-09T16:24:53+08:00">
+  <a class='notlink'>
+    <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
+    <p>更新于：2020年12月9日</p>
+  </a>
 </div>
 
-          </div>
         
       
+        
+          
+
+        
+      
+        
+          
+  <div class="new-meta-item share -mob-share-list">
+  <div class="-mob-share-list share-body">
     
-  </section>
-  
+      
+        <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/05/05/RocketMQ%E4%B8%BB%E9%A2%98%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4/&title=RocketMQ(四)主题创建与调整 - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
     
-  
+      
+        <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/05/05/RocketMQ%E4%B8%BB%E9%A2%98%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4/&title=RocketMQ(四)主题创建与调整 - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+        <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/05/05/RocketMQ%E4%B8%BB%E9%A2%98%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4/&title=RocketMQ(四)主题创建与调整 - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
 
 
-    
+
+        
+      
+    </div>
+  </div>
+
+
   
+  
+
+  
+    <div class="prev-next">
+      
+      
+        <a class='next' href='/2020/05/04/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/'>
+          <p class='title'>RocketMQ(三)注册中心<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>前言高可用性NameServer作为一个十分重要的核心组件，在整个RockteMQ集群运作过程中发挥着重要作用，NameServer服务一旦宕机，整个集群就无法正常运转。因此NameServer...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
 </div>
 <aside class='l_side'>
   
@@ -520,178 +701,19 @@
     
     
 
-<section class="widget shadow desktop">
-  
-  <header>
-    
-      <i class="fas fa-award fa-fw" aria-hidden="true"></i><span class='name'>站点信息</span>
-    
-  </header>
 
 
-  <div class='content'>
-    <div class="webinfo">
-      
-        <div class="webinfo-item">
-          <div>文章数目：</div>
-          <div>23 篇</div>
-        </div>
-      
-
-      
-        <div class="webinfo-item">
-          <div>已运行时间：</div>
-          <div id="webinfo-runtime-count" publish_date="03/24/2020 21:34:09"></div>
-        </div>
-        <script>
-          var BirthDay = new Date(new Date('2020/02/01'));
-          var today = new Date();
-          var timeold = (today.getTime() - BirthDay.getTime());
-          var daysold = Math.floor(timeold / (24 * 60 * 60 * 1000));
-          document.getElementById('webinfo-runtime-count').innerHTML = daysold + ' 天';
-        </script>
-      
-
-
-      
-
-      
-        <div class="webinfo-item">
-          <div>本站访客数：</div>
-          
-          <div><span id="lc-uv"><span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span></span> 人</div>
-          
-        </div>
-      
-
-      
-        <div class="webinfo-item">
-          <div>本站总访问量：</div>
-          
-          <div><span id="lc-sv"><span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span></span> 次</div>
-          
-        </div>
-      
-
-      
-        <div class="webinfo-item">
-          <div>最后活动时间：</div>
-          
-            <div id="last-update" style="display: none;">Thu Dec 10 2020 08:12:55 GMT+0800 (China Standard Time)</div>
-            <div id="last-update-show">2020-12-10 日</div>
-          
-        </div>
-        
-        <script>
-          function timeago(dateTimeStamp) {
-              var minute = 1000 * 60; //把分，时，天，周，半个月，一个月用毫秒表示
-              var hour = minute * 60;
-              var day = hour * 24;
-              var week = day * 7;
-              var month = day * 30;
-              var now = new Date().getTime(); //获取当前时间毫秒
-              var diffValue = now - dateTimeStamp; //时间差
-              if (diffValue < 0) {
-                  return;
-              }
-              var minC = diffValue / minute; //计算时间差的分，时，天，周，月
-              var hourC = diffValue / hour;
-              var dayC = diffValue / day;
-              var weekC = diffValue / week;
-              var monthC = diffValue / month;
-              if (monthC >= 1 && monthC <= 3) {
-                  result = " " + parseInt(monthC) + " 月前"
-              } else if (weekC >= 1 && weekC <= 3) {
-                  result = " " + parseInt(weekC) + " 周前"
-              } else if (dayC >= 1 && dayC <= 6) {
-                  result = " " + parseInt(dayC) + " 天前"
-              } else if (hourC >= 1 && hourC <= 23) {
-                  result = " " + parseInt(hourC) + " 小时前"
-              } else if (minC >= 1 && minC <= 59) {
-                  result = " " + parseInt(minC) + " 分钟前"
-              } else if (diffValue >= 0 && diffValue <= minute) {
-                  result = "刚刚"
-              } else {
-                  var datetime = new Date();
-                  datetime.setTime(dateTimeStamp);
-                  var Nyear = datetime.getFullYear();
-                  var Nmonth = datetime.getMonth() + 1 < 10 ? "0" + (datetime.getMonth() + 1) : datetime.getMonth() + 1;
-                  var Ndate = datetime.getDate() < 10 ? "0" + datetime.getDate() : datetime.getDate();
-                  var Nhour = datetime.getHours() < 10 ? "0" + datetime.getHours() : datetime.getHours();
-                  var Nminute = datetime.getMinutes() < 10 ? "0" + datetime.getMinutes() : datetime.getMinutes();
-                  var Nsecond = datetime.getSeconds() < 10 ? "0" + datetime.getSeconds() : datetime.getSeconds();
-                  result = Nyear + "-" + Nmonth + "-" + Ndate
-              }
-              return result;
-          }
-          var lastUpDate = document.getElementById('last-update').innerHTML;
-          try {
-            document.getElementById('last-update-show').innerHTML = timeago(new Date(lastUpDate));
-          } catch (error) {
-            document.getElementById('last-update-show').innerHTML = '2020-12-10 日';
-          }
-        </script>
-        
-      
-    </div>
-  </div>
-</section>
-
-  
-
-  
-    
-    
-  
-
-  <section class="widget category shadow desktop">
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
     
   <header>
     
-      <a href='/blog/categories/'><i class="fas fa-folder-open fa-fw" aria-hidden="true"></i><span class='name'>文章分类</span></a>
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
     
   </header>
 
 
     <div class='content'>
-      <ul class="entry navigation">
-        
-          <li><a class="flat-box"
-            title="/categories/java%E5%9F%BA%E7%A1%80/" href="/categories/java%E5%9F%BA%E7%A1%80/"
-            id="categoriesjavaE59FBAE7A180"
-            ><div class='name'>java基础</div><div class='badge'>(19)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/java%E5%9F%BA%E7%A1%80/IO%E6%B5%81/" href="/categories/java%E5%9F%BA%E7%A1%80/IO%E6%B5%81/"
-            id="categoriesjavaE59FBAE7A180IOE6B581"
-            ><div class='name'>IO流</div><div class='badge'>(1)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/"
-            id="categoriesjavaE59FBAE7A180E5A49AE7BABFE7A88B"
-            ><div class='name'>多线程</div><div class='badge'>(17)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/java%E5%9F%BA%E7%A1%80/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" href="/categories/java%E5%9F%BA%E7%A1%80/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"
-            id="categoriesjavaE59FBAE7A180E695B0E68DAEE7BB93E69E84"
-            ><div class='name'>数据结构</div><div class='badge'>(1)</div></a></li>
-        
-          <li><a class="flat-box"
-            title="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/" href="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/"
-            id="categoriesE6B688E681AFE4B8ADE997B4E4BBB6"
-            ><div class='name'>消息中间件</div><div class='badge'>(4)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/RocketMQ/" href="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/RocketMQ/"
-            id="categoriesE6B688E681AFE4B8ADE997B4E4BBB6RocketMQ"
-            ><div class='name'>RocketMQ</div><div class='badge'>(3)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/rocketmq-data/" href="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/rocketmq-data/"
-            id="categoriesE6B688E681AFE4B8ADE997B4E4BBB6rocketmq-data"
-            ><div class='name'>rocketmq-data</div><div class='badge'>(1)</div></a></li>
-        
-      </ul>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%8A%A8%E5%88%9B%E5%BB%BA"><span class="toc-text">自动创建</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E5%88%9B%E5%BB%BA"><span class="toc-text">手动创建</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B0%83%E6%95%B4"><span class="toc-text">调整</span></a></li></ol>
     </div>
   </section>
 
@@ -700,6 +722,7 @@
 
 
 </aside>
+
 
 
         

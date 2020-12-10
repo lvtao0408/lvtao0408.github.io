@@ -17,7 +17,7 @@
 
   <!-- 页面元数据 -->
   
-  <title>RocketMQ(四)注册中心 - 来杯冰镇可乐</title>
+  <title>RocketMQ(三)注册中心 - 来杯冰镇可乐</title>
   
 
   
@@ -416,7 +416,7 @@
  
 <div id="pjax-data" style="display: none"> 
   <div id="pjax-ispage">true</div> 
-  <div id="pjax-pageTitle">RocketMQ(四)注册中心</div> 
+  <div id="pjax-pageTitle">RocketMQ(三)注册中心</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -456,7 +456,7 @@
     
     
       <h1 class="title">
-        RocketMQ(四)注册中心
+        RocketMQ(三)注册中心
       </h1>
       <div class='new-meta-box'>
         
@@ -487,7 +487,7 @@
             <div class="new-meta-item date">
   <a class='notlink'>
     <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
-    <p>发布于：2020年5月5日</p>
+    <p>发布于：2020年5月4日</p>
   </a>
 </div>
 
@@ -498,7 +498,7 @@
   <div class="new-meta-item browse leancloud">
     <a class='notlink'>
       
-      <div id="lc-pv" data-title="RocketMQ(四)注册中心" data-path="/2020/05/05/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/">
+      <div id="lc-pv" data-title="RocketMQ(三)注册中心" data-path="/2020/05/04/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/">
         <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
         <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
         次浏览
@@ -517,7 +517,7 @@
   
   <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><h2 id="高可用性"><a href="#高可用性" class="headerlink" title="高可用性"></a>高可用性</h2><p>NameServer作为一个十分重要的核心组件，在整个RockteMQ集群运作过程中发挥着重要作用，NameServer服务一旦宕机，整个集群就无法正常运转。因此NameServer一定要集群部署，这样才能保证高可用性。NameServer集群各节点彼此之间互不通信，也就是某一刻NameServer节点之间的数据并不完全相同，但这对消息发送不会造成任何影响。</p>
 <h2 id="路由信息"><a href="#路由信息" class="headerlink" title="路由信息"></a>路由信息</h2><p>在RocketMQ源码中，namesrv模块的org.apache.rocketmq.namesrv.routeinfo.RouteInfoManager类负责存储Broker集群各节点注册的路由信息:</p>
-<p><img src="/2020/05/05/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/%E8%B7%AF%E7%94%B1%E4%BF%A1%E6%81%AF.png" class="lazyload" data-srcset="/2020/05/05/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/%E8%B7%AF%E7%94%B1%E4%BF%A1%E6%81%AF.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p><img src="/2020/05/04/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/%E8%B7%AF%E7%94%B1%E4%BF%A1%E6%81%AF.png" class="lazyload" data-srcset="/2020/05/04/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/%E8%B7%AF%E7%94%B1%E4%BF%A1%E6%81%AF.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
 <p><font size="4"><b>HashMap&lt;String, List<QueueData>&gt; topicQueueTable</QueueData></b></font><br>此变量以topic为单位，记录对应的所有队列信息，因为一个topic的数据可以分散到多个Broker中，所以topic与QueueData集合是一对多的关系，QueueData类数据结构:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public class QueueData implements Comparable&lt;QueueData&gt; &#123;</span><br><span class="line">    &#x2F;&#x2F; 队列所属的Broker名称 </span><br><span class="line">    private String brokerName;</span><br><span class="line">    &#x2F;&#x2F; 读队列数量 </span><br><span class="line">    private int readQueueNums;</span><br><span class="line">    &#x2F;&#x2F; 写队列数量 </span><br><span class="line">    private int writeQueueNums;</span><br><span class="line">    &#x2F;&#x2F; Topic的读写权限(2是写 4是读 6是读写) </span><br><span class="line">    private int perm;</span><br><span class="line">    &#x2F;&#x2F; 同步复制还是异步复制标记</span><br><span class="line">    private int topicSynFlag;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -571,7 +571,7 @@
               
             
               
-                <p>本文永久链接是：<a href=http://yoursite.com/2020/05/05/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/>http://yoursite.com/2020/05/05/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/</a></p>
+                <p>本文永久链接是：<a href=http://yoursite.com/2020/05/04/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/>http://yoursite.com/2020/05/04/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/</a></p>
               
             
           </blockquote>
@@ -588,10 +588,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-06T17:26:44+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-08T19:28:20+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年12月6日</p>
+    <p>更新于：2020年12月8日</p>
   </a>
 </div>
 
@@ -610,7 +610,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/05/05/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/&title=RocketMQ(四)注册中心 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/05/04/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/&title=RocketMQ(三)注册中心 - 来杯冰镇可乐&summary="
           
           >
           
@@ -622,7 +622,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/05/05/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/&title=RocketMQ(四)注册中心 - 来杯冰镇可乐&summary="
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/05/04/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/&title=RocketMQ(三)注册中心 - 来杯冰镇可乐&summary="
           
           >
           
@@ -634,7 +634,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/05/05/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/&title=RocketMQ(四)注册中心 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/05/04/RocketMQ%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/&title=RocketMQ(三)注册中心 - 来杯冰镇可乐&summary="
           
           >
           
@@ -664,13 +664,16 @@
   
     <div class="prev-next">
       
+        <a class='prev' href='/2020/05/05/RocketMQ%E4%B8%BB%E9%A2%98%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>RocketMQ(四)主题创建与调整</p>
+          <p class='content'>自动创建topic在默认情况下支持自动创建，开关由配置文件的autoCreateTopicEnable(默认true)属性决定，在项目启动后存储在BrokerConfig类中。如果某个Broke...</p>
+        </a>
       
-        <a class='next' href='/2020/05/04/RocketMQ%E5%88%9B%E5%BB%BAtopic/'>
-          <p class='title'>RocketMQ(三)Topic创建<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>自动创建坎坎坷坷坎坎坷坷坎坎坷坷坎坎坷坷
-手动创建坎坎坷坷坎坎坷坷坎坎坷坷坎坎坷坷
-读写队列坎坎坷坷坎坎坷坷坎坎坷坷坎坎坷坷
-</p>
+      
+        <a class='next' href='/2020/05/03/RocketMQ%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2/'>
+          <p class='title'>rocketmq-data(二)服务部署<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>前言使用docker搭建rocketmq-data集群
+安装maven下载文件:wget http://mirror.bit.edu.cn/apache/maven/binaries/apach...</p>
         </a>
       
     </div>
