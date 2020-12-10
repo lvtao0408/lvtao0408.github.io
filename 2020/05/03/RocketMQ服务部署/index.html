@@ -523,23 +523,83 @@
 <p>修改内容，localRepository标签为仓库:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;</span><br><span class="line"> </span><br><span class="line">&lt;settings xmlns&#x3D;&quot;http:&#x2F;&#x2F;maven.apache.org&#x2F;SETTINGS&#x2F;1.0.0&quot;</span><br><span class="line">          xmlns:xsi&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2001&#x2F;XMLSchema-instance&quot;</span><br><span class="line">          xsi:schemaLocation&#x3D;&quot;http:&#x2F;&#x2F;maven.apache.org&#x2F;SETTINGS&#x2F;1.0.0 http:&#x2F;&#x2F;maven.apache.org&#x2F;xsd&#x2F;settings-1.0.0.xsd&quot;&gt;</span><br><span class="line">  </span><br><span class="line">   &lt;localRepository&gt;&#x2F;usr&#x2F;local&#x2F;repo&lt;&#x2F;localRepository&gt;</span><br><span class="line"> </span><br><span class="line">  &lt;mirrors&gt;</span><br><span class="line">        &lt;mirror&gt;</span><br><span class="line">            &lt;id&gt;alimaven&lt;&#x2F;id&gt;</span><br><span class="line">            &lt;name&gt;aliyun maven&lt;&#x2F;name&gt;</span><br><span class="line">            &lt;url&gt;http:&#x2F;&#x2F;maven.aliyun.com&#x2F;nexus&#x2F;content&#x2F;groups&#x2F;public&#x2F;&lt;&#x2F;url&gt;</span><br><span class="line">            &lt;mirrorOf&gt;*&lt;&#x2F;mirrorOf&gt;       </span><br><span class="line">        &lt;&#x2F;mirror&gt;</span><br><span class="line">  &lt;&#x2F;mirrors&gt;</span><br><span class="line"> </span><br><span class="line">&lt;&#x2F;settings&gt;</span><br></pre></td></tr></table></figure> 
 
-<h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><p>下载: wget <a target="_blank" rel="noopener" href="http://mirrors.hust.edu.cn/apache/rocketmq/4.7.1/rocketmq-all-4.7.1-source-release.zip">http://mirrors.hust.edu.cn/apache/rocketmq/4.7.1/rocketmq-all-4.7.1-source-release.zip</a><br>解压: unzip rocketmq-all-4.7.1-source-release.zip</p>
-<p>改文件名:mv rocketmq-all-4.7.1-source-release /apply/rocketmq/nameserver-a<br>进入解压文件夹:cd nameserver-a<br>下载依赖(需要等待一段时间):mvn -Prelease-all -DskipTests clean install -U</p>
-<p>进入执行文件夹:cd distribution/target/rocketmq-4.7.1/rocketmq-4.7.1/bin<br>修改启动参数:vim runserver.sh</p>
-<p>jvm启动参数修改:JAVA_OPT=”${JAVA_OPT} -server -Xms256m -Xmx256m -Xmn512m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m”</p>
-<h2 id="NameServer"><a href="#NameServer" class="headerlink" title="NameServer"></a>NameServer</h2><p>创建日志文件夹:mkdir -p /usr/local/rocketmq-data/nameserver-a/logs<br>创建日志文件:touch /usr/local/rocketmq-data/nameserver-a/logs/mqnamesrv.log</p>
-<p>创建配置文件夹:mkdir -p /usr/local/rocketmq-data/nameserver-a/conf<br>创建配置文件:touch /usr/local/rocketmq-data/nameserver-a/conf/namesrv.properties</p>
-<p>修改配置文件内容:vim /usr/local/rocketmq-data/nameserver-a/conf/namesrv.properties<br>添加属性(自定义启动端口):listenPort=9876</p>
-<p>启动:nohup sh mqnamesrv -c /usr/local/rocketmq-data/nameserver-a/conf/namesrv.properties &gt;/usr/local/rocketmq-data/nameserver-a/logs/mqnamesrv.log 2&gt;&amp;1 &amp;</p>
-<h2 id="Broker"><a href="#Broker" class="headerlink" title="Broker"></a>Broker</h2><p>创建日志文件夹:mkdir -p /usr/local/rocketmq-data/broker-a/logs<br>创建日志文件:touch /usr/local/rocketmq-data/broker-a/logs/broker.log</p>
-<p>创建配置文件夹:mkdir -p /usr/local/rocketmq-data/broker-a/conf<br>创建配置文件:touch /usr/local/rocketmq-data/broker-a/conf/broker.properties</p>
-<p>创建store文件夹:<br>mkdir -p /usr/local/rocketmq-data/broker-a/store/<br>mkdir -p /usr/local/rocketmq-data/broker-a/store/commitlog<br>mkdir -p /usr/local/rocketmq-data/broker-a/store/consumequeue<br>mkdir -p /usr/local/rocketmq-data/broker-a/store/index<br>mkdir -p /usr/local/rocketmq-data/broker-a/store/checkpoint<br>mkdir -p /usr/local/rocketmq-data/broker-a/store/abort</p>
-<p>修改配置文件内容:vim /usr/local/rocketmq-data/nameserver-a/conf/namesrv.properties<br>添加属性(自定义启动端口):listenPort=9800</p>
-<p>进入执行文件夹:cd distribution/target/rocketmq-4.7.1/rocketmq-4.7.1/bin<br>修改启动参数:vim runserver.sh</p>
-<p>进入conf文件夹: cd ../conf<br>编辑broker配置:vim broker.conf</p>
-<p>brokerClusterName = lvt-cluster<br>brokerName = broker-a<br>brokerId = 0<br>deleteWhen = 04<br>fileReservedTime = 48<br>brokerRole = ASYNC_MASTER<br>flushDiskType = ASYNC_FLUSH<br>brokerIP1 = 175.24.30.43</p>
-<p>#存储路径<br>storePathRootDir=/usr/local/rocketmq-data/broker-a/store/<br>#commitLog 存储路径<br>storePathCommitLog=/usr/local/rocketmq-data/broker-a/store/commitlog<br>#消费队列存储路径存储路径<br>storePathConsumeQueue=/usr/local/rocketmq-data/broker-a/store/consumequeue<br>#消息索引存储路径<br>storePathIndex=/usr/local/rocketmq-data/broker-a/store/index<br>#checkpoint 文件存储路径<br>storeCheckpoint=/usr/local/rocketmq-data/broker-a/store/checkpoint<br>#abort 文件存储路径<br>abortFile=/usr/local/rocketmq-data/broker-a/store/abort</p>
-<p>切换bin文件夹:cd ../bin<br>启动:nohup sh mqbroker -n 175.24.30.43:9876;175.24.30.43:9877 -c /usr/local/rocketmq-data/broker-a/conf/broker.properties &gt;/usr/local/rocketmq-data/broker-a/logs/broker.log 2&gt;&amp;1 &amp;</p>
+<h2 id="创建文件夹"><a href="#创建文件夹" class="headerlink" title="创建文件夹"></a>创建文件夹</h2><p>创建日志文件夹:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;logs</span><br></pre></td></tr></table></figure>
+
+<p>创建配置文件夹:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf</span><br></pre></td></tr></table></figure>
+
+<p>创建存储文件夹:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;store</span><br></pre></td></tr></table></figure>
+
+<h2 id="下载安装包"><a href="#下载安装包" class="headerlink" title="下载安装包"></a>下载安装包</h2><p>下载: </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wget http:&#x2F;&#x2F;mirrors.hust.edu.cn&#x2F;apache&#x2F;rocketmq&#x2F;4.7.1&#x2F;rocketmq-all-4.7.1-source-release.zip</span><br></pre></td></tr></table></figure>
+
+<p>解压: </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">unzip rocketmq-all-4.7.1-source-release.zip</span><br></pre></td></tr></table></figure>
+
+<p>进入解压文件夹:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd rocketmq-all-4.7.1-source-release</span><br></pre></td></tr></table></figure>
+
+<p>下载依赖:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mvn -Prelease-all -DskipTests clean install -U</span><br></pre></td></tr></table></figure>
+
+<p>进入执行文件夹:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd distribution&#x2F;target&#x2F;rocketmq-4.7.1&#x2F;rocketmq-4.7.1&#x2F;bin</span><br></pre></td></tr></table></figure>
+
+<p>编辑启动文件:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim runserver.sh</span><br></pre></td></tr></table></figure>
+
+<p>jvm启动参数修改(根据用途决定):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">JAVA_OPT&#x3D;&quot;$&#123;JAVA_OPT&#125; -server -Xms256m -Xmx256m -Xmn512m -XX:MetaspaceSize&#x3D;128m -XX:MaxMetaspaceSize&#x3D;320m&quot;</span><br></pre></td></tr></table></figure>
+
+<h2 id="NameServer-a"><a href="#NameServer-a" class="headerlink" title="NameServer-a"></a>NameServer-a</h2><p>将下载解压好的包移动到/apply/rocketmq文件夹，并重新命名为namesrv-a:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mv &#x2F;usr&#x2F;local&#x2F;rocketmq&#x2F;rocketmq-all-4.7.1-source-release &#x2F;apply&#x2F;rocketmq&#x2F;namesrv-a</span><br></pre></td></tr></table></figure>
+
+<p>创建日志文件:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">touch &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;logs&#x2F;namesrv-a.log</span><br></pre></td></tr></table></figure>
+
+<p>创建配置文件:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">touch &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;namesrv-a.properties</span><br></pre></td></tr></table></figure>
+
+<p>修改配置文件内容:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;nameserver-a&#x2F;conf&#x2F;namesrv-a.properties</span><br></pre></td></tr></table></figure>
+
+<p>添加属性(自定义启动端口):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">listenPort&#x3D;9876</span><br></pre></td></tr></table></figure>
+
+<p>进入执行文件夹:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd &#x2F;usr&#x2F;local&#x2F;rocketmq&#x2F;namesrv-a&#x2F;distribution&#x2F;target&#x2F;rocketmq-4.7.1&#x2F;rocketmq-4.7.1&#x2F;bin</span><br></pre></td></tr></table></figure>
+
+<p>启动:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nohup sh mqnamesrv -c &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;namesrv-a.properties &gt;&#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;logs&#x2F;namesrv-a.log 2&gt;&amp;1 &amp;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Broker-a"><a href="#Broker-a" class="headerlink" title="Broker-a"></a>Broker-a</h2><p>下载安装后移动到/apply/rocketmq文件夹，并重新命名为broker-a:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mv &#x2F;usr&#x2F;local&#x2F;rocketmq&#x2F;rocketmq-all-4.7.1-source-release &#x2F;apply&#x2F;rocketmq&#x2F;broker-a</span><br></pre></td></tr></table></figure>
+
+<p>进入</p>
+<p>创建日志:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">touch &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;logs&#x2F;namesrv-a.log</span><br></pre></td></tr></table></figure>
+
+<p>创建配置:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">touch &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;broker-a.properties</span><br></pre></td></tr></table></figure>
+
+<p>编辑配置:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;broker-a.properties</span><br></pre></td></tr></table></figure>
+
+<p>在broker-a.properties中添加属性(自定义启动端口):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">listenPort&#x3D;9800</span><br></pre></td></tr></table></figure>
+
+<p>创建store文件夹:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;store&#x2F;broker-a</span><br><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;store&#x2F;broker-a&#x2F;commitlog</span><br><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;store&#x2F;broker-a&#x2F;consumequeue</span><br><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;store&#x2F;broker-a&#x2F;index</span><br><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;store&#x2F;broker-a&#x2F;checkpoint</span><br><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;store&#x2F;broker-a&#x2F;abort</span><br></pre></td></tr></table></figure>
+
+<p>编辑broker配置:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim distribution&#x2F;target&#x2F;rocketmq-4.7.1&#x2F;rocketmq-4.7.1&#x2F;bin</span><br></pre></td></tr></table></figure>
+<p>#集群名称<br>brokerClusterName = lvt-cluster<br>#节点名称<br>brokerName = broker-a<br>#Broker的id，0为master，其他为slave<br>brokerId = 0<br>#凌晨4点执行删除<br>deleteWhen = 04<br>#数据保存48小时<br>fileReservedTime = 48<br>#<br>brokerRole = ASYNC_MASTER<br>#<br>flushDiskType = ASYNC_FLUSH<br>#公网IP<br>brokerIP1 = 175.24.30.43<br>#存储路径<br>storePathRootDir=/usr/local/rocketmq-data/broker-a/store/<br>#commitLog 存储路径<br>storePathCommitLog=/usr/local/rocketmq-data/broker-a/store/commitlog<br>#消费队列存储路径存储路径<br>storePathConsumeQueue=/usr/local/rocketmq-data/broker-a/store/consumequeue<br>#消息索引存储路径<br>storePathIndex=/usr/local/rocketmq-data/broker-a/store/index<br>#checkpoint 文件存储路径<br>storeCheckpoint=/usr/local/rocketmq-data/broker-a/store/checkpoint<br>#abort 文件存储路径<br>abortFile=/usr/local/rocketmq-data/broker-a/store/abort</p>
+<p>进入执行文件夹:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd &#x2F;usr&#x2F;local&#x2F;rocketmq&#x2F;broker-a&#x2F;distribution&#x2F;target&#x2F;rocketmq-4.7.1&#x2F;rocketmq-4.7.1&#x2F;bin</span><br></pre></td></tr></table></figure>
+
+<p>启动:nohup sh mqbroker -n 175.24.30.43:9876;175.24.30.43:9877 -c /usr/local/rocketmq-data/broker-a/conf/broker.properties &gt;/usr/local/rocketmq-data/broker-a/logs/broker.log 2&gt;&amp;1 &amp;</p>
 <h2 id="Console"><a href="#Console" class="headerlink" title="Console"></a>Console</h2>
   
   
@@ -574,7 +634,7 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-10T08:12:35+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-10T17:46:37+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2020年12月10日</p>
@@ -701,7 +761,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85maven"><span class="toc-text">安装maven</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="toc-text">准备工作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NameServer"><span class="toc-text">NameServer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Broker"><span class="toc-text">Broker</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Console"><span class="toc-text">Console</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85maven"><span class="toc-text">安装maven</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E6%96%87%E4%BB%B6%E5%A4%B9"><span class="toc-text">创建文件夹</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8B%E8%BD%BD%E5%AE%89%E8%A3%85%E5%8C%85"><span class="toc-text">下载安装包</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NameServer-a"><span class="toc-text">NameServer-a</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Broker-a"><span class="toc-text">Broker-a</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Console"><span class="toc-text">Console</span></a></li></ol>
     </div>
   </section>
 
