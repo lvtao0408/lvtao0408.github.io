@@ -523,41 +523,14 @@
 <p>这里换一种假设，不存在的topic第一次被Producer投递时，没有其他Producer同时进行，导致此topic仅仅分配在某一个Broker中。这就相当危险了，并行能力太差，如果消息量上来很容易造成积压。说这么多就是想表达自动创建的topic的配置信息，因为场景的不确定性很难达到理想值，因此在生产环境中最好关闭自动创建，所有topic都由开发人员根据业务场景主观判断并创建。</p>
 <h2 id="手动创建"><a href="#手动创建" class="headerlink" title="手动创建"></a>手动创建</h2><p>topic的手动创建可以通过linux命令来实现，也可以在console页面进行操作，命令操作相对于页面来说较麻烦一些，并且生产环境除非运维基本上不会有访问服务器的权限，所以这里只写控制台如何创建。</p>
 <p>topic在控制台的创建界面:<br><img src="/2020/05/05/RocketMQ%E4%B8%BB%E9%A2%98%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4/topic%E5%88%9B%E5%BB%BA%E7%95%8C%E9%9D%A2.jpg" class="lazyload" data-srcset="/2020/05/05/RocketMQ%E4%B8%BB%E9%A2%98%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4/topic%E5%88%9B%E5%BB%BA%E7%95%8C%E9%9D%A2.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>每个选项的描述:</p>
-<table>
-<thead>
-<tr>
-<th>列名</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>clusterName</td>
-<td>集群名</td>
-</tr>
-<tr>
-<td>BROKER_NAME</td>
-<td>broker名称,一直没看懂这个选项，无论如何选择最终所有的Broker都会创建topic的队列</td>
-</tr>
-<tr>
-<td>topicName</td>
-<td>topic名称</td>
-</tr>
-<tr>
-<td>writeQueueNums</td>
-<td>写队列数，Producer只能连接到写队列，每个写队列只能被一个Producer连接</td>
-</tr>
-<tr>
-<td>readQueueNums</td>
-<td>读队列数，Consumer只能连接到读队列，每个读队列只能被一个Consumer连接</td>
-</tr>
-<tr>
-<td>perm</td>
-<td>2禁读、4禁写、6同时支持读写，一般情况这里填写6</td>
-</tr>
-</tbody></table>
-<p>点击提交后，集群中每个Broker都会创建writeQueueNums个队列，可以理解为被创建的topic，在整个clusterName中的队列总数为writeQueueNums*Broker(master)数量，</p>
-<h2 id="调整"><a href="#调整" class="headerlink" title="调整"></a>调整</h2>
+<br>
+clusterName与BROKER_NAME选项必须填写一个，用于指定topic在哪些Broker节点上创建。如果仅填写clusterName选项(支持多选)，则选中的集群所属Broker节点都会创建此topic信息，这种方式也叫集群创建。如果仅填写BROKER_NAME选项(支持多选)，则只在选中的Broker节点中创建，这种方式也叫Broker创建。如果俩个有存在选项值，则取并集。
+
+<p>writeQueueNums(写队列数)参数决定了在每个选中的Broker节点中创建的队列数量，比如写队列数的值为4，在topic被创建后，涉及到的每个Broker对应的stroe/consumequeue文件夹下都会创建0、1、2、3四个文件夹(懒创建方式，只有消息投递到此文件夹才会被创建)，这四个文件夹代表四个队列，用于持久化投递到本节点的数据信息。<br>写队列数也可以决定连接的Producer数量上限，因为NameServer只会路由队列号0、1、2、3，当Producer连接数不足4个时根据策略分配，当Producer连接数超过4个时，超过的部分不会被分到任何队列，即使启动也没有意义。</p>
+<p>readQueueNums(读队列数)参数决定某个Broker负责的某个topic最多可连接的消费者数，在集群正常运行期间此参数似乎没有存在的意义。假设某个Broker上的写队列数是4，那么在Broker节点中会创建0、1、2、3四个队列。如果设置的读队列数小于写队列数(比如3)，那么NameServer只会为Consumer路由012三个队列号，导致队列号为3的队列永远无法被消费。如果设置的读队列数大于写队列数(比如5)，那么会导致有个消费者不会被分到任何队列，即使启动也没有意义。</p>
+<p>按照上述的理论，writeQueueNums小于readQueueNums情况下最多造成资源浪费，大于readQueueNums情况下则会造成严重的消息堆积问题，writeQueueNums与readQueueNums的值只有保持一致才是合理的，如此说来完全可以强制这俩参数相等，或者合并成一个参数表示。设计者没有这么做肯定有发挥作用的地方，这么设计的目的是方便队列的缩容与扩容，思考一个问题，假设某个topic在每个Broker上创建了128个队列，如果在用户无感知的情况下缩小到64个，或者扩容到256个？</p>
+<p>关于缩容，可以先将写队列数修改为64，修改后会触发再均衡，将队列重新分配给所有Consumer，并且此时队列号65-127不会被路由到任何Producer，也就是说这些队列不会接收到新消息。由于读队列还是128，仍然可以继续消费队列号65-127的消息，直到队列号65-127全部消费完毕后，修改读队列的值与写队列保持一致，再次触发均衡策略，消费者也不会路由到队列号65-127，至此缩容完毕。扩容的思想与缩容基本一致。</p>
+
   
   
     
@@ -591,7 +564,7 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-11T10:41:44+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-11T17:30:57+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2020年12月11日</p>
@@ -713,7 +686,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%8A%A8%E5%88%9B%E5%BB%BA"><span class="toc-text">自动创建</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E5%88%9B%E5%BB%BA"><span class="toc-text">手动创建</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B0%83%E6%95%B4"><span class="toc-text">调整</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%8A%A8%E5%88%9B%E5%BB%BA"><span class="toc-text">自动创建</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E5%88%9B%E5%BB%BA"><span class="toc-text">手动创建</span></a></li></ol>
     </div>
   </section>
 
