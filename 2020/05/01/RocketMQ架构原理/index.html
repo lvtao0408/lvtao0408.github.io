@@ -524,8 +524,8 @@
 <h2 id="消息领域模型"><a href="#消息领域模型" class="headerlink" title="消息领域模型"></a>消息领域模型</h2><p><font size="4"><b>Topic:</b></font><br>Topic的作用是将整个RocketMQ集群的消息进行划分，使不同类型的消息区分开来，以便于消费者针对不同的消息类型做不同的业务处理。</p>
 <p><font size="4"><b>Tag:</b></font><br>Tag可以看作是消息的二级分类，一般在相同业务模块中通过引入标签来标记不同用途的消息，另外RocketMQ允许消费者按照Tag对消息进行过滤，也可以通过Tag过滤不需要的数据。</p>
 <p><font size="4"><b>Message:</b></font><br>Message就是我们发送或消费的消息，用户在发送消息的时候可以设置messageKey，也就是消息的唯一识别MessageId，便于后续的查询和追踪。</p>
-<p><font size="4"><b>Producer Group:</b></font><br>开发者在启动Producer时可以指定一个生产组，如果没有指定会自动生成一个。Producer Group的作用是将多个Producer融合成一个整体，将发送消息的任务负载均衡到多个Producer并行执行，提高生产者的执行效率，也方便后续的水平扩展。</p>
-<p><font size="4"><b>Consumer Group:</b></font><br>Consumer Group的基本思想与Producer Group一致，不过消费者可以指定消息模式为广播，脱离消费组的束缚。</p>
+<p><font size="4"><b>Producer Group:</b></font><br>开发者在启动Producer时可以指定一个生产组，如果没有指定会自动生成一个(默认为DEFAULT_PRODUCER)。Producer Group主要用于推送事务消息，比如Producer在投递事务消息时宕机，本地事务回滚，可以继续联系该组下的另外一个生产者实例，不至于导致业务走不下去。</p>
+<p><font size="4"><b>Consumer Group:</b></font><br>开发者在启动Producer时可以指定一个消费组，用于负载均衡共同消费消息。</p>
 <h2 id="部署模型"><a href="#部署模型" class="headerlink" title="部署模型"></a>部署模型</h2><p><img src="/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/RocketMQ%E9%83%A8%E7%BD%B2%E6%9E%B6%E6%9E%84.png" class="lazyload" data-srcset="/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/RocketMQ%E9%83%A8%E7%BD%B2%E6%9E%B6%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
 <p><font size="4"><b>Broker特点:</b></font><br>Broker服务分为Master与Slave，一个Master可以对应多个Slaver，Master与Slaver的对应关系通过指定相同的BrokerName、不同的BrokerId来定义，BrokerId为0表示Master，非0表示Slaver。</p>
 <p><font size="4"><b>Producer特点:</b></font><br>Producer服务会随机与NameServer集群中的一个节点建立长连接，定期从NameServer获取topic-queue路由信息，然后与topic-queue所在的 BrokerServer的Master节点建立长连接，并且会定时向Master发送心跳。Producer集群完全是无状态的，可以随意集群部署。</p>
@@ -593,10 +593,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-08T09:26:01+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-13T23:48:23+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年12月8日</p>
+    <p>更新于：2020年12月13日</p>
   </a>
 </div>
 

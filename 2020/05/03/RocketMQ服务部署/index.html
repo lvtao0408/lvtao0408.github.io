@@ -516,109 +516,167 @@
 
   
   <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>由于RocketMQ是使用纯Java编写的，所以NameServer、Broker的运行必须依赖于JDK环境，安装过程中需要下载依赖，因此也必须要用到maven依赖，JDK就不写了，从maven的安装开始写。</p>
-<h2 id="maven"><a href="#maven" class="headerlink" title="maven"></a>maven</h2><p>下载文件:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wget http:&#x2F;&#x2F;mirror.bit.edu.cn&#x2F;apache&#x2F;maven&#x2F;binaries&#x2F;apache-maven-3.2.2-bin.tar.gz</span><br></pre></td></tr></table></figure>
-
-<p>解压:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tar -zxvf apache-maven-3.2.2-bin.tar.gz</span><br></pre></td></tr></table></figure>
-
-<p>添加环境变量(vim /etc/profile):</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">export MAVEN_HOME&#x3D;&#x2F;usr&#x2F;local&#x2F;apache-maven-3.2.2</span><br><span class="line">export PATH&#x3D;$MAVEN_HOME&#x2F;bin:$PATH</span><br></pre></td></tr></table></figure>
-
-<p>刷新环境变量:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source &#x2F;etc&#x2F;profile</span><br></pre></td></tr></table></figure>
-
-<p>检查是否安装成功:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mvn -v</span><br></pre></td></tr></table></figure>
-
-<p>更换国内镜像:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd &#x2F;usr&#x2F;local&#x2F;apache-maven-3.2.2&#x2F;conf</span><br></pre></td></tr></table></figure>
-
-<p>编辑xml配置文件:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vi setting.xml</span><br></pre></td></tr></table></figure>
-
-<p>修改内容，localRepository标签为仓库:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;</span><br><span class="line"> </span><br><span class="line">&lt;settings xmlns&#x3D;&quot;http:&#x2F;&#x2F;maven.apache.org&#x2F;SETTINGS&#x2F;1.0.0&quot;</span><br><span class="line">          xmlns:xsi&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2001&#x2F;XMLSchema-instance&quot;</span><br><span class="line">          xsi:schemaLocation&#x3D;&quot;http:&#x2F;&#x2F;maven.apache.org&#x2F;SETTINGS&#x2F;1.0.0 http:&#x2F;&#x2F;maven.apache.org&#x2F;xsd&#x2F;settings-1.0.0.xsd&quot;&gt;</span><br><span class="line">  </span><br><span class="line">   &lt;localRepository&gt;&#x2F;usr&#x2F;local&#x2F;repo&lt;&#x2F;localRepository&gt;</span><br><span class="line"> </span><br><span class="line">  &lt;mirrors&gt;</span><br><span class="line">        &lt;mirror&gt;</span><br><span class="line">            &lt;id&gt;alimaven&lt;&#x2F;id&gt;</span><br><span class="line">            &lt;name&gt;aliyun maven&lt;&#x2F;name&gt;</span><br><span class="line">            &lt;url&gt;http:&#x2F;&#x2F;maven.aliyun.com&#x2F;nexus&#x2F;content&#x2F;groups&#x2F;public&#x2F;&lt;&#x2F;url&gt;</span><br><span class="line">            &lt;mirrorOf&gt;*&lt;&#x2F;mirrorOf&gt;       </span><br><span class="line">        &lt;&#x2F;mirror&gt;</span><br><span class="line">  &lt;&#x2F;mirrors&gt;</span><br><span class="line"> </span><br><span class="line">&lt;&#x2F;settings&gt;</span><br></pre></td></tr></table></figure>
-
-<h2 id="NameServer"><a href="#NameServer" class="headerlink" title="NameServer"></a>NameServer</h2><p>进入/apply/rocketmq/文件夹中，下载安装包、解压并重新命名: </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 下载</span><br><span class="line">wget http:&#x2F;&#x2F;mirrors.hust.edu.cn&#x2F;apache&#x2F;rocketmq&#x2F;4.7.1&#x2F;rocketmq-all-4.7.1-source-release.zip</span><br><span class="line">&#x2F;&#x2F; 解压</span><br><span class="line">unzip rocketmq-all-4.7.1-source-release.zip</span><br><span class="line">&#x2F;&#x2F; 重命名</span><br><span class="line">mv rocketmq-all-4.7.1-source-release &#x2F;apply&#x2F;rocketmq&#x2F;broker-a</span><br><span class="line">&#x2F;&#x2F; 进入文件夹</span><br><span class="line">cd &#x2F;apply&#x2F;rocketmq&#x2F;broker-a</span><br><span class="line">&#x2F;&#x2F; 下载依赖</span><br><span class="line">mvn -Prelease-all -DskipTests clean install -U</span><br><span class="line">&#x2F;&#x2F; 进入执行文件夹</span><br><span class="line">cd distribution&#x2F;target&#x2F;rocketmq-4.7.1&#x2F;rocketmq-4.7.1&#x2F;bin</span><br><span class="line">&#x2F;&#x2F; 编辑启动文件:</span><br><span class="line">vim runserver.sh</span><br><span class="line">&#x2F;&#x2F; 修改jvm启动参数</span><br><span class="line">JAVA_OPT&#x3D;&quot;$&#123;JAVA_OPT&#125; -server -Xms256m -Xmx256m -Xmn512m -XX:MetaspaceSize&#x3D;128m -XX:MaxMetaspaceSize&#x3D;320m&quot;</span><br></pre></td></tr></table></figure>
-
-<p>创建properties文件:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf</span><br><span class="line">touch &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;namesrv-a.properties</span><br></pre></td></tr></table></figure>
-
-<p>编辑properties文件:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;namesrv-a.properties</span><br></pre></td></tr></table></figure>
-
-<p>添加properties属性:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># 服务端口号</span><br><span class="line">listenPort&#x3D;9876 </span><br></pre></td></tr></table></figure>
-
-<p>进入执行文件夹:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd &#x2F;apply&#x2F;rocketmq&#x2F;namesrv-a&#x2F;distribution&#x2F;target&#x2F;rocketmq-4.7.1&#x2F;rocketmq-4.7.1&#x2F;bin</span><br></pre></td></tr></table></figure>
-
-<p>启动:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nohup sh mqnamesrv -c &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;namesrv-a.properties &amp;</span><br></pre></td></tr></table></figure>
+<h2 id="maven"><a href="#maven" class="headerlink" title="maven"></a>maven</h2><figure class="highlight plain"><figcaption><span>下载文件</span></figcaption><table><tr><td class="code"><pre><span class="line">wget http:&#x2F;&#x2F;mirror.bit.edu.cn&#x2F;apache&#x2F;maven&#x2F;binaries&#x2F;apache-maven-3.2.2-bin.tar.gz</span><br></pre></td></tr></table></figure>
 
 <br>
-<span class="p red">注:如果NameServer仅部署一台，或者每台都在不同的机器上，properties可以不配置(端口默认就是9876)，如果本地测试想要在一台服务器上配置多个，就需要区分端口</span>
+<figure class="highlight plain"><figcaption><span>解压文件</span></figcaption><table><tr><td class="code"><pre><span class="line">tar -zxvf apache-maven-3.2.2-bin.tar.gz</span><br></pre></td></tr></table></figure>
 
-<h2 id="Broker"><a href="#Broker" class="headerlink" title="Broker"></a>Broker</h2><p>进入/apply/rocketmq/文件夹中，下载解压安装包: </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 下载</span><br><span class="line">wget http:&#x2F;&#x2F;mirrors.hust.edu.cn&#x2F;apache&#x2F;rocketmq&#x2F;4.7.1&#x2F;rocketmq-all-4.7.1-source-release.zip</span><br><span class="line">&#x2F;&#x2F; 解压</span><br><span class="line">unzip rocketmq-all-4.7.1-source-release.zip</span><br><span class="line">&#x2F;&#x2F; 重命名</span><br><span class="line">mv rocketmq-all-4.7.1-source-release &#x2F;apply&#x2F;rocketmq&#x2F;broker-a</span><br><span class="line">&#x2F;&#x2F; 进入文件夹</span><br><span class="line">cd &#x2F;apply&#x2F;rocketmq&#x2F;broker-a</span><br><span class="line">&#x2F;&#x2F; 下载依赖</span><br><span class="line">mvn -Prelease-all -DskipTests clean install -U</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>编辑环境变量:</span></figcaption><table><tr><td class="code"><pre><span class="line">vim &#x2F;etc&#x2F;profile</span><br></pre></td></tr></table></figure>
 
-<p>修改jvm启动参数:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 进入执行文件夹</span><br><span class="line">cd distribution&#x2F;target&#x2F;rocketmq-4.7.1&#x2F;rocketmq-4.7.1&#x2F;bin</span><br><span class="line">&#x2F;&#x2F; 编辑启动文件:</span><br><span class="line">vim runbroker.sh</span><br><span class="line">&#x2F;&#x2F; 修改jvm启动参数(这里只是学习用，所以设置比较小)</span><br><span class="line">JAVA_OPT&#x3D;&quot;$&#123;JAVA_OPT&#125; -server -Xms256m -Xmx256m -Xmn512m&quot;</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>添加环境变量:</span></figcaption><table><tr><td class="code"><pre><span class="line">export MAVEN_HOME&#x3D;&#x2F;usr&#x2F;local&#x2F;apache-maven-3.2.2</span><br><span class="line">export PATH&#x3D;$MAVEN_HOME&#x2F;bin:$PATH</span><br></pre></td></tr></table></figure>
 
-<p>创建store文件夹:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;store-broker-a</span><br><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;store-broker-a&#x2F;commitlog</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>刷新环境变量</span></figcaption><table><tr><td class="code"><pre><span class="line">source &#x2F;etc&#x2F;profile</span><br></pre></td></tr></table></figure>
 
-<p>创建properties文件:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">touch &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;broker-a.properties</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>检查是否安装成功</span></figcaption><table><tr><td class="code"><pre><span class="line">mvn -v</span><br></pre></td></tr></table></figure>
 
-<p>编辑properties文件:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;broker-a.properties</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>进入配置文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">cd &#x2F;usr&#x2F;local&#x2F;apache-maven-3.2.2&#x2F;conf</span><br></pre></td></tr></table></figure>
 
-<p>添加properties属性:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">#服务端口号</span><br><span class="line">listenPort&#x3D;10911</span><br><span class="line">#集群名</span><br><span class="line">brokerClusterName &#x3D; lvt-cluster</span><br><span class="line">#broker服务名</span><br><span class="line">brokerName &#x3D; broker-a</span><br><span class="line">#0表示master，大于0表示各个slave</span><br><span class="line">brokerId &#x3D; 0</span><br><span class="line">#删除文件时间点，默认凌晨 4点</span><br><span class="line">deleteWhen &#x3D; 04</span><br><span class="line">#文件保留时间,默认48小时</span><br><span class="line">fileReservedTime &#x3D; 48</span><br><span class="line">#Broker角色</span><br><span class="line">#- ASYNC_MASTER 异步复制Master</span><br><span class="line">#- SYNC_MASTER 同步双写Master</span><br><span class="line">#- SLAVE</span><br><span class="line">brokerRole &#x3D; ASYNC_MASTER</span><br><span class="line">#刷盘方式</span><br><span class="line">#- ASYNC_FLUSH 异步刷盘</span><br><span class="line">#- SYNC_FLUSH 同步刷盘</span><br><span class="line">flushDiskType &#x3D; ASYNC_FLUSH</span><br><span class="line">#公网</span><br><span class="line">brokerIP1 &#x3D; 172.0.0.1</span><br><span class="line">#注册中心地址，多个使用;分开</span><br><span class="line">namesrvAddr&#x3D;172.0.0.1:9876</span><br><span class="line">#是否自动创建，生产建议关闭</span><br><span class="line">autoCreateTopicEnable&#x3D;true</span><br><span class="line">#持久化消息存储根路径</span><br><span class="line">storePathRootDir&#x3D;&#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;store-broker-a</span><br><span class="line">#commitLog文件存储路径</span><br><span class="line">storePathCommitLog&#x3D;&#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;store-broker-a&#x2F;commitlog</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>编辑xml配置文件</span></figcaption><table><tr><td class="code"><pre><span class="line">vi setting.xml</span><br></pre></td></tr></table></figure>
 
-<p>进入执行文件夹:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd &#x2F;apply&#x2F;rocketmq&#x2F;broker-a&#x2F;distribution&#x2F;target&#x2F;rocketmq-4.7.1&#x2F;rocketmq-4.7.1&#x2F;bin</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>修改镜像仓库</span></figcaption><table><tr><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;</span><br><span class="line"> </span><br><span class="line">&lt;settings xmlns&#x3D;&quot;http:&#x2F;&#x2F;maven.apache.org&#x2F;SETTINGS&#x2F;1.0.0&quot;</span><br><span class="line">          xmlns:xsi&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2001&#x2F;XMLSchema-instance&quot;</span><br><span class="line">          xsi:schemaLocation&#x3D;&quot;http:&#x2F;&#x2F;maven.apache.org&#x2F;SETTINGS&#x2F;1.0.0 http:&#x2F;&#x2F;maven.apache.org&#x2F;xsd&#x2F;settings-1.0.0.xsd&quot;&gt;</span><br><span class="line">  </span><br><span class="line">   &lt;localRepository&gt;&#x2F;usr&#x2F;local&#x2F;repo&lt;&#x2F;localRepository&gt;</span><br><span class="line"> </span><br><span class="line">  &lt;mirrors&gt;</span><br><span class="line">        &lt;mirror&gt;</span><br><span class="line">            &lt;id&gt;alimaven&lt;&#x2F;id&gt;</span><br><span class="line">            &lt;name&gt;aliyun maven&lt;&#x2F;name&gt;</span><br><span class="line">            &lt;url&gt;http:&#x2F;&#x2F;maven.aliyun.com&#x2F;nexus&#x2F;content&#x2F;groups&#x2F;public&#x2F;&lt;&#x2F;url&gt;</span><br><span class="line">            &lt;mirrorOf&gt;*&lt;&#x2F;mirrorOf&gt;       </span><br><span class="line">        &lt;&#x2F;mirror&gt;</span><br><span class="line">  &lt;&#x2F;mirrors&gt;</span><br><span class="line"> </span><br><span class="line">&lt;&#x2F;settings&gt;</span><br></pre></td></tr></table></figure>
 
-<p>启动:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nohup sh mqbroker -c &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;broker-a.properties &amp;</span><br></pre></td></tr></table></figure>
+<h2 id="NameServer"><a href="#NameServer" class="headerlink" title="NameServer"></a>NameServer</h2><figure class="highlight plain"><figcaption><span>进入/apply/rocketmq/文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">cd &#x2F;apply&#x2F;rocketmq&#x2F;</span><br></pre></td></tr></table></figure>
 
-<span class="p red">注:在网上看到很多资料将配置写在broker.conf中，这种方式启动是没有读取这个文件的，如果将属性全部设置在broker.conf中也不会启动失败，因为这些参数全部自带默认值。另外在配置属性中关于store的一些路径只能设置storePathRootDir、storePathCommitLog这俩个，其他的写进去会导致项目无法启动(如果写的路径是错的则不会，应该是没检测到路径就改用默认值了)。还有个奇怪的事情，我在腾讯云部署的伪Broker集群，发现不同的节点端口号不能相邻，否则会报端口占用，隔着几百就可以。</span>
+<br>
+<figure class="highlight plain"><figcaption><span>下载安装包</span></figcaption><table><tr><td class="code"><pre><span class="line">wget http:&#x2F;&#x2F;mirrors.hust.edu.cn&#x2F;apache&#x2F;rocketmq&#x2F;4.7.1&#x2F;rocketmq-all-4.7.1-source-release.zip</span><br></pre></td></tr></table></figure>
 
-<h2 id="Console"><a href="#Console" class="headerlink" title="Console"></a>Console</h2><p>打开git地址，进行Download ZIP，上传到服务器路径/apply/rocketmq:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 进入页面并下载</span><br><span class="line">https:&#x2F;&#x2F;github.com&#x2F;apache&#x2F;rocketmq-externals.git</span><br><span class="line">&#x2F;&#x2F; 解压</span><br><span class="line">unzip &#x2F;apply&#x2F;rocketmq&#x2F;rocketmq-externals-master.zip</span><br><span class="line">&#x2F;&#x2F; 修改文件夹名称</span><br><span class="line">mv &#x2F;apply&#x2F;rocketmq&#x2F;rocketmq-externals-master console</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>解压安装包</span></figcaption><table><tr><td class="code"><pre><span class="line">unzip rocketmq-all-4.7.1-source-release.zip</span><br></pre></td></tr></table></figure>
 
-<p>创建控制台数据文件夹:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;console-data</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>重命名</span></figcaption><table><tr><td class="code"><pre><span class="line">mv rocketmq-all-4.7.1-source-release &#x2F;apply&#x2F;rocketmq&#x2F;broker-a</span><br></pre></td></tr></table></figure>
 
-<p>编辑properties文件:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim &#x2F;apply&#x2F;rocketmq&#x2F;console&#x2F;rocketmq-console&#x2F;src&#x2F;main&#x2F;resources&#x2F;application.properties</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>进入文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">cd &#x2F;apply&#x2F;rocketmq&#x2F;broker-a</span><br></pre></td></tr></table></figure>
 
-<p>修改属性:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">rocketmq.config.namesrvAddr&#x3D;172.0.0.1:9876</span><br><span class="line">rocketmq.config.dataPath&#x3D;&#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;console-data</span><br><span class="line">rocketmq.config.loginRequired&#x3D;true</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>下载依赖</span></figcaption><table><tr><td class="code"><pre><span class="line">mvn -Prelease-all -DskipTests clean install -U</span><br></pre></td></tr></table></figure>
 
-<p>设置账号密码，如果rocketmq.config.loginRequired为false，此设置无效。如果为true，不设置账号密码默认admin/admin:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim &#x2F;apply&#x2F;rocketmq&#x2F;console&#x2F;rocketmq-console&#x2F;src&#x2F;main&#x2F;resources&#x2F;users.properties</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>进入执行文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">cd distribution&#x2F;target&#x2F;rocketmq-4.7.1&#x2F;rocketmq-4.7.1&#x2F;bin</span><br></pre></td></tr></table></figure>
 
-<p>设置管理员和普通用户(注释的汉字别打进去，否则下面编译不通过):</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># 设置管理员，格式:username&#x3D;password[,N]  其中N是可选项:0为普通用户 1为管理员</span><br><span class="line">admin&#x3D;admin,1</span><br><span class="line"># 普通成员</span><br><span class="line">member&#x3D;member</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>编辑启动文件</span></figcaption><table><tr><td class="code"><pre><span class="line">vim runserver.sh</span><br></pre></td></tr></table></figure>
 
-<p>进入/apply/rocketmq/console/rocketmq-console文件夹，编译(一定要编辑完配置在编译，否则配置无效):</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mvn clean package -Dmaven.test.skip&#x3D;true</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>修改jvm启动参数</span></figcaption><table><tr><td class="code"><pre><span class="line">JAVA_OPT&#x3D;&quot;$&#123;JAVA_OPT&#125; -server -Xms256m -Xmx256m -Xmn512m -XX:MetaspaceSize&#x3D;128m -XX:MaxMetaspaceSize&#x3D;320m&quot;</span><br></pre></td></tr></table></figure>
 
-<p>进入jar包文件夹:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd &#x2F;apply&#x2F;rocketmq&#x2F;console&#x2F;rocketmq-console&#x2F;target</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>创建conf文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf</span><br></pre></td></tr></table></figure>
 
-<p>运行:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nohup java -jar rocketmq-console-ng-2.0.0.jar &amp;</span><br></pre></td></tr></table></figure>
+<br>
+<figure class="highlight plain"><figcaption><span>创建properties</span></figcaption><table><tr><td class="code"><pre><span class="line">touch &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;namesrv-a.properties</span><br></pre></td></tr></table></figure>
 
+<br>
+<figure class="highlight plain"><figcaption><span>编辑properties</span></figcaption><table><tr><td class="code"><pre><span class="line">vim &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;namesrv-a.properties</span><br></pre></td></tr></table></figure>
 
+<br>
+<figure class="highlight plain"><figcaption><span>添加端口号</span></figcaption><table><tr><td class="code"><pre><span class="line"># 服务端口号</span><br><span class="line">listenPort&#x3D;9876 </span><br></pre></td></tr></table></figure>
 
+<br>
+<figure class="highlight plain"><figcaption><span>进入执行文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">cd &#x2F;apply&#x2F;rocketmq&#x2F;namesrv-a&#x2F;distribution&#x2F;target&#x2F;rocketmq-4.7.1&#x2F;rocketmq-4.7.1&#x2F;bin</span><br></pre></td></tr></table></figure>
 
+<br>
+<figure class="highlight plain"><figcaption><span>启动</span></figcaption><table><tr><td class="code"><pre><span class="line">nohup sh mqnamesrv -c &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;namesrv-a.properties &amp;</span><br></pre></td></tr></table></figure>
 
+<p class="p red">注:如果NameServer仅部署一台，或者每台都在不同的机器上，properties可以不配置(端口默认就是9876)，如果本地测试想要在一台服务器上配置多个，就需要区分端口</p>
 
+<h2 id="Broker"><a href="#Broker" class="headerlink" title="Broker"></a>Broker</h2><figure class="highlight plain"><figcaption><span>进入/apply/rocketmq/文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">cd &#x2F;apply&#x2F;rocketmq&#x2F;</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>下载安装包</span></figcaption><table><tr><td class="code"><pre><span class="line">wget http:&#x2F;&#x2F;mirrors.hust.edu.cn&#x2F;apache&#x2F;rocketmq&#x2F;4.7.1&#x2F;rocketmq-all-4.7.1-source-release.zip</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>解压安装包</span></figcaption><table><tr><td class="code"><pre><span class="line">unzip rocketmq-all-4.7.1-source-release.zip</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>重命名</span></figcaption><table><tr><td class="code"><pre><span class="line">mv rocketmq-all-4.7.1-source-release &#x2F;apply&#x2F;rocketmq&#x2F;broker-a</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>进入文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">cd &#x2F;apply&#x2F;rocketmq&#x2F;broker-a</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>下载依赖</span></figcaption><table><tr><td class="code"><pre><span class="line">mvn -Prelease-all -DskipTests clean install -U</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>进入执行文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">cd distribution&#x2F;target&#x2F;rocketmq-4.7.1&#x2F;rocketmq-4.7.1&#x2F;bin</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>编辑启动文件</span></figcaption><table><tr><td class="code"><pre><span class="line">vim runbroker.sh</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>修改jvm启动参数</span></figcaption><table><tr><td class="code"><pre><span class="line">JAVA_OPT&#x3D;&quot;$&#123;JAVA_OPT&#125; -server -Xms256m -Xmx256m -Xmn512m&quot;</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>创建store文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;store-broker-a</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>创建commitlog文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;store-broker-a&#x2F;commitlog</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>创建properties</span></figcaption><table><tr><td class="code"><pre><span class="line">touch &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;broker-a.properties</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>编辑properties</span></figcaption><table><tr><td class="code"><pre><span class="line">vim &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;broker-a.properties</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>添加属性</span></figcaption><table><tr><td class="code"><pre><span class="line">#服务端口号</span><br><span class="line">listenPort&#x3D;10911</span><br><span class="line">#集群名</span><br><span class="line">brokerClusterName &#x3D; lvt-cluster</span><br><span class="line">#broker服务名</span><br><span class="line">brokerName &#x3D; broker-a</span><br><span class="line">#0表示master，大于0表示各个slave</span><br><span class="line">brokerId &#x3D; 0</span><br><span class="line">#删除文件时间点，默认凌晨 4点</span><br><span class="line">deleteWhen &#x3D; 04</span><br><span class="line">#文件保留时间,默认48小时</span><br><span class="line">fileReservedTime &#x3D; 48</span><br><span class="line">#Broker角色</span><br><span class="line">#- ASYNC_MASTER 异步复制Master</span><br><span class="line">#- SYNC_MASTER 同步双写Master</span><br><span class="line">#- SLAVE</span><br><span class="line">brokerRole &#x3D; ASYNC_MASTER</span><br><span class="line">#刷盘方式</span><br><span class="line">#- ASYNC_FLUSH 异步刷盘</span><br><span class="line">#- SYNC_FLUSH 同步刷盘</span><br><span class="line">flushDiskType &#x3D; ASYNC_FLUSH</span><br><span class="line">#公网</span><br><span class="line">brokerIP1 &#x3D; 172.0.0.1</span><br><span class="line">#注册中心地址，多个使用;分开</span><br><span class="line">namesrvAddr&#x3D;172.0.0.1:9876</span><br><span class="line">#是否自动创建，生产建议关闭</span><br><span class="line">autoCreateTopicEnable&#x3D;true</span><br><span class="line">#持久化消息存储根路径</span><br><span class="line">storePathRootDir&#x3D;&#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;store-broker-a</span><br><span class="line">#commitLog文件存储路径</span><br><span class="line">storePathCommitLog&#x3D;&#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;store-broker-a&#x2F;commitlog</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>进入执行文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">cd &#x2F;apply&#x2F;rocketmq&#x2F;broker-a&#x2F;distribution&#x2F;target&#x2F;rocketmq-4.7.1&#x2F;rocketmq-4.7.1&#x2F;bin</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>启动</span></figcaption><table><tr><td class="code"><pre><span class="line">nohup sh mqbroker -c &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;conf&#x2F;broker-a.properties &amp;</span><br></pre></td></tr></table></figure>
+
+<p class="p red">注:在网上看到很多资料将配置写在broker.conf中，上述的不是方式不会读取这个配置文件，如果这么做也不会报错，因为这些参数全部自带默认值。</p>
+
+<p class="p red">另外在配置属性中关于store的一些路径只能设置storePathRootDir、storePathCommitLog这俩个，其他的写进去会导致项目无法启动(如果写的路径是错的则不会，应该是没检测到路径就改用默认值了)。</p>
+
+<p class="p red">还有个奇怪的事情，我在腾讯云部署的伪Broker集群，发现不同的节点端口号不能相邻，否则会报端口占用，目前是各服务的端口号隔几百。</p>
+
+<h2 id="Console"><a href="#Console" class="headerlink" title="Console"></a>Console</h2><figure class="highlight plain"><figcaption><span>进入git网址，下载源码(点击Download ZIP)</span></figcaption><table><tr><td class="code"><pre><span class="line">https:&#x2F;&#x2F;github.com&#x2F;apache&#x2F;rocketmq-externals.git</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>上传到服务器/apply/rocketmq文件夹，并解压</span></figcaption><table><tr><td class="code"><pre><span class="line">unzip &#x2F;apply&#x2F;rocketmq&#x2F;rocketmq-externals-master.zip</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>重命名文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">mv &#x2F;apply&#x2F;rocketmq&#x2F;rocketmq-externals-master console</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>创建数据文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">mkdir -p &#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;console-data</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>编辑application.properties</span></figcaption><table><tr><td class="code"><pre><span class="line">vim &#x2F;apply&#x2F;rocketmq&#x2F;console&#x2F;rocketmq-console&#x2F;src&#x2F;main&#x2F;resources&#x2F;application.properties</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>修改属性</span></figcaption><table><tr><td class="code"><pre><span class="line"># 注册中心地址端口</span><br><span class="line">rocketmq.config.namesrvAddr&#x3D;172.0.0.1:9876</span><br><span class="line"># 存放数据路径</span><br><span class="line">rocketmq.config.dataPath&#x3D;&#x2F;usr&#x2F;local&#x2F;rocketmq-data&#x2F;console-data</span><br><span class="line"># 是否需要登陆</span><br><span class="line">rocketmq.config.loginRequired&#x3D;true</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>编辑users.properties</span></figcaption><table><tr><td class="code"><pre><span class="line">vim &#x2F;apply&#x2F;rocketmq&#x2F;console&#x2F;rocketmq-console&#x2F;src&#x2F;main&#x2F;resources&#x2F;users.properties</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>设置登录控制台的账号密码(注释的汉字别打进去，否则下面编译不通过)</span></figcaption><table><tr><td class="code"><pre><span class="line"># 设置管理员，格式:username&#x3D;password[,N]  其中N是可选项:0为普通用户 1为管理员</span><br><span class="line">admin&#x3D;admin,1</span><br><span class="line"># 普通成员</span><br><span class="line">member&#x3D;member</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>进入解压文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">cd &#x2F;apply&#x2F;rocketmq&#x2F;console&#x2F;rocketmq-console</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>执行编译(一定要编辑完配置在编译，否则配置无效)</span></figcaption><table><tr><td class="code"><pre><span class="line">mvn clean package -Dmaven.test.skip&#x3D;true</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>进入jar包文件夹</span></figcaption><table><tr><td class="code"><pre><span class="line">cd &#x2F;apply&#x2F;rocketmq&#x2F;console&#x2F;rocketmq-console&#x2F;target</span><br></pre></td></tr></table></figure>
+
+<br>
+<figure class="highlight plain"><figcaption><span>启动服务</span></figcaption><table><tr><td class="code"><pre><span class="line">nohup java -jar rocketmq-console-ng-2.0.0.jar &amp;</span><br></pre></td></tr></table></figure>
+
+<p class="p red">注:如果rocketmq.config.loginRequired设置为false，则不需要编辑users.properties设置登录用的账号密码。在设置为true的情况下，如果不编辑users.properties文件设置账号密码，会有个默认账号可以直接登录(admin/admin)，生产环境为了安全起见，建议自定义账号密码。</p>
 
   
   
@@ -653,7 +711,7 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-13T12:33:15+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-13T20:58:23+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2020年12月13日</p>
