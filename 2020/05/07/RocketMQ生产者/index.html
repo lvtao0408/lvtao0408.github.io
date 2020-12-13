@@ -515,7 +515,30 @@
 
 
   
-  <h2 id="springboot集成"><a href="#springboot集成" class="headerlink" title="springboot集成"></a>springboot集成</h2>
+  <h2 id="生产者与生产组"><a href="#生产者与生产组" class="headerlink" title="生产者与生产组"></a>生产者与生产组</h2><h2 id="springboot集成"><a href="#springboot集成" class="headerlink" title="springboot集成"></a>springboot集成</h2><p><font size="4"><b>RocketMQ依赖</b></font></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">	&lt;groupId&gt;org.apache.rocketmq&lt;&#x2F;groupId&gt;</span><br><span class="line">	&lt;artifactId&gt;rocketmq-client&lt;&#x2F;artifactId&gt;</span><br><span class="line">	&lt;version&gt;4.7.0&lt;&#x2F;version&gt;</span><br><span class="line">&lt;&#x2F;dependency&gt;</span><br></pre></td></tr></table></figure>
+
+<p><font size="4"><b>application.properties</b></font></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"># 服务端口</span><br><span class="line">server.port&#x3D;8082</span><br><span class="line"></span><br><span class="line"># 生产者分组</span><br><span class="line">rocketmq.producer.groupName&#x3D;GROUP_A</span><br><span class="line"></span><br><span class="line"># MQ注册中心地地址</span><br><span class="line">rocketmq.producer.namesrvAddr&#x3D;175.24.30.43:9876</span><br><span class="line"></span><br><span class="line"># 消息最大长度 默认 1024 * 4 (4M)</span><br><span class="line">rocketmq.producer.maxMessageSize &#x3D; 4096</span><br><span class="line"></span><br><span class="line"># 发送消息超时时间，默认 3000</span><br><span class="line">rocketmq.producer.sendMsgTimeOut&#x3D;3000</span><br><span class="line"></span><br><span class="line"># 发送消息失败重试次数，默认2</span><br><span class="line">rocketmq.producer.retryTimesWhenSendFailed&#x3D;2</span><br></pre></td></tr></table></figure>
+
+<p><font size="4"><b>将生产者注册到IOC</b></font></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">@Configuration</span><br><span class="line">public class RocketMQProducerConfig &#123;</span><br><span class="line"></span><br><span class="line">    @Value(&quot;$&#123;rocketmq.producer.groupName&#125;&quot;)</span><br><span class="line">    private String groupName;</span><br><span class="line"></span><br><span class="line">    @Value(&quot;$&#123;rocketmq.producer.namesrvAddr&#125;&quot;)</span><br><span class="line">    private String namesrvAddr;</span><br><span class="line"></span><br><span class="line">    @Value(&quot;$&#123;rocketmq.producer.maxMessageSize&#125;&quot;)</span><br><span class="line">    private Integer maxMessageSize;</span><br><span class="line"></span><br><span class="line">    @Value(&quot;$&#123;rocketmq.producer.sendMsgTimeOut&#125;&quot;)</span><br><span class="line">    private Integer sendMsgTimeOut;</span><br><span class="line"></span><br><span class="line">    @Value(&quot;$&#123;rocketmq.producer.retryTimesWhenSendFailed&#125;&quot;)</span><br><span class="line">    private Integer retryTimesWhenSendFailed;</span><br><span class="line"></span><br><span class="line">    &#x2F;**</span><br><span class="line">     * RocketMQ生产者对象</span><br><span class="line">     *&#x2F;</span><br><span class="line">    @Bean</span><br><span class="line">    public DefaultMQProducer defaultProducer() throws MQClientException &#123;</span><br><span class="line"></span><br><span class="line">        DefaultMQProducer producer &#x3D; new DefaultMQProducer(groupName);</span><br><span class="line">        producer.setNamesrvAddr(namesrvAddr);</span><br><span class="line">        producer.setVipChannelEnabled(false);</span><br><span class="line">        producer.setMaxMessageSize(maxMessageSize);</span><br><span class="line">        producer.setSendMsgTimeout(sendMsgTimeOut);</span><br><span class="line">        producer.setRetryTimesWhenSendAsyncFailed(retryTimesWhenSendFailed);</span><br><span class="line">        producer.start();</span><br><span class="line"></span><br><span class="line">        return producer;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><font size="4"><b>Controller层简单写一个消息发送代码:</b></font><br>@RestController<br>public class ProducerController {</p>
+<pre><code>@Autowired
+private DefaultMQProducer producer;
+
+@RequestMapping(value = &quot;/send&quot;, method = RequestMethod.GET)
+public Result&lt;SendResult&gt; send(@RequestParam(&quot;message&quot;)String message)
+        throws InterruptedException, RemotingException, MQClientException, MQBrokerException &#123;
+
+    Message sendMsg = new Message(&quot;ORDER_REMINDER&quot;, &quot;LOGISTICS&quot;, message.getBytes());
+    SendResult sendResult = producer.send(sendMsg);
+
+    return Result.build(&quot;发送成功&quot;, sendResult);
+&#125;</code></pre>
+<p>}</p>
+<h2 id="简单测试"><a href="#简单测试" class="headerlink" title="简单测试"></a>简单测试</h2><h2 id="发送方式"><a href="#发送方式" class="headerlink" title="发送方式"></a>发送方式</h2><h2 id="发送类型"><a href="#发送类型" class="headerlink" title="发送类型"></a>发送类型</h2>
   
   
     
@@ -549,7 +572,7 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-13T12:28:17+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-13T14:35:21+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2020年12月13日</p>
@@ -671,7 +694,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#springboot%E9%9B%86%E6%88%90"><span class="toc-text">springboot集成</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%9F%E4%BA%A7%E8%80%85%E4%B8%8E%E7%94%9F%E4%BA%A7%E7%BB%84"><span class="toc-text">生产者与生产组</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#springboot%E9%9B%86%E6%88%90"><span class="toc-text">springboot集成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E5%8D%95%E6%B5%8B%E8%AF%95"><span class="toc-text">简单测试</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%91%E9%80%81%E6%96%B9%E5%BC%8F"><span class="toc-text">发送方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%91%E9%80%81%E7%B1%BB%E5%9E%8B"><span class="toc-text">发送类型</span></a></li></ol>
     </div>
   </section>
 
