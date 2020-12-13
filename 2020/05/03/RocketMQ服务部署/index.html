@@ -516,11 +516,30 @@
 
   
   <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>使用docker搭建rocketmq-data集群</p>
-<h2 id="安装maven"><a href="#安装maven" class="headerlink" title="安装maven"></a>安装maven</h2><p>下载文件:wget <a target="_blank" rel="noopener" href="http://mirror.bit.edu.cn/apache/maven/binaries/apache-maven-3.2.2-bin.tar.gz">http://mirror.bit.edu.cn/apache/maven/binaries/apache-maven-3.2.2-bin.tar.gz</a><br>解压:tar -zxvf apache-maven-3.2.2-bin.tar.gz</p>
-<p>添加环境变量(vim /etc/profile):<br>export MAVEN_HOME=/usr/local/apache-maven-3.2.2<br>export PATH=$MAVEN_HOME/bin:$PATH</p>
-<p>生效:source /etc/profile<br>检查:mvn -v</p>
-<p>更换国内镜像:<br>cd /usr/local/apache-maven-3.2.2/conf<br>vi setting.xml</p>
+<h2 id="安装maven"><a href="#安装maven" class="headerlink" title="安装maven"></a>安装maven</h2><p>下载文件:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wget http:&#x2F;&#x2F;mirror.bit.edu.cn&#x2F;apache&#x2F;maven&#x2F;binaries&#x2F;apache-maven-3.2.2-bin.tar.gz</span><br></pre></td></tr></table></figure>
+
+<p>解压:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tar -zxvf apache-maven-3.2.2-bin.tar.gz</span><br></pre></td></tr></table></figure>
+
+<p>添加环境变量(vim /etc/profile):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">export MAVEN_HOME&#x3D;&#x2F;usr&#x2F;local&#x2F;apache-maven-3.2.2</span><br><span class="line">export PATH&#x3D;$MAVEN_HOME&#x2F;bin:$PATH</span><br></pre></td></tr></table></figure>
+
+<p>刷新环境变量:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source &#x2F;etc&#x2F;profile</span><br></pre></td></tr></table></figure>
+
+<p>检查是否安装成功:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mvn -v</span><br></pre></td></tr></table></figure>
+
+<p>更换国内镜像:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd &#x2F;usr&#x2F;local&#x2F;apache-maven-3.2.2&#x2F;conf</span><br></pre></td></tr></table></figure>
+
+<p>编辑xml配置文件:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vi setting.xml</span><br></pre></td></tr></table></figure>
+
 <p>修改内容，localRepository标签为仓库:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;</span><br><span class="line"> </span><br><span class="line">&lt;settings xmlns&#x3D;&quot;http:&#x2F;&#x2F;maven.apache.org&#x2F;SETTINGS&#x2F;1.0.0&quot;</span><br><span class="line">          xmlns:xsi&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2001&#x2F;XMLSchema-instance&quot;</span><br><span class="line">          xsi:schemaLocation&#x3D;&quot;http:&#x2F;&#x2F;maven.apache.org&#x2F;SETTINGS&#x2F;1.0.0 http:&#x2F;&#x2F;maven.apache.org&#x2F;xsd&#x2F;settings-1.0.0.xsd&quot;&gt;</span><br><span class="line">  </span><br><span class="line">   &lt;localRepository&gt;&#x2F;usr&#x2F;local&#x2F;repo&lt;&#x2F;localRepository&gt;</span><br><span class="line"> </span><br><span class="line">  &lt;mirrors&gt;</span><br><span class="line">        &lt;mirror&gt;</span><br><span class="line">            &lt;id&gt;alimaven&lt;&#x2F;id&gt;</span><br><span class="line">            &lt;name&gt;aliyun maven&lt;&#x2F;name&gt;</span><br><span class="line">            &lt;url&gt;http:&#x2F;&#x2F;maven.aliyun.com&#x2F;nexus&#x2F;content&#x2F;groups&#x2F;public&#x2F;&lt;&#x2F;url&gt;</span><br><span class="line">            &lt;mirrorOf&gt;*&lt;&#x2F;mirrorOf&gt;       </span><br><span class="line">        &lt;&#x2F;mirror&gt;</span><br><span class="line">  &lt;&#x2F;mirrors&gt;</span><br><span class="line"> </span><br><span class="line">&lt;&#x2F;settings&gt;</span><br></pre></td></tr></table></figure>
+
 <h2 id="NameServer"><a href="#NameServer" class="headerlink" title="NameServer"></a>NameServer</h2><p>进入/apply/rocketmq/文件夹中，下载安装包、解压并重新命名: </p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 下载</span><br><span class="line">wget http:&#x2F;&#x2F;mirrors.hust.edu.cn&#x2F;apache&#x2F;rocketmq&#x2F;4.7.1&#x2F;rocketmq-all-4.7.1-source-release.zip</span><br><span class="line">&#x2F;&#x2F; 解压</span><br><span class="line">unzip rocketmq-all-4.7.1-source-release.zip</span><br><span class="line">&#x2F;&#x2F; 重命名</span><br><span class="line">mv rocketmq-all-4.7.1-source-release &#x2F;apply&#x2F;rocketmq&#x2F;broker-a</span><br><span class="line">&#x2F;&#x2F; 进入文件夹</span><br><span class="line">cd &#x2F;apply&#x2F;rocketmq&#x2F;broker-a</span><br><span class="line">&#x2F;&#x2F; 下载依赖</span><br><span class="line">mvn -Prelease-all -DskipTests clean install -U</span><br><span class="line">&#x2F;&#x2F; 进入执行文件夹</span><br><span class="line">cd distribution&#x2F;target&#x2F;rocketmq-4.7.1&#x2F;rocketmq-4.7.1&#x2F;bin</span><br><span class="line">&#x2F;&#x2F; 编辑启动文件:</span><br><span class="line">vim runserver.sh</span><br><span class="line">&#x2F;&#x2F; 修改jvm启动参数</span><br><span class="line">JAVA_OPT&#x3D;&quot;$&#123;JAVA_OPT&#125; -server -Xms256m -Xmx256m -Xmn512m -XX:MetaspaceSize&#x3D;128m -XX:MaxMetaspaceSize&#x3D;320m&quot;</span><br></pre></td></tr></table></figure>
 
@@ -634,10 +653,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-11T13:32:54+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-13T11:33:01+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年12月11日</p>
+    <p>更新于：2020年12月13日</p>
   </a>
 </div>
 
