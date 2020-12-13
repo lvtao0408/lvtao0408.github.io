@@ -529,7 +529,7 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">class BrokerLiveInfo &#123;</span><br><span class="line">    &#x2F;&#x2F; 上次心跳时间戳</span><br><span class="line">    private long lastUpdateTimestamp;</span><br><span class="line">    &#x2F;&#x2F; 数据版本</span><br><span class="line">    private DataVersion dataVersion;</span><br><span class="line">    &#x2F;&#x2F; 长连接通道</span><br><span class="line">    private Channel channel;</span><br><span class="line">    &#x2F;&#x2F; Ha地址</span><br><span class="line">    private String haServerAddr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p><font size="4"><b>HashMap&lt;String, List<String>&gt; filterServerTable</String></b></font><br>此变量以Broker地址端口为单位，记录每个Broker的消费者在进行消费时的过滤逻辑，后续会详细讲。</p>
-<span class="p red">注:由clusterAddrTable的结构可以判断，多个Broker集群可以共用一个注册中心集群，但这并不能代表同一个Broker名称可以在多个Broker集群中同时存在，Broker名称+id在一个注册中心集群中是唯一的，与集群名称无关。</span>
+<span class="p red">注:由clusterAddrTable的结构可以判断，一个注册中心集群可以包含多个Broker集群，同一个Broker名称可以出现在多个不同的Broker集群中。不过我发现了一个奇怪的问题，我有一个名称为lvt-cluster的集群，内部有个broker-a的Broker，然后在test-cluster集群中也用broker-a这个名称启动了一个Broker，控制台能看到这俩个Broker，当我使用kill杀死test-cluster集群中的broker-a时，在控制台仍然存在，然后我又kill掉lvt-cluster集群中的broker-a，俩个Broker在控制台都消失了。再次启动lvt-cluster集群中的broker-a，又出现了2个Broker，直到我重启注册中心集群，才回归正常。</span>
 
 <h2 id="服务注册"><a href="#服务注册" class="headerlink" title="服务注册"></a>服务注册</h2><p>Broker在启动的时候，会向NameServer注册自己的服务信息，由于NameServer支持集群部署，并且集群中各节点之间没有任何数据交互。因此每个Broker节点启动时，会获取NameSever的地址列表(乱序)，采用遍历列表的方式向每一个NameServer节点注册自己的信息。</p>
 <p>启动并注册完毕后，Broker会启动一个定时任务，每隔30s定时向NameServer进行心跳更新。无论是启动时注册，还是心跳注册，NameServer接收到注册信息都不会持久化到本地，而是保存在上述的各个map中。</p>
@@ -588,10 +588,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-08T19:28:20+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-13T12:41:33+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年12月8日</p>
+    <p>更新于：2020年12月13日</p>
   </a>
 </div>
 
@@ -664,17 +664,15 @@
   
     <div class="prev-next">
       
-        <a class='prev' href='/2020/05/05/RocketMQ%E4%B8%BB%E9%A2%98%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4/'>
-          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>RocketMQ(四)主题创建与调整</p>
+        <a class='prev' href='/2020/05/05/RocketMQ%E4%B8%BB%E9%A2%98%E5%88%9B%E5%BB%BA/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>RocketMQ(四)主题创建</p>
           <p class='content'>自动创建topic在默认情况下支持自动创建，开关由配置文件的autoCreateTopicEnable(默认true)属性决定，在项目启动后存储在BrokerConfig类中。如果某个Broke...</p>
         </a>
       
       
         <a class='next' href='/2020/05/03/RocketMQ%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2/'>
-          <p class='title'>rocketmq-data(二)服务部署<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>前言使用docker搭建rocketmq-data集群
-安装maven下载文件:
-1wget http:&#x2F;&#x2F;mirror.bit.edu.cn&#x2F;apache&#x2...</p>
+          <p class='title'>rocketmq(二)服务部署<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>前言由于RocketMQ是使用纯Java编写的，所以NameServer、Broker的运行必须依赖于JDK环境，安装过程中需要下载依赖，因此也必须要用到maven依赖，JDK就不写了，从mav...</p>
         </a>
       
     </div>
