@@ -21,7 +21,7 @@
   
 
   
-    <meta name="description" content="消息在Broker中的存储结构">
+    <meta name="description" content="Broker节点中与消息相关的存储结构">
   
 
   <!-- feed -->
@@ -515,8 +515,249 @@
 
 
   
-  <h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><p>哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈嗝</p>
+  <h2 id="存储文件"><a href="#存储文件" class="headerlink" title="存储文件"></a>存储文件</h2><p>Broker负责存储消息、主题、对应队列等，将这些内容持久化到配置文件的store文件夹中:<br><img src="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/%E6%96%87%E4%BB%B6%E5%88%86%E7%B1%BB.jpg" class="lazyload" data-srcset="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/%E6%96%87%E4%BB%B6%E5%88%86%E7%B1%BB.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>当生产者通过路由信息将消息发送到Broker后，Broker先将消息写到内存中，然后通过线程刷到磁盘。刷盘方式分为同步和异步俩种方式，在配置文件的flushDiskType属性中进行设置:<br><img src="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/%E5%88%B7%E7%9B%98%E6%96%B9%E5%BC%8F.jpg" class="lazyload" data-srcset="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/%E5%88%B7%E7%9B%98%E6%96%B9%E5%BC%8F.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<h2 id="config"><a href="#config" class="headerlink" title="config"></a>config</h2><p>此文件夹存储了Broker运行需要的各种配置信息，采用json文本形式存储配置文件以及对应的备份文件:</p>
+<table>
+<thead>
+<tr>
+<th>文件名称</th>
+<th>解析存储类</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>topics.json</td>
+<td>TopicConfigManager</td>
+<td>存储每个topic的读写队列数、权限、是否顺序等信息</td>
+</tr>
+<tr>
+<td>consumerOffset.json</td>
+<td>ConsumerOffsetManager</td>
+<td>记录每个Consumer在每个topic上对于该topic的consumequeue队列的消费进度</td>
+</tr>
+<tr>
+<td>consumerFilter.json</td>
+<td>ConsumerFilterManager</td>
+<td>存储每个消费者Consumer的过滤信息</td>
+</tr>
+<tr>
+<td>subscriptionGroup.json</td>
+<td>SubscriptionGroupManager</td>
+<td>存储每个消费者Consumer的订阅信息</td>
+</tr>
+<tr>
+<td>delayOffset.json</td>
+<td>ScheduleMessageService</td>
+<td>记录对于延迟主题SCHEDULE_TOPIC_XXXX的每个consumequeue队列的消费进度</td>
+</tr>
+</tbody></table>
+<h2 id="commitlog"><a href="#commitlog" class="headerlink" title="commitlog"></a>commitlog</h2><p>此文件夹负责存储Broker节点接收到的消息，存储消息的文件名长度为20位，以起始物理偏移量的值进行命名，如果长度不够20位则在左侧补零，每个文件的大小默认1G，也就是1073741824字节，当文件写满则创建下一个文件。比如Broker接收到第一个消息后创建00000000000000000000代表第一个文件，起始偏移量为0，当文件写满1G后，创建名为00000000001073741824的文件继续存储消息，起始偏移量为1073741824。</p>
+<p class="p red">注:这里的偏移量是指物理偏移量(1个字节代表一个偏移量)，并非按消息数量递增的逻辑偏移量，物理偏移量用于定位某个消息在此文件中的物理位置</p>
 
+<p>消息在commitlog文件中的存储格式如下:<br><img src="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/commitlog%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/commitlog%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>存储结构中，各部位代表的含义:</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>占用磁盘</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>msgLen</td>
+<td>4字节</td>
+<td>消息长度，具体指整个消息体所占用的字节大小</td>
+</tr>
+<tr>
+<td>magicCode</td>
+<td>4字节</td>
+<td>魔数，固定值daa320a7</td>
+</tr>
+<tr>
+<td>bodyCRC</td>
+<td>4字节</td>
+<td>消息体验证码</td>
+</tr>
+<tr>
+<td>queueId</td>
+<td>4字节</td>
+<td>消息体发送到了哪个MessageQueue</td>
+</tr>
+<tr>
+<td>flag</td>
+<td>4字节</td>
+<td>创建Message对象时由生产者通过构造器设定的flag值</td>
+</tr>
+<tr>
+<td>queueOffset</td>
+<td>8字节</td>
+<td>表示在队列中逻辑的偏移量</td>
+</tr>
+<tr>
+<td>physicalPosition</td>
+<td>8字节</td>
+<td>表示在存储文件中的偏移量</td>
+</tr>
+<tr>
+<td>sysFlag</td>
+<td>4字节</td>
+<td>是生产者相关的信息标识</td>
+</tr>
+<tr>
+<td>msg born timestamp</td>
+<td>8字节</td>
+<td>消息创建时间</td>
+</tr>
+<tr>
+<td>msg host</td>
+<td>8字节</td>
+<td>消息生产者的host</td>
+</tr>
+<tr>
+<td>store timestamp</td>
+<td>8字节</td>
+<td>消息存储时间</td>
+</tr>
+<tr>
+<td>store host</td>
+<td>8字节</td>
+<td>消息存储机器的host</td>
+</tr>
+<tr>
+<td>reconsume times</td>
+<td>4字节</td>
+<td>消息重复消费次数</td>
+</tr>
+<tr>
+<td>prepare transaction offset</td>
+<td>8字节</td>
+<td>消息事务相关偏移量</td>
+</tr>
+<tr>
+<td>body length</td>
+<td>4字节</td>
+<td>消息体的长度</td>
+</tr>
+<tr>
+<td>msg body</td>
+<td>不固定</td>
+<td>消息内容</td>
+</tr>
+<tr>
+<td>topic length</td>
+<td>1</td>
+<td>主题名称长度(1字节=8位，因此topic长度不会超过127)</td>
+</tr>
+<tr>
+<td>topic length</td>
+<td>不固定</td>
+<td>主题名称</td>
+</tr>
+<tr>
+<td>properties lengh</td>
+<td>不固定</td>
+<td>Properties内容长度</td>
+</tr>
+<tr>
+<td>properties</td>
+<td>不固定</td>
+<td>Properties的内容</td>
+</tr>
+</tbody></table>
+<p class="p red">某个Broker节点接收到的所有topic-queue消息，全部写入一个文件中(直到写满为止)，这一点与Kafka有很大不同。Kafka是以topic-partition为单位创建存储消息的文件，存储文件的分类粒度比RocketMQ要细很多，也意味着相同的业务场景，kafka节点创建存储消息的文件数量肯定会比RocketMQ节点要多，且随着节点中topic和queue/partition的激增，数量差距越来越大。</p>
+
+<p class="p red">当kafka的存储文件越来越多(单机以64个partition为分水岭)，顺序写入特性会被大大破坏从而引起大量的随机I/O，吞吐量会急剧下降，而RocketMQ的这个设计，很好的避免了这个问题。</p>
+
+<h2 id="consumequeue"><a href="#consumequeue" class="headerlink" title="consumequeue"></a>consumequeue</h2><p>Broker节点接收到的任何topic-queue消息都会写在commitlog文件中，并且没有规则的分布情况，如果消费者想要拉取某个topic-queue消息时，需要整体检索commitlog文件，这种方式的效率难以保障。这就需要对commitlog文件的消息建立索引来加快消息的检索，而这些索引数据就是在consumequeue文件夹进行存储。</p>
+<p>例如现在某个Broker节点中负责订单的发货(DELIVER_PACKAGE)、到货(ARRIVAL_PACKAGE)、签收(SIGN_PACKAGE)的三个消息通知topic，每个topic都有4个队列，目录结构如下:<br><img src="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/consumequeue%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/consumequeue%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>由此图可以看出，consumequeue目录结构的分类粒度与Kafka存储消息文件的粒度类似，只不过consumequeue目录不存储具体的消息内容，只存储路由到该queue中的消息在CommitLog中的物理偏移量(offset)、消息大小(size)、消息所属的tag的hash值(tagCode)三个属性，每条索引占用磁盘空间固定为20字节。</p>
+<p><font size="4"><b>文件写入</b></font><br>当Broker收到某个topic-queue消息时，先将消息写入commitlog文件中并得到物理偏移量，然后进入consumequeue目录对应的文件夹创建文件，文件名长度为20位，以起始物理偏移量的值进行命名，如果长度不够20位则在左侧补零。每个文件默认可以存储30W个消息索引，文件磁盘大小也就是60W字节，比如Broker收到某个topic-queue的第一条消息时，创建文件00000000000000000000，起始物理偏移量为0，将刚才的物理偏移量、消息大小、tag的hash值写入创建的文件中，当写满后30W条消息时创建第二个文件00000000000006000000，起始物理偏移量为60W，继续存储写入的数据。</p>
+<p><font size="4"><b>文件读取</b></font><br>当Broker收到Consumer的消息拉取请求时，根据topic、queueId找到对应文件夹，通过文件夹里面各文件的名称计算出存储的逻辑偏移量范围，然后根据Consumer提供的offset锁定到具体检索哪个文件。将Consumer提供的offset*20后减去文件名的数值，即可得到要查询的消息在consumequeue索引中的物理偏移量位置，往后取20字节的数据就是消息的索引信息，拿到物理偏移量去commitlog即可查询最终的消息。</p>
+<p class="p red">consumequeue文件夹创建的文件命名虽然和commitlog同样都是物理偏移量，不过consumequeue文件存储的数据量固定，且布局有序、有固定规则，因此可以通过文件名去定位具体的物理偏移量，不会存在检索效率的问题。</p>
+
+<h2 id="index"><a href="#index" class="headerlink" title="index"></a>index</h2><p>Broker除了通过Consumer提供的offset获取消息外，还支持通过MessageID或者MessageKey查询消息。使用ID查询处理起来比较简单，因为MessageID就是根据Broker+offset生成的，因此很容易找到对应的commitlog文件来读取消息。而MessageKey由生产者自己设定，RocketMQ为了保证其查询的效率，使用index文件夹记录对应的索引信息。</p>
+<p>index文件由IndexHeader、HashSlot、Index三部分构成:<br><img src="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/index%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/index%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p><font size="4"><b>IndexHeader中存储的都是一些文件基础数据:</b></font></p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>占用磁盘</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>beginTimestamp</td>
+<td>8字节</td>
+<td>该索引文件第一个消息的存储(落盘)时间</td>
+</tr>
+<tr>
+<td>endTimestamp</td>
+<td>8字节</td>
+<td>该索引文件最后一个消息的存储(落盘)时间</td>
+</tr>
+<tr>
+<td>beginPhyoffset</td>
+<td>8字节</td>
+<td>该索引文件第一个消息在commitlog的物理偏移量</td>
+</tr>
+<tr>
+<td>endPhyoffset</td>
+<td>8字节</td>
+<td>该索引文件最后一个消息在commitlog的物理偏移量</td>
+</tr>
+<tr>
+<td>hashSlotCount</td>
+<td>4字节</td>
+<td>该索引文件目前的哈希槽个数</td>
+</tr>
+<tr>
+<td>indexCount</td>
+<td>4字节</td>
+<td>该索引文件目前已存储的索引数量</td>
+</tr>
+</tbody></table>
+<p><font size="4"><b>HashSlot负责对索引内容进行分片:</b></font><br>消息在进行index存储时，通过消息key的哈希值%500W定位哈希槽(貌似500W这个值可以修改)，因此可以理解为一个index文件的哈希槽最多500W个，另外IndexHeader与HashSlot的大小都是固定的，再文件中的位置不需要额外标记，可以直接定位获取。其中每个哈希槽固定占有4字节，仅仅用来存储当前卡槽最后一个key在index部分的逻辑位置(第几个)，也可以代表此卡槽下面的索引数量。</p>
+<p><font size="4"><b>Index存储真正的索引信息:</b></font></p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>占用磁盘</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>key hash value</td>
+<td>4字节</td>
+<td>消息key的哈希值</td>
+</tr>
+<tr>
+<td>phyOffset</td>
+<td>8字节</td>
+<td>消息在commitlog的物理偏移量(索引的核心数据)</td>
+</tr>
+<tr>
+<td>timeDiff</td>
+<td>4字节</td>
+<td>消息落盘时间与IndexHeader中的beginTimestamp的差值(节省磁盘空间，如果直接存储落盘时间就需要占用8字节)</td>
+</tr>
+<tr>
+<td>prevIndex</td>
+<td>4字节</td>
+<td>哈希槽的第一个索引prevIndex=0，后续的索引prevIndex=前一个索引的物理偏移量</td>
+</tr>
+</tbody></table>
+<p><font size="4"><b>索引文件创建过程:</b></font><br>当Broker接收到消息后，先将消息写入commitlog文件中并得到物理偏移量，然后进入index文件夹查询最新创建的索引文件，如果此索引文件的IndexHeader的indexCount等于2000W则表示已满，获取当前时间戳作为名称创建新的索引文件，如果小于2000W直接进入写文件环节。</p>
+<p>获取消息key的哈希值并%500W计算出卡槽号，如果此卡槽存储的值为0，表示目前下面还没有存储索引，写入索引数据(其中prevIndex=0)，如果卡槽存储的值不为0，仍然写入索引数据(其中prevIndex=当前卡槽值)，然后将卡槽值加一。</p>
+<p><font size="4"><b>消息key查询过程:</b></font><br>查询的传入值除了key外，还包含一个时间起始值以及截止值(这玩意在控制台貌似不需要?)，时间范围参数用于定位具体的索引文件，根据消息key的哈希值锁定具体的卡槽。通过卡槽值获取最大的，麻痹的 不对 改天写。</p>
+<h2 id="abort文件"><a href="#abort文件" class="headerlink" title="abort文件"></a>abort文件</h2><p>Broker启动时会在store目录创建此文件，在正常退出后会删除此文件。如果Broker在启动时发现store目录中发现abort文件存在，那么说明上次服务退出属于异常退出(宕机或者手动kill进程等)，异常退出会导致部分文件的写入逻辑没有执行完就被打断(比如某条消息只写入一半)，造成脏数据影响后续的解析。</p>
+<h2 id="lock"><a href="#lock" class="headerlink" title="lock"></a>lock</h2><p>这叼毛文件完全搜不到是干啥的</p>
+<h2 id="checkpoint"><a href="#checkpoint" class="headerlink" title="checkpoint"></a>checkpoint</h2><p>checkpoint文件的作用是记录commitlog、consumequeue、index最后一次刷盘时间，此文件固定长度为4k。但是Broker仅仅使用了前24个字节，这24个字节按照8字节为单位划分为三部分，使用16进制数字表示上述的三个刷盘时间戳。</p>
+<p>使用文本打开此文件，内容如下:<br><img src="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/checkpoint%E6%96%87%E4%BB%B6%E5%86%85%E5%AE%B9.jpg" class="lazyload" data-srcset="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/checkpoint%E6%96%87%E4%BB%B6%E5%86%85%E5%AE%B9.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<h2 id="IO访问性能"><a href="#IO访问性能" class="headerlink" title="IO访问性能"></a>IO访问性能</h2>
   
   
     
@@ -550,10 +791,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-17T17:34:45+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-21T00:10:44+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年12月17日</p>
+    <p>更新于：2020年12月21日</p>
   </a>
 </div>
 
@@ -673,7 +914,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95"><span class="toc-text">测试</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E6%96%87%E4%BB%B6"><span class="toc-text">存储文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#config"><span class="toc-text">config</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#commitlog"><span class="toc-text">commitlog</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#consumequeue"><span class="toc-text">consumequeue</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#index"><span class="toc-text">index</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#abort%E6%96%87%E4%BB%B6"><span class="toc-text">abort文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#lock"><span class="toc-text">lock</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#checkpoint"><span class="toc-text">checkpoint</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#IO%E8%AE%BF%E9%97%AE%E6%80%A7%E8%83%BD"><span class="toc-text">IO访问性能</span></a></li></ol>
     </div>
   </section>
 
