@@ -719,7 +719,10 @@
 <td>该索引文件目前已存储的索引数量</td>
 </tr>
 </tbody></table>
-<p><font size="4"><b>HashSlot负责对索引内容进行分片:</b></font><br>消息在进行index存储时，通过消息key的哈希值%500W定位哈希槽(貌似500W这个值可以修改)，因此可以理解为一个index文件的哈希槽最多500W个，另外IndexHeader与HashSlot的大小都是固定的，再文件中的位置不需要额外标记，可以直接定位获取。其中每个哈希槽固定占有4字节，仅仅用来存储当前卡槽最后一个key在index部分的逻辑位置(第几个)，也可以代表此卡槽下面的索引数量。</p>
+<p><font size="4"><b>HashSlot负责对索引内容进行分片:</b></font><br>消息在进行index存储时，通过消息key的哈希值%500W定位哈希槽(貌似500W这个值可以修改)，因此可以理解为一个index文件的哈希槽最多500W个，另外IndexHeader与HashSlot的大小都是固定的，再文件中的位置不需要额外标记，可以直接定位获取。</p>
+<p>其中每个哈希槽固定占有4字节，仅仅用来存储当前卡槽最后一个key在index部分的逻辑位置(整个索引文件index区域中第几个写入的)，这么做的目的仍然是节省磁盘空间，如果直接存储物理偏移量需要8个字节，这里四个字节就够了，因为IndexHeader与HashSlot的大小是固定的，每个索引数据在整个index的物理偏移量为:</p>
+<p class="p red">IndexHeader大小(40字节) + hashSlot大小(4字节) * 数量(500w) + 逻辑位置 * 每个index大小(20字节)</p>
+
 <p><font size="4"><b>Index存储真正的索引信息:</b></font></p>
 <table>
 <thead>
@@ -751,8 +754,8 @@
 </tr>
 </tbody></table>
 <p><font size="4"><b>索引文件创建过程:</b></font><br>当Broker接收到消息后，先将消息写入commitlog文件中并得到物理偏移量，然后进入index文件夹查询最新创建的索引文件，如果此索引文件的IndexHeader的indexCount等于2000W则表示已满，获取当前时间戳作为名称创建新的索引文件，如果小于2000W直接进入写文件环节。</p>
-<p>获取消息key的哈希值并%500W计算出卡槽号，如果此卡槽存储的值为0，表示目前下面还没有存储索引，写入索引数据(其中prevIndex=0)，如果卡槽存储的值不为0，仍然写入索引数据(其中prevIndex=当前卡槽值)，然后将卡槽值加一。</p>
-<p><font size="4"><b>消息key查询过程:</b></font><br>查询的传入值除了key外，还包含一个时间起始值以及截止值(这玩意在控制台貌似不需要?)，时间范围参数用于定位具体的索引文件，根据消息key的哈希值锁定具体的卡槽。通过卡槽值获取最大的，麻痹的 不对 改天写。</p>
+<p>获取消息key的哈希值并%500W计算出卡槽号，如果此卡槽存储的值为0，表示目前下面还没有存储索引，写入索引数据(其中prevIndex=0)，如果卡槽存储的值不为0，通过卡槽值计算出索引数据所在的物理偏移量并取出，然后将新的索引数据写入文件(其中prevIndex=当前卡槽值)，然后刷新卡槽值为当前索引数据的逻辑位置(整个索引文件index区域中第几个写入的)，其实就是类似HashMap的数组+链表。</p>
+<p><font size="4"><b>消息key查询过程:</b></font><br>查询的传入值除了key外，还包含一个时间起始值以及截止值(这玩意在控制台貌似不需要?)，时间范围参数用于定位具体的索引文件，根据消息key的哈希值锁定具体的卡槽。通过卡槽值计算出最后一个索引数据在索引文件中的物理偏移量并取出，紧接着通过prevIndex属性递归遍历，再加上时间范围与timeDiff属性对比筛选，得出符合条件的phyOffset属性集合，去commitlog捞消息。由于key的hash相同，内容不一定相同，所以在捞消息的时候还要对key的内容进行筛选。</p>
 <h2 id="abort文件"><a href="#abort文件" class="headerlink" title="abort文件"></a>abort文件</h2><p>Broker启动时会在store目录创建此文件，在正常退出后会删除此文件。如果Broker在启动时发现store目录中发现abort文件存在，那么说明上次服务退出属于异常退出(宕机或者手动kill进程等)，异常退出会导致部分文件的写入逻辑没有执行完就被打断(比如某条消息只写入一半)，造成脏数据影响后续的解析。</p>
 <h2 id="lock"><a href="#lock" class="headerlink" title="lock"></a>lock</h2><p>这叼毛文件完全搜不到是干啥的</p>
 <h2 id="checkpoint"><a href="#checkpoint" class="headerlink" title="checkpoint"></a>checkpoint</h2><p>checkpoint文件的作用是记录commitlog、consumequeue、index最后一次刷盘时间，此文件固定长度为4k。但是Broker仅仅使用了前24个字节，这24个字节按照8字节为单位划分为三部分，使用16进制数字表示上述的三个刷盘时间戳。</p>
@@ -791,7 +794,7 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-21T00:10:44+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-21T00:37:30+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2020年12月21日</p>
