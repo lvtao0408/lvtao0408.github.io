@@ -760,7 +760,8 @@
 <h2 id="lock"><a href="#lock" class="headerlink" title="lock"></a>lock</h2><p>这叼毛文件完全搜不到是干啥的</p>
 <h2 id="checkpoint"><a href="#checkpoint" class="headerlink" title="checkpoint"></a>checkpoint</h2><p>checkpoint文件的作用是记录commitlog、consumequeue、index最后一次刷盘时间，此文件固定长度为4k。但是Broker仅仅使用了前24个字节，这24个字节按照8字节为单位划分为三部分，使用16进制数字表示上述的三个刷盘时间戳。</p>
 <p>使用文本打开此文件，内容如下:<br><img src="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/checkpoint%E6%96%87%E4%BB%B6%E5%86%85%E5%AE%B9.jpg" class="lazyload" data-srcset="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/checkpoint%E6%96%87%E4%BB%B6%E5%86%85%E5%AE%B9.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<h2 id="IO访问性能"><a href="#IO访问性能" class="headerlink" title="IO访问性能"></a>IO访问性能</h2>
+<h2 id="IO访问性能"><a href="#IO访问性能" class="headerlink" title="IO访问性能"></a>IO访问性能</h2><p>无论是生产消息还是消费消息，本质上都是对磁盘文件的读写，上面的内容是通过优化文件结构的方式来提高分布式消息队列的性能，除此之外，RocketMQ还在操作系统层面对磁盘文件读写进行优化。</p>
+
   
   
     
@@ -794,7 +795,7 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-21T00:37:30+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-21T20:17:03+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2020年12月21日</p>
@@ -870,11 +871,16 @@
   
     <div class="prev-next">
       
+        <a class='prev' href='/2020/05/11/RocketMQ%E6%B6%88%E8%B4%B9%E7%AB%AF/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>RocketMQ(七)消费端</p>
+          <p class='content'>springboot集成消费模式推拉模式消息顺序消息过滤消息回溯</p>
+        </a>
       
-        <a class='next' href='/2020/05/07/RocketMQ%E7%94%9F%E4%BA%A7%E8%80%85/'>
-          <p class='title'>RocketMQ(五)生产者<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+      
+        <a class='next' href='/2020/05/07/RocketMQ%E7%94%9F%E4%BA%A7%E7%AB%AF/'>
+          <p class='title'>RocketMQ(五)生产端<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
           <p class='content'>springboot集成RocketMQ依赖
-测试标题12345&lt;dependency&gt;	&lt;groupId&gt;org.apache.rocketmq&lt;&#x2F;gr...</p>
+12345&lt;dependency&gt;	&lt;groupId&gt;org.apache.rocketmq&lt;&#x2F;groupI...</p>
         </a>
       
     </div>
