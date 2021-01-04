@@ -760,7 +760,32 @@
 <h2 id="lock"><a href="#lock" class="headerlink" title="lock"></a>lock</h2><p>这叼毛文件完全搜不到是干啥的</p>
 <h2 id="checkpoint"><a href="#checkpoint" class="headerlink" title="checkpoint"></a>checkpoint</h2><p>checkpoint文件的作用是记录commitlog、consumequeue、index最后一次刷盘时间，此文件固定长度为4k。但是Broker仅仅使用了前24个字节，这24个字节按照8字节为单位划分为三部分，使用16进制数字表示上述的三个刷盘时间戳。</p>
 <p>使用文本打开此文件，内容如下:<br><img src="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/checkpoint%E6%96%87%E4%BB%B6%E5%86%85%E5%AE%B9.jpg" class="lazyload" data-srcset="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/checkpoint%E6%96%87%E4%BB%B6%E5%86%85%E5%AE%B9.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<h2 id="删除策略"><a href="#删除策略" class="headerlink" title="删除策略"></a>删除策略</h2><h2 id="读写性能"><a href="#读写性能" class="headerlink" title="读写性能"></a>读写性能</h2><p>无论是生产消息还是消费消息，本质上都是对磁盘文件的读写，上面的内容是通过优化文件结构的方式来提高分布式消息队列的性能，除此之外，RocketMQ还在操作系统层面对磁盘文件读写进行优化。</p>
+<h2 id="删除策略"><a href="#删除策略" class="headerlink" title="删除策略"></a>删除策略</h2><p>每个Broker节点存储的文件都会随着时间的推移不断增长，CommitLog、ConsumeQueue文件是基于文件内存映射机制，并且在启动的时候会将所有的文件加载，为了避免内存与磁盘的浪费、能够让磁盘能够循环利用、避免因为磁盘不足导致消息无法写入等引入了文件过期删除机制。</p>
+<p>RocketMQ采用定时器扫描方式执行删除策略，并且在删除过程中不会关心消息是否被消费，删除策略在以下任一条件成立的情况才会执行批量删除:</p>
+<ul>
+<li>消息文件过期(默认72小时)，且到达清理时点(默认是凌晨4点)，删除过期文件。</li>
+<li>消息文件过期(默认72小时)，且磁盘空间达到了水位线(默认75%)，删除过期文件。</li>
+<li>磁盘已经达到必须释放的上限(85%水位线)的时候，则开始批量清理文件(无论是否过期)，直到空间充足。</li>
+</ul>
+<p class="p red">注：若磁盘空间达到危险水位线（默认90%），出于保护自身的目的，broker会拒绝写入服务。</p>
+
+<h2 id="高性能存储"><a href="#高性能存储" class="headerlink" title="高性能存储"></a>高性能存储</h2><p>整个RocketMQ集群服务的本质是进行消息发送与消费，Producer发送消息到Broker端并进行磁盘写入，Consumer发送请求到Broker端并进行磁盘读取，也就是说RocketMQ的工作与磁盘数据的读写息息相关。上述的commitlog、consumequeue、index是在磁盘的存储结构上进行优化，除此之外，RocketMQ设计者们还从磁盘的读写层面进行了性能优化。</p>
+<p><font size="4"><b>磁盘读过程</b></font></p>
+<ul>
+<li>寻道 : 磁头移动定位到指定磁道，这部分时间代价最高</li>
+<li>旋转延迟 : 在磁道位置确定后，中轴带动盘面旋转到合适的扇区开头处</li>
+<li>数据传输 : 表示盘面继续转动，读取数据并传送到内存</li>
+</ul>
+<p><font size="4"><b>顺序与随机读写</b></font><br>对于磁盘的读写分为两种模式，顺序读写和随机读写。随机读写存在一个多次寻址的过程，而顺序读写相当于有一个物理索引，在读取的时候不需要寻找地址，因此顺序读写相对于随机读写，效率很高。</p>
+<p>RocketMQ与Kafka在进行消息持久化时，都采用追加的方式写入磁盘文件(顺序写入)。Consumer在进行消费时，也是对磁盘文件进行顺序读取，每次要读取的数据在磁盘的位置，正好都在上次的后面，因此不需要寻道，移动到扇区开头处后直接进行数据传输，<span class="p red">可以理解为RocketMQ与Kafka的顺序写入保证了顺序读取。</span></p>
+<p><font size="4"><b>PageCache</b></font><br>当操作系统的运行内存有大量剩余时，为了提高IO的性能，会将多余的内存抽取出来作为文件的缓存使用。操作系统将文件按大小切割为多个数据块，并放入PageCache中进行缓存。</p>
+<p>当Broker进行文件写入时，操作系统只是将数据写入PageCache中，并采用异步方式将PageCache写入的数据刷盘到磁盘中，也就是说文件写入磁盘是纯内存操作的，内存IO相对于磁盘IO来说，效率提升很多。这也带来了一定的风险，写入PageCache的数据如果未来得及同步到磁盘就发生宕机，会导致这部分数据丢失，因此RocketMQ在Broker端配置文件中可以自己选择同步或者异步刷盘方式，效率与可靠性由开发者自己权衡，而kafka直接不支持同步刷盘(太奔放了)。</p>
+<p>当Broker进行文件读取时，首先去PageCache中查询要操作的文件内容是否存在，如果存在则直接读取并返回，如果不存在则需要启动磁盘IO，读取完毕后将内容加入PageCache中，除了读取查询需要的数据外，操作系统还会往后预读取若干(至少1个，通常3个)页数据一并放入PageCache中，这么做的目的就是尽量减少磁盘IO的次数，尽量提高PageCache的命中率。如果保证多数情况下对文件都是顺序读取，配合PageCache的预读取，可以保证请求几乎都命中PageCache，大大提升文件读取的执行效率。</p>
+<p class="p red">PageCache机制是牺牲可靠性(宕机引发数据丢失)的前提下，尽量将磁盘IO转化为内存IO从而提高执行效率，这种机制虽然是操作系统层面的优化，但是RocketMQ顺序读写完美契合了PageCache，使其发挥出优越的性能。</p>
+
+<p class="p red">如果某Broker端负责的topic不多且Consumer消费进度几乎一致，那么PageCache在缓存数据很小的情况下依然能极大提高效率。如果topic数量极多且各Consumer消费进度完全不一致，那么PageCache缓存的数据也会激增，一旦超出PageCache所能承受的极限，会导致后续的磁盘IO无法缓存引发随机读写，性能并不能达到满意的效果。</p>
+
+<p><font size="4"><b>零拷贝</b></font><br>由上述的PageCache相关知识可以确定，RocketMQ大多数文件读写操作都是基于PageCache完成的，但是RocketMQ对文件读取的优化不仅仅于此。操作系统中读取PageCache数据的方式有很多种，按照使用方式大致分为拷贝方式、地址映射方式俩种，RocketMQ参考了这俩种方式并实现了零拷贝技术再次提高了文件读取的速度。</p>
 
   
   
@@ -795,10 +820,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-24T22:14:54+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-01-04T23:27:09+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年12月24日</p>
+    <p>更新于：2021年1月4日</p>
   </a>
 </div>
 
@@ -924,7 +949,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E6%96%87%E4%BB%B6"><span class="toc-text">存储文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#config"><span class="toc-text">config</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#commitlog"><span class="toc-text">commitlog</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#consumequeue"><span class="toc-text">consumequeue</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#index"><span class="toc-text">index</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#abort%E6%96%87%E4%BB%B6"><span class="toc-text">abort文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#lock"><span class="toc-text">lock</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#checkpoint"><span class="toc-text">checkpoint</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E7%AD%96%E7%95%A5"><span class="toc-text">删除策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%BB%E5%86%99%E6%80%A7%E8%83%BD"><span class="toc-text">读写性能</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E6%96%87%E4%BB%B6"><span class="toc-text">存储文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#config"><span class="toc-text">config</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#commitlog"><span class="toc-text">commitlog</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#consumequeue"><span class="toc-text">consumequeue</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#index"><span class="toc-text">index</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#abort%E6%96%87%E4%BB%B6"><span class="toc-text">abort文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#lock"><span class="toc-text">lock</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#checkpoint"><span class="toc-text">checkpoint</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E7%AD%96%E7%95%A5"><span class="toc-text">删除策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AB%98%E6%80%A7%E8%83%BD%E5%AD%98%E5%82%A8"><span class="toc-text">高性能存储</span></a></li></ol>
     </div>
   </section>
 

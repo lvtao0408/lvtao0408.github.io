@@ -17,11 +17,11 @@
 
   <!-- 页面元数据 -->
   
-  <title>RocketMQ(八)再均衡策略 - 来杯冰镇可乐</title>
+  <title>RocketMQ(八)再均衡 - 来杯冰镇可乐</title>
   
 
   
-    <meta name="description" content="再均衡策略原理">
+    <meta name="description" content="再均衡原理">
   
 
   <!-- feed -->
@@ -416,7 +416,7 @@
  
 <div id="pjax-data" style="display: none"> 
   <div id="pjax-ispage">true</div> 
-  <div id="pjax-pageTitle">RocketMQ(八)再均衡策略</div> 
+  <div id="pjax-pageTitle">RocketMQ(八)再均衡</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -456,7 +456,7 @@
     
     
       <h1 class="title">
-        RocketMQ(八)再均衡策略
+        RocketMQ(八)再均衡
       </h1>
       <div class='new-meta-box'>
         
@@ -498,7 +498,7 @@
   <div class="new-meta-item browse leancloud">
     <a class='notlink'>
       
-      <div id="lc-pv" data-title="RocketMQ(八)再均衡策略" data-path="/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1%E7%AD%96%E7%95%A5/">
+      <div id="lc-pv" data-title="RocketMQ(八)再均衡" data-path="/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/">
         <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
         <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
         次浏览
@@ -515,7 +515,13 @@
 
 
   
-  <h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2>
+  <h2 id="再均衡概念"><a href="#再均衡概念" class="headerlink" title="再均衡概念"></a>再均衡概念</h2><p>Rebalance(再均衡)机制指的是:一个topic下的多个队列，在同一个消费者组下的多个Consumer实例之间进行重新分配。以消费者集群模式为例，这种模式的设计本意是提高消息的并行能力，组内的Consumer会尽量均匀的分配所有队列然后进行消费，也就是说组内Consumer的数量代表消费此topic的并行数量。每当组内Consumer的数量发生变化时，需要对目前消费组内的所有Consumer重新分配队列，重新分配的过程就是再均衡过程。</p>
+<p>例如某个topic有4个队列，此时某消费组启动第一个Consumer实例，被分配到所有队列(4个):<br><img src="/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/%E5%86%8D%E5%9D%87%E8%A1%A1%E5%8F%98%E5%8C%96-0.png" class="lazyload" data-srcset="/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/%E5%86%8D%E5%9D%87%E8%A1%A1%E5%8F%98%E5%8C%96-0.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>然后启动第二个Consumer实例，消费组内Consumer实例数量增加，触发再均衡重新分配队列:<br><img src="/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/%E5%86%8D%E5%9D%87%E8%A1%A1%E5%8F%98%E5%8C%96-1.png" class="lazyload" data-srcset="/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/%E5%86%8D%E5%9D%87%E8%A1%A1%E5%8F%98%E5%8C%96-1.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>紧接着启动第三个Consumer实例，消费组内Consumer实例数量增加，触发再均衡重新分配队列:<br><img src="/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/%E5%86%8D%E5%9D%87%E8%A1%A1%E5%8F%98%E5%8C%96-2.png" class="lazyload" data-srcset="/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/%E5%86%8D%E5%9D%87%E8%A1%A1%E5%8F%98%E5%8C%96-2.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>启动最后一个Consumer实例，消费组内Consumer实例数量增加，触发再均衡重新分配队列:<br><img src="/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/%E5%86%8D%E5%9D%87%E8%A1%A1%E5%8F%98%E5%8C%96-3.png" class="lazyload" data-srcset="/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/%E5%86%8D%E5%9D%87%E8%A1%A1%E5%8F%98%E5%8C%96-3.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>不巧此时consumer-1发生宕机，消费组内Consumer实例数量减少，触发再均衡重新分配队列:<br><img src="/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/%E5%86%8D%E5%9D%87%E8%A1%A1%E5%8F%98%E5%8C%96-%E5%AE%95%E6%9C%BA.png" class="lazyload" data-srcset="/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/%E5%86%8D%E5%9D%87%E8%A1%A1%E5%8F%98%E5%8C%96-%E5%AE%95%E6%9C%BA.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+
   
   
     
@@ -532,7 +538,7 @@
               
             
               
-                <p>本文永久链接是：<a href=http://yoursite.com/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1%E7%AD%96%E7%95%A5/>http://yoursite.com/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1%E7%AD%96%E7%95%A5/</a></p>
+                <p>本文永久链接是：<a href=http://yoursite.com/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/>http://yoursite.com/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/</a></p>
               
             
           </blockquote>
@@ -549,10 +555,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-22T21:05:38+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-29T00:35:25+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年12月22日</p>
+    <p>更新于：2020年12月29日</p>
   </a>
 </div>
 
@@ -571,7 +577,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1%E7%AD%96%E7%95%A5/&title=RocketMQ(八)再均衡策略 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/&title=RocketMQ(八)再均衡 - 来杯冰镇可乐&summary="
           
           >
           
@@ -583,7 +589,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1%E7%AD%96%E7%95%A5/&title=RocketMQ(八)再均衡策略 - 来杯冰镇可乐&summary="
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/&title=RocketMQ(八)再均衡 - 来杯冰镇可乐&summary="
           
           >
           
@@ -595,7 +601,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1%E7%AD%96%E7%95%A5/&title=RocketMQ(八)再均衡策略 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/&title=RocketMQ(八)再均衡 - 来杯冰镇可乐&summary="
           
           >
           
@@ -625,8 +631,8 @@
   
     <div class="prev-next">
       
-        <a class='prev' href='/2020/05/18/RocketMQ%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/'>
-          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>RocketMQ(九)分布式事务</p>
+        <a class='prev' href='/2020/05/18/RocketMQ%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>RocketMQ(九)事务消息</p>
           <p class='content'>测试</p>
         </a>
       
@@ -677,7 +683,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95"><span class="toc-text">测试</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%8D%E5%9D%87%E8%A1%A1%E6%A6%82%E5%BF%B5"><span class="toc-text">再均衡概念</span></a></li></ol>
     </div>
   </section>
 
