@@ -785,7 +785,19 @@
 
 <p class="p red">如果某Broker端负责的topic不多且Consumer消费进度几乎一致，那么PageCache在缓存数据很小的情况下依然能极大提高效率。如果topic数量极多且各Consumer消费进度完全不一致，那么PageCache缓存的数据也会激增，一旦超出PageCache所能承受的极限，会导致后续的磁盘IO无法缓存引发随机读写，性能并不能达到满意的效果。</p>
 
-<p><font size="4"><b>零拷贝</b></font><br>根据上述的PageCache相关知识可以确定，RocketMQ大多数文件读写操作都是基于PageCache完成的，操作系统中读取PageCache数据的方式有很多种，按照使用方式大致分为拷贝方式、地址映射方式俩种。RocketMQ参考了这俩种方式并实现了零拷贝技术，对PageCache的读取操作又进行了一层优化。</p>
+<p><font size="4"><b>零拷贝</b></font></p>
+<p>以Linux系统为例，当A服务器需要读取B服务器的磁盘数据时，B服务器默认采用操作系统提供的read()、write()函数进行读取并传输，在此过程中涉及到四个步骤:</p>
+<ul>
+<li>1.用户态切换到内核态，操作系统调用read()函数，将磁盘数据copy到内核缓冲区，此过程由MDA完成。</li>
+<li>2.将内核缓冲区数据copy到用户缓冲区，内存之间的数据拷贝需CPU协助完成，copy完毕后内核态切回用户态。</li>
+<li>3.用户空间的数据如果需要网络传送到其他服务器，需要调用write()函数，此时用户态切换到内核态，然后将用户缓冲区数据copy到内核socket发送缓冲区，涉及到内存之间的数据copy，仍然需CPU协助完成。</li>
+<li>4.最后socket缓冲区数据需要复制到网卡缓冲区中，此操作由MDA完成，复制完毕后由网卡发送到客户端，然后CPU状态切回用户态。</li>
+</ul>
+<p>步骤流程图:<br><img src="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/%E5%B8%B8%E8%A7%84%E6%96%87%E4%BB%B6%E8%AF%BB%E5%8F%96.png" class="lazyload" data-srcset="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/%E5%B8%B8%E8%A7%84%E6%96%87%E4%BB%B6%E8%AF%BB%E5%8F%96.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>整个过程涉及4次数据的copy、2次CPU调度、4次内核用户态的切换，频繁的数据复制以及内核/用户态的切换对系统开销非常大，因此便产生了零拷贝技术。零拷贝技术的思想是减少CPU调度和内核用户态切换的次数，实现方式分为mmap、sendfile等。</p>
+<p>mmap通过虚拟内存映射，让多个虚拟地址指向同一个物理内存地址，用户空间通过映射关系共享内核空间的数据，内核缓冲区数据copy到用户缓冲区的步骤可以省略，这样从PageCache到网卡的传输就省掉了1次CPU调度、2次内核用户态切换:<br><img src="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/%E9%9B%B6%E6%8B%B7%E8%B4%9D-mmap.png" class="lazyload" data-srcset="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/%E9%9B%B6%E6%8B%B7%E8%B4%9D-mmap.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>sendfile直接没有用户态进行参与，也不需要将数据拷贝到用户缓冲区，相比较mmap又少了一次CPU调度:<br><img src="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/%E9%9B%B6%E6%8B%B7%E8%B4%9D-sendfile.png" class="lazyload" data-srcset="/2020/05/09/RocketMQ%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8/%E9%9B%B6%E6%8B%B7%E8%B4%9D-sendfile.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p class="p red">mmap适合操作小块数据量，sendfile适合操作大块数据量，RocketMQ选择mmap方式，而Kafka选择sendfile方式，至于区别暂时没找到...</p>
 
   
   
@@ -820,10 +832,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-01-04T23:38:51+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-01-07T13:31:30+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2021年1月4日</p>
+    <p>更新于：2021年1月7日</p>
   </a>
 </div>
 

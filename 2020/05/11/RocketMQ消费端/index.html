@@ -544,10 +544,10 @@
 <h2 id="消息过滤"><a href="#消息过滤" class="headerlink" title="消息过滤"></a>消息过滤</h2><p>Tag、SQL92和类过滤器(新版去除)</p>
 <h2 id="订阅关系一致"><a href="#订阅关系一致" class="headerlink" title="订阅关系一致"></a>订阅关系一致</h2><p>同一个消费组内的所有Consumer还需遵循订阅关系一致性原则，才能保证消息的正常消费。这个原则要求消费组内的所有Consumer订阅的topic和对应tags必须保持一致，一旦订阅关系不一致就会导致消费混乱，甚至消息丢失。</p>
 <p>消费组的订阅信息在Broker的存储结构由ConsumerManager类的consumerTable进行维护:</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> ConcurrentMap&lt;String, ConsumerGroupInfo&gt; consumerTable = </span><br><span class="line">    <span class="keyword">new</span> ConcurrentHashMap&lt;String, ConsumerGroupInfo&gt;(<span class="number">1024</span>);</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> ConcurrentMap&lt;String<span class="comment">/* Group */</span>, ConsumerGroupInfo&gt; consumerTable = </span><br><span class="line">    <span class="keyword">new</span> ConcurrentHashMap&lt;String, ConsumerGroupInfo&gt;(<span class="number">1024</span>);</span><br></pre></td></tr></table></figure>
 
 <p>ConsumerGroupInfo类存储了消费组的具体结构，类内部的subscriptionTable存储的topic的订阅详情:</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> ConcurrentMap&lt;String, SubscriptionData&gt; subscriptionTable =</span><br><span class="line">    <span class="keyword">new</span> ConcurrentHashMap&lt;String, SubscriptionData&gt;();</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> ConcurrentMap&lt;String<span class="comment">/* Topic */</span>, SubscriptionData&gt; subscriptionTable =</span><br><span class="line">    <span class="keyword">new</span> ConcurrentHashMap&lt;String, SubscriptionData&gt;();</span><br></pre></td></tr></table></figure>
 
 <p>SubscriptionData类存储了订阅的所有规则信息:</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">    <span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SubscriptionData</span> <span class="keyword">implements</span> <span class="title">Comparable</span>&lt;<span class="title">SubscriptionData</span>&gt; </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//订阅所有消息</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">static</span> String SUB_ALL = <span class="string">&quot;*&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 类过滤模式标记</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">boolean</span> classFilterMode = <span class="keyword">false</span>;</span><br><span class="line">    <span class="comment">// topic名称</span></span><br><span class="line">    <span class="keyword">private</span> String topic;</span><br><span class="line">    <span class="comment">// 订阅tags，多个可用||隔开</span></span><br><span class="line">    <span class="keyword">private</span> String subString;</span><br><span class="line">    <span class="comment">// 订阅tags集合</span></span><br><span class="line">    <span class="keyword">private</span> Set&lt;String&gt; tagsSet = <span class="keyword">new</span> HashSet&lt;String&gt;();</span><br><span class="line">    <span class="comment">// tagcode集合</span></span><br><span class="line">    <span class="keyword">private</span> Set&lt;Integer&gt; codeSet = <span class="keyword">new</span> HashSet&lt;Integer&gt;();</span><br><span class="line">    <span class="comment">// 订阅版本时间戳</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">long</span> subVersion = System.currentTimeMillis();</span><br><span class="line">    <span class="comment">// 表达式类型</span></span><br><span class="line">    <span class="keyword">private</span> String expressionType = ExpressionType.TAG;</span><br><span class="line">    <span class="comment">// 构造器、hashCode、equals、getset等...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -610,10 +610,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-27T19:12:44+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-01-10T22:45:40+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年12月27日</p>
+    <p>更新于：2021年1月10日</p>
   </a>
 </div>
 
@@ -688,7 +688,7 @@
       
         <a class='prev' href='/2020/05/18/RocketMQ%E5%86%8D%E5%9D%87%E8%A1%A1/'>
           <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>RocketMQ(八)再均衡</p>
-          <p class='content'>再均衡概念Rebalance(再均衡)机制指的是:一个topic下的多个队列，在同一个消费者组下的多个Consumer实例之间进行重新分配。以消费者集群模式为例，这种模式的设计本意是提高消息的并...</p>
+          <p class='content'>简单介绍在集群消费模式下，消费组内各Consumer均摊订阅的队列信息，也就是消费端的负载均衡机制。在消费过程中如果队列、消费组信息发生变化，则需要根据分配策略对组内所有Consumer重新分配...</p>
         </a>
       
       
