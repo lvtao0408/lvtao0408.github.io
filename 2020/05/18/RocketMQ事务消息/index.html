@@ -515,7 +515,13 @@
 
 
   
-  <h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2>
+  <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>事务消息就是将发送消息和本地数据库的持久化操作融合为一个事务，要么一起成功，要么一起失败，不会存在一个操作成功另一操作失败的情况，说白了就是Broker端与数据库端持久化的分布式事务问题。</p>
+<h2 id="事务原理"><a href="#事务原理" class="headerlink" title="事务原理"></a>事务原理</h2><p>RocketMQ采用2PC的解决方案思想，将整个分布式事务过程分为俩个阶段进行处理，相对于2PC又要简单一点，因为没有涉及到协调器的概念，操作过程由Producer端主导。</p>
+<p><font size="4"><b>第一阶段</b></font></p>
+<ul>
+<li>第一阶段由Producer把消息发送到Broker端，但是消息并没有持久化到队列，</li>
+</ul>
+
   
   
     
@@ -549,10 +555,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-12-27T19:14:47+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-01-16T15:51:53+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年12月27日</p>
+    <p>更新于：2021年1月16日</p>
   </a>
 </div>
 
@@ -676,7 +682,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95"><span class="toc-text">测试</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E5%8E%9F%E7%90%86"><span class="toc-text">事务原理</span></a></li></ol>
     </div>
   </section>
 
