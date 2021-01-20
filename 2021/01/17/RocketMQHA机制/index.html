@@ -5,8 +5,6 @@
   <!-- SEO相关 -->
   
     
-      <meta name="robots" content="noindex,follow">
-    
   
   <!-- 渲染优化 -->
   <meta name="renderer" content="webkit">
@@ -19,9 +17,11 @@
 
   <!-- 页面元数据 -->
   
-  <title>归档：2020/5 - 来杯冰镇可乐</title>
+  <title>RocketMQ(十)HA机制 - 来杯冰镇可乐</title>
   
 
+  
+    <meta name="description" content="通过主从同步机制保证系统的高可用">
   
 
   <!-- feed -->
@@ -371,7 +371,7 @@
   
     
     
-        <div class='cover-wrapper  search' style="display: none;">
+        <div class='cover-wrapper post search' style="display: none;">
           
             <div class='cover-bg lazyload placeholder' data-bg="https://cdn.jsdelivr.net/gh/volantis-x/cdn-wallpaper-minimalist@1.0.0/2020/001.jpg"></div>
           
@@ -415,8 +415,8 @@
  
  
 <div id="pjax-data" style="display: none"> 
-  <div id="pjax-ispage">false</div> 
-  <div id="pjax-pageTitle"></div> 
+  <div id="pjax-ispage">true</div> 
+  <div id="pjax-pageTitle">RocketMQ(十)HA机制</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -446,79 +446,239 @@
         
 
 <div class='l_main'>
-	
-		
-  <section class="post-list">
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
     
     
-      
+    
+      <h1 class="title">
+        RocketMQ(十)HA机制
+      </h1>
+      <div class='new-meta-box'>
         
-          <div class='post-wrapper'>
-            <div class="post post-v3 white-box reveal shadow">
-  
-  
-  
-  
-    
-    <h2 class="article-title" >
-      <a href="/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/">
-        RocketMQ(一)架构原理
-      </a>
-    </h2>
-  
-  <div class='md'>
-    
-      <p>RocketMQ的核心组件、消息领域模型、架构图讲解</p>
-    
+          
+            
+<div class='new-meta-item author'>
+  <a class='author' href="/" rel="nofollow">
+    <img no-lazy src="">
+    <p>lvtao</p>
+  </a>
+</div>
+
+          
+        
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/">消息中间件</a><span class="sep"></span><a class="category-link" href="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/RocketMQ/">RocketMQ</a>
+    </a>
   </div>
-  
-    <div class='meta-v3' line_style='solid'>
-      <div>
+
+
+          
         
-        <time>2020-05-01</time>
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2021年1月17日</p>
+  </a>
+</div>
+
+          
         
-          <span class="dot"></span>
-          <a class="category-link" href="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/">消息中间件</a><span class="sep"></span><a class="category-link" href="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/RocketMQ/">RocketMQ</a>
+          
+            
+  <div class="new-meta-item browse leancloud">
+    <a class='notlink'>
+      
+      <div id="lc-pv" data-title="RocketMQ(十)HA机制" data-path="/2021/01/17/RocketMQHA%E6%9C%BA%E5%88%B6/">
+        <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
+        <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
+        次浏览
+      </div>
+    </a>
+  </div>
+
+
+          
         
       </div>
+    
+  </div>
+
+
+  
+  <h2 id="主从模式"><a href="#主从模式" class="headerlink" title="主从模式"></a>主从模式</h2><p>RocketMQ通过Broker的主从模式实现服务的高可用，Slave节点定时向Master节点发送请求同步最新数据，并且在4.5版本后支持主从节点的自动切换，当主节点出现故障后，根据RAFT算法从Slave节点中选择一个作为Master，保证Broker服务的正常生产消费。</p>
+<p><font size="4"><b>主从模式优点:</b></font></p>
+<ul>
+<li>数据备份 : 数据冗余多份，一定程度上保证了Master出现不可恢复的故障后，数据不丢失。</li>
+<li>高可用性 : 即使Master宕机，Consumer会自动重连到对应的Slave节点，不会出现消费停滞的情况。</li>
+<li>读写分离 : Slave节点可以一定程度上缓解Master节点的读压力。</li>
+</ul>
+<h2 id="元数据复制"><a href="#元数据复制" class="headerlink" title="元数据复制"></a>元数据复制</h2><p>BrokerController类有个handleSlaveSynchronize方法，当role为BrokerRole.SLAVE时，会注册一个定时任务，每隔10秒钟执行一次SlaveSynchronize类的syncAll()方法，进行元数据的复制:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">syncAll</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="comment">// 同步topic信息</span></span><br><span class="line">        <span class="keyword">this</span>.syncTopicConfig();</span><br><span class="line">        <span class="comment">// 同步消费者偏移量信息</span></span><br><span class="line">        <span class="keyword">this</span>.syncConsumerOffset();</span><br><span class="line">        <span class="comment">// 同步延迟消费的偏移量信息</span></span><br><span class="line">        <span class="keyword">this</span>.syncDelayOffset();</span><br><span class="line">        <span class="comment">//同步订阅的消息组信息</span></span><br><span class="line">        <span class="keyword">this</span>.syncSubscriptionGroupConfig();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>没有什么复杂的逻辑，就是通过NameServer可以得到Master节点的服务地址，然后直接调用接口就能拿到所有数据信息。Consumer在拉取完消息并消费完毕后，仍然是向Master节点提交消费进度，Slave定时进行拉取刷新。当Master节点宕机后，Consumer无法向Master提交offset信息，对此RocketMQ提供了俩种机制确保不丢失offset信息。</p>
+<p>第一种是Consumer端将消费进度存储在自身内存中并标记hasCommitOffsetFlag属性为true，仍然定时向Broker反馈offset信息，当Broker恢复后会收到并更新offset，从节点也会定时同步Master最新offset，如果再恢复期间Consumer宕机或关闭服务，仍然会丢失部分消费进度，造成数据重复消费。</p>
+<p>第二种是消费者在向Broker节点拉取消息时，如果为Master节点，拉取消息后会顺带更新Master的offset。</p>
+<h2 id="CommitLog复制"><a href="#CommitLog复制" class="headerlink" title="CommitLog复制"></a>CommitLog复制</h2><p><font size="4"><b>复制流程:</b></font><br><img src="/2021/01/17/RocketMQHA%E6%9C%BA%E5%88%B6/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E6%B5%81%E7%A8%8B.png" class="lazyload" data-srcset="/2021/01/17/RocketMQHA%E6%9C%BA%E5%88%B6/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E6%B5%81%E7%A8%8B.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<ul>
+<li>AcceptSocketService: Master启动后会运行此线程，监听并接受Slave的连接请求。</li>
+<li>HAConnection: 每接受一个Slave的连接请求，都会创建一个对应的HAConnection，本质是对SocketChannel的read/write的封装。</li>
+<li>SocketReadService: 由HAConnection创建，是对SocketChannel中read的封装，作用是读取slave发送的已同步offset。</li>
+<li>SocketWriteService: 由HAConnection创建，是对SocketChannel中write的封装，作用是将消息发送给Slave。</li>
+<li>GroupTransferService: 同步复制模式下，将Master挂起直到Slave发出同步成功信号后唤醒。</li>
+</ul>
+<p><font size="4"><b>异步复制</b></font><br>异步复制的好处是将消息写入commitlog后直接返回，无需关心与Slave的数据同步问题，消息同步给Slave的逻辑处理由HAConnection异步处理。消息持久化后无需等待Slave确认是否存储成功，从效率上高于同步复制，缺点是如果Master宕机，由于数据同步有延迟导致Slave和Master存在一定程度的数据不一致问题，适用于数据可靠性要求不高的业务场景。</p>
+<p><font size="4"><b>同步复制</b></font><br>同步复制与异步复制的唯一区别是持久化消息后，需等待Slave节点返回此消息的同步结果，期间被GroupTransferService线程使用CountDownLatch阻塞挂起，直到Slave返回成功结果或超时再进行唤醒。这种模式不会造成消息丢失，但是工作效率相对降低，适用于数据可靠性要求很高的业务场景。</p>
+<p>判断主从同步是否完成的依据是Slave中已成功复制的最大消息偏移量是否大于等于消息生产者发送消息后消息服务端返回的下一条消息的起始偏移量。如果大于等于说明主从同步完成，否则等待1秒后继续检查，每一批任务中循环5次加上初始的一次一共6次，6次还没确认就关闭连接。</p>
+<p class="p red">这里只需要有一个Slave复制成功并成功应答即算成功。</p>
+
+<h2 id="读写分离"><a href="#读写分离" class="headerlink" title="读写分离"></a>读写分离</h2><p>传统的读写分离是完全按照Master节点写入、Slave节点读取的规则进行，而RocketMQ有属于自己的一套读写分离逻辑。在默认情况下RocketMQ会优先选择从Master进行拉取消息，并且计算堆积量是否超过物理内存40%，表示主服务繁忙，当超过时则建议Consumer下次从Slave拉取消息。</p>
+<p>开启读写分离需要Master与Slave添加配置slaveReadEnable=true，默认为false。</p>
+
+  
+  
+    
+    <div class='footer'>
       
-        <div>
-          <a class='readmore' href='/2020/05/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/'>
-            阅读全文
-          </a>
+      
+      
+        <div class='copyright'>
+          <blockquote>
+            
+              
+                <p>博客内容遵循 署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</p>
+
+              
+            
+              
+                <p>本文永久链接是：<a href=http://yoursite.com/2021/01/17/RocketMQHA%E6%9C%BA%E5%88%B6/>http://yoursite.com/2021/01/17/RocketMQHA%E6%9C%BA%E5%88%B6/</a></p>
+              
+            
+          </blockquote>
         </div>
+      
       
     </div>
   
+  
+    
 
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-01-18T20:56:33+08:00">
+  <a class='notlink'>
+    <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
+    <p>更新于：2021年1月18日</p>
+  </a>
 </div>
 
-          </div>
         
       
-    
-  </section>
-  
-    
-      <br>
-      <div class="prev-next">
         
-          <a class="prev" rel="prev" href="/archives/2020/05/">
-            <section class="post prev white-box shadow" >
-              <i class="fas fa-chevron-left" aria-hidden="true"></i>&nbsp;上一页&nbsp;
-            </section>
-          </a>
+          
+
         
-        <p class="current">
-          2 / 2
-        </p>
+      
         
-      </div>
+          
+  <div class="new-meta-item share -mob-share-list">
+  <div class="-mob-share-list share-body">
     
-  
+      
+        <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2021/01/17/RocketMQHA%E6%9C%BA%E5%88%B6/&title=RocketMQ(十)HA机制 - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+        <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2021/01/17/RocketMQHA%E6%9C%BA%E5%88%B6/&title=RocketMQ(十)HA机制 - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+        <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2021/01/17/RocketMQHA%E6%9C%BA%E5%88%B6/&title=RocketMQ(十)HA机制 - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
 
 
-	
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+      
+        <a class='next' href='/2020/05/18/RocketMQ%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/'>
+          <p class='title'>RocketMQ(九)事务消息<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>概述RocketMQ事务消息本质是将发送消息和本地数据库操作融合为一个事务，要么一起成功，要么一起失败，不会存在一个操作成功另一操作失败的情况，说明白点就是Broker端与数据库端持久化数据的分...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
 </div>
 <aside class='l_side'>
   
@@ -526,173 +686,19 @@
     
     
 
-<section class="widget shadow desktop">
-  
-  <header>
-    
-      <i class="fas fa-award fa-fw" aria-hidden="true"></i><span class='name'>站点信息</span>
-    
-  </header>
 
 
-  <div class='content'>
-    <div class="webinfo">
-      
-        <div class="webinfo-item">
-          <div>文章数目：</div>
-          <div>34 篇</div>
-        </div>
-      
-
-      
-        <div class="webinfo-item">
-          <div>已运行时间：</div>
-          <div id="webinfo-runtime-count" publish_date="03/24/2020 21:34:09"></div>
-        </div>
-        <script>
-          var BirthDay = new Date(new Date('2020/02/01'));
-          var today = new Date();
-          var timeold = (today.getTime() - BirthDay.getTime());
-          var daysold = Math.floor(timeold / (24 * 60 * 60 * 1000));
-          document.getElementById('webinfo-runtime-count').innerHTML = daysold + ' 天';
-        </script>
-      
-
-
-      
-
-      
-        <div class="webinfo-item">
-          <div>本站访客数：</div>
-          
-          <div><span id="lc-uv"><span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span></span> 人</div>
-          
-        </div>
-      
-
-      
-        <div class="webinfo-item">
-          <div>本站总访问量：</div>
-          
-          <div><span id="lc-sv"><span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span></span> 次</div>
-          
-        </div>
-      
-
-      
-        <div class="webinfo-item">
-          <div>最后活动时间：</div>
-          
-            <div id="last-update" style="display: none;">Sat Jan 16 2021 15:52:03 GMT+0800 (China Standard Time)</div>
-            <div id="last-update-show">2021-01-16 日</div>
-          
-        </div>
-        
-        <script>
-          function timeago(dateTimeStamp) {
-              var minute = 1000 * 60; //把分，时，天，周，半个月，一个月用毫秒表示
-              var hour = minute * 60;
-              var day = hour * 24;
-              var week = day * 7;
-              var month = day * 30;
-              var now = new Date().getTime(); //获取当前时间毫秒
-              var diffValue = now - dateTimeStamp; //时间差
-              if (diffValue < 0) {
-                  return;
-              }
-              var minC = diffValue / minute; //计算时间差的分，时，天，周，月
-              var hourC = diffValue / hour;
-              var dayC = diffValue / day;
-              var weekC = diffValue / week;
-              var monthC = diffValue / month;
-              if (monthC >= 1 && monthC <= 3) {
-                  result = " " + parseInt(monthC) + " 月前"
-              } else if (weekC >= 1 && weekC <= 3) {
-                  result = " " + parseInt(weekC) + " 周前"
-              } else if (dayC >= 1 && dayC <= 6) {
-                  result = " " + parseInt(dayC) + " 天前"
-              } else if (hourC >= 1 && hourC <= 23) {
-                  result = " " + parseInt(hourC) + " 小时前"
-              } else if (minC >= 1 && minC <= 59) {
-                  result = " " + parseInt(minC) + " 分钟前"
-              } else if (diffValue >= 0 && diffValue <= minute) {
-                  result = "刚刚"
-              } else {
-                  var datetime = new Date();
-                  datetime.setTime(dateTimeStamp);
-                  var Nyear = datetime.getFullYear();
-                  var Nmonth = datetime.getMonth() + 1 < 10 ? "0" + (datetime.getMonth() + 1) : datetime.getMonth() + 1;
-                  var Ndate = datetime.getDate() < 10 ? "0" + datetime.getDate() : datetime.getDate();
-                  var Nhour = datetime.getHours() < 10 ? "0" + datetime.getHours() : datetime.getHours();
-                  var Nminute = datetime.getMinutes() < 10 ? "0" + datetime.getMinutes() : datetime.getMinutes();
-                  var Nsecond = datetime.getSeconds() < 10 ? "0" + datetime.getSeconds() : datetime.getSeconds();
-                  result = Nyear + "-" + Nmonth + "-" + Ndate
-              }
-              return result;
-          }
-          var lastUpDate = document.getElementById('last-update').innerHTML;
-          try {
-            document.getElementById('last-update-show').innerHTML = timeago(new Date(lastUpDate));
-          } catch (error) {
-            document.getElementById('last-update-show').innerHTML = '2021-01-16 日';
-          }
-        </script>
-        
-      
-    </div>
-  </div>
-</section>
-
-  
-
-  
-    
-    
-  
-
-  <section class="widget category shadow desktop">
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
     
   <header>
     
-      <a href='/blog/categories/'><i class="fas fa-folder-open fa-fw" aria-hidden="true"></i><span class='name'>文章分类</span></a>
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
     
   </header>
 
 
     <div class='content'>
-      <ul class="entry navigation">
-        
-          <li><a class="flat-box"
-            title="/categories/java%E5%9F%BA%E7%A1%80/" href="/categories/java%E5%9F%BA%E7%A1%80/"
-            id="categoriesjavaE59FBAE7A180"
-            ><div class='name'>java基础</div><div class='badge'>(23)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/java%E5%9F%BA%E7%A1%80/IO%E6%B5%81/" href="/categories/java%E5%9F%BA%E7%A1%80/IO%E6%B5%81/"
-            id="categoriesjavaE59FBAE7A180IOE6B581"
-            ><div class='name'>IO流</div><div class='badge'>(1)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" href="/categories/java%E5%9F%BA%E7%A1%80/%E5%A4%9A%E7%BA%BF%E7%A8%8B/"
-            id="categoriesjavaE59FBAE7A180E5A49AE7BABFE7A88B"
-            ><div class='name'>多线程</div><div class='badge'>(17)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/java%E5%9F%BA%E7%A1%80/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" href="/categories/java%E5%9F%BA%E7%A1%80/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"
-            id="categoriesjavaE59FBAE7A180E695B0E68DAEE7BB93E69E84"
-            ><div class='name'>数据结构</div><div class='badge'>(5)</div></a></li>
-        
-          <li><a class="flat-box"
-            title="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/" href="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/"
-            id="categoriesE6B688E681AFE4B8ADE997B4E4BBB6"
-            ><div class='name'>消息中间件</div><div class='badge'>(11)</div></a></li>
-        
-          <li><a class="flat-box child"
-            title="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/RocketMQ/" href="/categories/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/RocketMQ/"
-            id="categoriesE6B688E681AFE4B8ADE997B4E4BBB6RocketMQ"
-            ><div class='name'>RocketMQ</div><div class='badge'>(11)</div></a></li>
-        
-      </ul>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E4%BB%8E%E6%A8%A1%E5%BC%8F"><span class="toc-text">主从模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%83%E6%95%B0%E6%8D%AE%E5%A4%8D%E5%88%B6"><span class="toc-text">元数据复制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CommitLog%E5%A4%8D%E5%88%B6"><span class="toc-text">CommitLog复制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB"><span class="toc-text">读写分离</span></a></li></ol>
     </div>
   </section>
 
@@ -701,6 +707,7 @@
 
 
 </aside>
+
 
 
         
