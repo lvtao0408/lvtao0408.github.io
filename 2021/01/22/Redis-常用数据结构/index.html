@@ -17,11 +17,11 @@
 
   <!-- 页面元数据 -->
   
-  <title>集合(五) TreeMap - 来杯冰镇可乐</title>
+  <title>Redis(二) 常用数据类型 - 来杯冰镇可乐</title>
   
 
   
-    <meta name="description" content="测试用">
+    <meta name="description" content="常用五种数据结构以及使用场景">
   
 
   <!-- feed -->
@@ -416,7 +416,7 @@
  
 <div id="pjax-data" style="display: none"> 
   <div id="pjax-ispage">true</div> 
-  <div id="pjax-pageTitle">集合(五) TreeMap</div> 
+  <div id="pjax-pageTitle">Redis(二) 常用数据类型</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -456,7 +456,7 @@
     
     
       <h1 class="title">
-        集合(五) TreeMap
+        Redis(二) 常用数据类型
       </h1>
       <div class='new-meta-box'>
         
@@ -476,7 +476,7 @@
   <div class='new-meta-item category'>
     <a class='notlink'>
       <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
-      <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+      <a class="category-link" href="/categories/%E7%BC%93%E5%AD%98%E4%B8%AD%E9%97%B4%E4%BB%B6/">缓存中间件</a><span class="sep"></span><a class="category-link" href="/categories/%E7%BC%93%E5%AD%98%E4%B8%AD%E9%97%B4%E4%BB%B6/redis/">redis</a>
     </a>
   </div>
 
@@ -487,7 +487,7 @@
             <div class="new-meta-item date">
   <a class='notlink'>
     <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
-    <p>发布于：2020年1月5日</p>
+    <p>发布于：2021年1月22日</p>
   </a>
 </div>
 
@@ -498,7 +498,7 @@
   <div class="new-meta-item browse leancloud">
     <a class='notlink'>
       
-      <div id="lc-pv" data-title="集合(五) TreeMap" data-path="/2020/01/05/TreeMap/">
+      <div id="lc-pv" data-title="Redis(二) 常用数据类型" data-path="/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">
         <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
         <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
         次浏览
@@ -515,7 +515,78 @@
 
 
   
-  <h2 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h2><p>描述…</p>
+  <h2 id="字符串-string"><a href="#字符串-string" class="headerlink" title="字符串(string)"></a>字符串(string)</h2><p>string是Redis最基础的数据类型，底层通过int或SDS(动态字符串:Simple Dynamic String)实现。在设置一个字符串键值对后，Redis会根据value的类型、长度来决定使用哪种编码，通过不同的编码方式映射到不同的数据结构。</p>
+<p><font size="4"><b>1.数据结构</b></font></p>
+<p><img src="/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<ul>
+<li><p>int类型数据结构支持incr、incrby、decr、decrby等命令对value值进行增减操作。</p>
+</li>
+<li><p>embstr编码的SDS结构是专门用于保存短字符串的优化编码方式，与raw编码不同，embstr编码通过一次内存分配函数将字符串KV对象和value值分配在连续的内存块中，提高CPU取数据的效率问题。</p>
+</li>
+<li><p>raw编码的SDS结构用于存储较长的字符串，通过俩次内存分配函数得到俩块内存，给字符串KV对象和value分别存储。</p>
+</li>
+</ul>
+<p><font size="4"><b>2.常用命令</b></font></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">get [key] [value]  &#x2F;&#x2F; 获取指定key对应value</span><br><span class="line"></span><br><span class="line">set [key] [value]  &#x2F;&#x2F; 给指定key设置value，该命令会覆盖旧的KV</span><br><span class="line"></span><br><span class="line">set [key] [value] [ex 秒数]&#x2F;[px 毫秒]&#x2F;[nx 纳秒]  &#x2F;&#x2F; 给指定key设置value和过期时间，该命令会覆盖旧的KV和过期时间</span><br><span class="line"></span><br><span class="line">append [key] [value] &#x2F;&#x2F; 把value追加到key的原值上</span><br><span class="line"></span><br><span class="line">expire [key] [time]  &#x2F;&#x2F; 等价于set + expire命令</span><br><span class="line"></span><br><span class="line">setex [key] [time] [value]  &#x2F;&#x2F; 给指定key设置过期时间，单位秒</span><br><span class="line"></span><br><span class="line">setnx [key] [value]  &#x2F;&#x2F; 如果key不存在则set，否则返回0</span><br><span class="line"></span><br><span class="line">incr [key]  &#x2F;&#x2F; 如果key为整数则使值增加1</span><br><span class="line"></span><br><span class="line">incrby [key] [number]  &#x2F;&#x2F; 如果key为整数则使值增加number</span><br><span class="line"></span><br><span class="line">decr [key]  &#x2F;&#x2F; 如果key为整数则使值减少1</span><br><span class="line"></span><br><span class="line">decrby [key] [number]  &#x2F;&#x2F; 如果key为整数则使值减少number</span><br></pre></td></tr></table></figure>
+
+<p><font size="4"><b>3.应用场景</b></font></p>
+<ul>
+<li>分布式缓存: 字典常量数据、JSON字符串、图片视频等序列化数组、Session等</li>
+<li>分布式锁: 根据业务对接口或代码块加分布式锁</li>
+<li>常规计数: 网站浏览量、点击量、收藏量等</li>
+<li>接口监控: 通过AOP和Redis计数器对指定接口限流或屏蔽</li>
+</ul>
+<h2 id="哈希-hash"><a href="#哈希-hash" class="headerlink" title="哈希(hash)"></a>哈希(hash)</h2><p>hash类型在Redis类型中是指键值中的值本身又是一个键值对，底层通过ziplist(压缩列表)或hashtable(哈希表)实现，Redis会根据哈希表中的KV元素数量、每个元素值大小来决定使用哪种数据。</p>
+<p><font size="4"><b>1.数据结构</b></font></p>
+<p><img src="/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%93%88%E5%B8%8C%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%93%88%E5%B8%8C%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<ul>
+<li><p>ziplist是Redis自己设计的数据结构，使用更加紧凑的结构实现多个元素的连续存储，相比较hashtable更加节约内存，但是在大量元素的情况下读写效率不如hashtable，大块连续的存储空间的要求也比较苛刻。</p>
+</li>
+<li><p>hashtable的结构与Java JDK1.7版本的HashMap类似，采用数组加链表的形式进行存储，相比较ziplist在大量元素情况下读写效率更好，因为读写时间复杂度为O(1)。</p>
+</li>
+</ul>
+<p><font size="4"><b>2.常用命令</b></font></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><font size="4"><b>3.应用场景</b></font><br>哈希一般用于存储结构简单、属性较多、修改频率较高的对象信息，比如购物车、商品信息、配置信息等。哈希存储对象相对于字符串存储对象的优势在于，整个修改操作可以只针对某个属性。</p>
+<p>比如购物车的商品数量发生改变，字符串存储需要将内容提取出来转为对象，修改完属性后在转化为字符串存储，在购物车数据比较大的情况下会增加很多无意义的资源浪费。哈希类型存储购物车信息一般将每个商品的ID和数量作为元素的键值对，每次发生改变也仅仅是修改某个键值对的value，涉及到的资源消耗相对较少。</p>
+<h2 id="列表-list"><a href="#列表-list" class="headerlink" title="列表(list)"></a>列表(list)</h2><p>list类型是用来存储多个有序的字符串，3.2之前的版本底层通过ziplist(压缩列表)或linkedlist(链表)实现，Redis会根据列表中的KV元素数量、每个元素值大小来决定使用哪种数据结构，3.2包括以后版本采用quicklist代替。</p>
+<p><font size="4"><b>1.数据结构</b></font></p>
+<p><img src="/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%88%97%E8%A1%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%88%97%E8%A1%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<ul>
+<li>ziplist的优缺点上面已经提到了。</li>
+<li>linkedlist和ziplist都是线性数据结构，当元素较多或者某元素内存占用较大时，连续存储不太现实，还得采用linkedlist方式进行存储。</li>
+</ul>
+<p><font size="4"><b>2.常用命令</b></font></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><font size="4"><b>3.应用场景</b></font><br>Redis关于此类型结构的操作比较丰富，支持两端插入和弹出、还可以获取指定范围的元素列表、获取指定索引下标的元素等，是一个比较灵活的数据结构，因此应用场景也比较灵活。可以利用list实现消息队列、列表的分页数据缓存等。</p>
+<h2 id="去重集合-set"><a href="#去重集合-set" class="headerlink" title="去重集合(set)"></a>去重集合(set)</h2><p>set类型是一个无序并唯一的键值集合，底层通过inset(整数集合)或hashtable(哈希表)实现，根据集合内部的元素类型、个数来决定使用哪种数据结构。</p>
+<p><font size="4"><b>1.数据结构</b></font></p>
+<p><img src="/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%8E%BB%E9%87%8D%E9%9B%86%E5%90%88%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%8E%BB%E9%87%8D%E9%9B%86%E5%90%88%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>intset集合存在的意义就是尽量减少内存的使用，当intset的条件无法满足时，使用hashtable进行存储，set集合对hashtable的使用和Java一样，仅仅使用key而已。</p>
+<p><font size="4"><b>2.常用命令</b></font></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><font size="4"><b>3.应用场景</b></font><br>set类型具有无序、不可重复、支持并交差等特性，在电商、社交、视频网站等平台有着广泛的应用，通过将用户的标签信息存储在set结构中，可以向用户推荐相同兴趣爱好的好友，或者存储好友信息来展示相同好友功能等。</p>
+<p>通过set集合提供的SADD、SRANDMEMBER命令可以实现抽奖功能。需要注意的是Redis在2.6版本才支持SADD命令的count参数，在3.2版本支持SRANDMEMBER命令的count参数，2.6版本以下仅支持单次获取一个随机元素。</p>
+<h2 id="有序去重集合-zset"><a href="#有序去重集合-zset" class="headerlink" title="有序去重集合(zset)"></a>有序去重集合(zset)</h2><p>zset类型相对于set类型，每个元素多了一个score值，保证元素内容不重复的前提下，通过score值对元素自动排序，底层通过ziplist(压缩列表)或skiplist(跳跃表)实现，根据集合内部的元素个数、大小来决定使用哪种数据结构。</p>
+<p><font size="4"><b>1.数据结构</b></font></p>
+<p><img src="/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<ul>
+<li>ziplist的优缺点上面已经提到了。</li>
+<li>skiplist也是一个有序的数据结构，为了避免链表结构这种查找元素需要从头到尾遍历的弊端，采用在每个节点中维持多个指向其他节点的指针，从而达到快速访问节点的目的。</li>
+</ul>
+<p><font size="4"><b>2.常用命令</b></font></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><font size="4"><b>3.应用场景</b></font><br>既然数据结构的亮点是排序，那么应用场景自然也是和排序相关。应用最为广泛的就是排行榜系统，例如某个网站的文章访问量、视频播放量/点赞量、电商系统商品的销售量等等。</p>
+<p>Redis的ZRANGEBYLEX命令支持对相同的score元素进行排序，实现方式是将元素字符串转化为二进制数组的字节数进行比较，因此可以用来实现手机号、姓名等排序场景。</p>
+<h2 id="底层结构"><a href="#底层结构" class="headerlink" title="底层结构"></a>底层结构</h2><p>Redis在进行内存数据存储时，并没有为每种数据类型分配固定的数据结构，而是根据数据大小、元素数量等各种情况，转化不同的结构管理数据，达到节约内存的目的。像hashtable、linkedlist这些和Java类似的结构这里就不提了，针对其他几个比较特别的结构简单分析一波。</p>
+<p><font size="4"><b>SDS(动态字符串)</b></font></p>
+<p><font size="4"><b>ziplist(压缩列表)</b></font></p>
+<p><font size="4"><b>quicklist(压缩列表+链表混合)</b></font></p>
+<p><font size="4"><b>skiplist(跳表)</b></font></p>
 
   
   
@@ -533,7 +604,7 @@
               
             
               
-                <p>本文永久链接是：<a href=http://yoursite.com/2020/01/05/TreeMap/>http://yoursite.com/2020/01/05/TreeMap/</a></p>
+                <p>本文永久链接是：<a href=http://yoursite.com/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/>http://yoursite.com/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</a></p>
               
             
           </blockquote>
@@ -550,10 +621,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-01-09T20:37:16+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-01-24T20:04:59+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2021年1月9日</p>
+    <p>更新于：2021年1月24日</p>
   </a>
 </div>
 
@@ -572,7 +643,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/01/05/TreeMap/&title=集合(五) TreeMap - 来杯冰镇可乐&summary="
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/&title=Redis(二) 常用数据类型 - 来杯冰镇可乐&summary="
           
           >
           
@@ -584,7 +655,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/01/05/TreeMap/&title=集合(五) TreeMap - 来杯冰镇可乐&summary="
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/&title=Redis(二) 常用数据类型 - 来杯冰镇可乐&summary="
           
           >
           
@@ -596,7 +667,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/01/05/TreeMap/&title=集合(五) TreeMap - 来杯冰镇可乐&summary="
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/&title=Redis(二) 常用数据类型 - 来杯冰镇可乐&summary="
           
           >
           
@@ -626,16 +697,10 @@
   
     <div class="prev-next">
       
-        <a class='prev' href='/2020/01/05/HashMap/'>
-          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>集合(四) HashMap</p>
-          <p class='content'>结构描述…
-</p>
-        </a>
       
-      
-        <a class='next' href='/2020/01/03/HashSet/'>
-          <p class='title'>集合(三) HashSet<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>结构描述…
+        <a class='next' href='/2021/01/21/Redis%E7%AE%80%E4%BB%8B/'>
+          <p class='title'>Redis(一) 简介<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>前言Redis是….
 </p>
         </a>
       
@@ -679,7 +744,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%84"><span class="toc-text">结构</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%97%E7%AC%A6%E4%B8%B2-string"><span class="toc-text">字符串(string)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%93%88%E5%B8%8C-hash"><span class="toc-text">哈希(hash)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%97%E8%A1%A8-list"><span class="toc-text">列表(list)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8E%BB%E9%87%8D%E9%9B%86%E5%90%88-set"><span class="toc-text">去重集合(set)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%89%E5%BA%8F%E5%8E%BB%E9%87%8D%E9%9B%86%E5%90%88-zset"><span class="toc-text">有序去重集合(zset)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84"><span class="toc-text">底层结构</span></a></li></ol>
     </div>
   </section>
 

@@ -538,7 +538,7 @@
 <p><font size="4"><b>机房分配策略(AllocateMessageQueueByMachineRoom)</b></font><br>感觉与平均分配策略的逻辑差不多，就近机房的逻辑判断没看懂</p>
 <p><font size="4"><b>一致性哈希分配策略(AllocateMessageQueueConsistentHash)</b></font><br>牵涉到一致性哈希算法，以后在更新</p>
 <h2 id="与kafka区别"><a href="#与kafka区别" class="headerlink" title="与kafka区别"></a>与kafka区别</h2><p>Kafka是在消费组的众多Consumer中，选举一个作为Group Leader，由这个Group Leader来计算出分配结果并同步给其他Consumer，这种机制很好的避免了脑裂问题。</p>
-<p>RocketMQ中，Consumer端无论是主动收到通知、还是RebalanceService线程触发的rebalance，都是每个Consumer自己按照分配策略给自己重新分配队列。如果消费组内各Consumer设置的分配策略以及获取的队列信息相同，那么计算出的分配结果也是相同的，不会有任何问题，如果不相同会导致脑裂，造成多个Consumer抢夺一个队列(有加锁机制，单个队列不会被组内多个Consumer消费)，有的队列无人问津。</p>
+<p>RocketMQ中，Consumer端无论是主动收到通知、还是RebalanceService线程触发的rebalance，都是每个Consumer自己按照分配策略给自己重新分配队列。如果消费组内各Consumer设置的分配策略以及获取的队列信息相同，那么计算出的分配结果也是相同的，不会有任何问题，如果不相同会导致脑裂，造成多个Consumer抢夺一个队列，有的队列无人问津。</p>
 
   
   
@@ -573,10 +573,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-01-16T22:57:42+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-01-20T17:08:15+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2021年1月16日</p>
+    <p>更新于：2021年1月20日</p>
   </a>
 </div>
 

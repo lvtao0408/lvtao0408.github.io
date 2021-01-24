@@ -21,7 +21,7 @@
   
 
   
-    <meta name="description" content="测试用">
+    <meta name="description" content="HashMap底层结构演变，以及JKD1.8常用方法的源码解析">
   
 
   <!-- feed -->
@@ -515,8 +515,10 @@
 
 
   
-  <h2 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h2><p>描述…</p>
+  <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>HashMap是基于哈希表的Map接口实现类，用于存储Key-Value键值对的集合，在JDK1.7版本采用数组+链表的结构形式数据存储，JDK1.8版本在原有的基础上增加了红黑树结构概念，虽然代码设计层面变得更加复杂，但是效率也提升了很多。</p>
+<h2 id="类主要成员"><a href="#类主要成员" class="headerlink" title="类主要成员"></a>类主要成员</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">HashMap</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt; <span class="keyword">extends</span> <span class="title">AbstractMap</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt;</span></span><br><span class="line"><span class="class">    <span class="keyword">implements</span> <span class="title">Map</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt;, <span class="title">Cloneable</span>, <span class="title">Serializable</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 默认初始容量为16(必须是2的倍数)</span></span><br><span class="line">	<span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> DEFAULT_INITIAL_CAPACITY = <span class="number">1</span> &lt;&lt; <span class="number">4</span>; </span><br><span class="line"></span><br><span class="line">	<span class="comment">//集合的最大容量，如果通过带参构造指定的最大容量超过此数，默认还是使用此数</span></span><br><span class="line">	<span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MAXIMUM_CAPACITY = <span class="number">1</span> &lt;&lt; <span class="number">30</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 默认负载因子</span></span><br><span class="line">	<span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">float</span> DEFAULT_LOAD_FACTOR = <span class="number">0.75f</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 当桶(bucket)上的结点数大于这个值时会转成红黑树(JDK1.8新增)</span></span><br><span class="line">	<span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> TREEIFY_THRESHOLD = <span class="number">8</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 当桶(bucket)上的节点数小于这个值时会转成链表(JDK1.8新增)</span></span><br><span class="line">	<span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> UNTREEIFY_THRESHOLD = <span class="number">6</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 当集合中的容量大于这个值时，表中的桶才能进行树形化，否则桶内元素太多时会扩容(JDK1.8新增)</span></span><br><span class="line">	<span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MIN_TREEIFY_CAPACITY = <span class="number">64</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 存储键值对的数组，数组长度代表目前容量</span></span><br><span class="line">	<span class="keyword">transient</span> Node&lt;K,V&gt;[] table;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 录集合被修改的次数</span></span><br><span class="line">	<span class="keyword">transient</span> <span class="keyword">int</span> modCount;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
+<h2 id="数组加链表"><a href="#数组加链表" class="headerlink" title="数组加链表"></a>数组加链表</h2><h2 id="数组加红黑树"><a href="#数组加红黑树" class="headerlink" title="数组加红黑树"></a>数组加红黑树</h2><h2 id="构造器源码"><a href="#构造器源码" class="headerlink" title="构造器源码"></a>构造器源码</h2><h2 id="put源码"><a href="#put源码" class="headerlink" title="put源码"></a>put源码</h2><h2 id="get源码"><a href="#get源码" class="headerlink" title="get源码"></a>get源码</h2><h2 id="resize源码"><a href="#resize源码" class="headerlink" title="resize源码"></a>resize源码</h2>
   
   
     
@@ -550,10 +552,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-01-09T20:37:22+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-01-21T19:20:51+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2021年1月9日</p>
+    <p>更新于：2021年1月21日</p>
   </a>
 </div>
 
@@ -633,8 +635,8 @@
         </a>
       
       
-        <a class='next' href='/2020/01/05/TreeMap/'>
-          <p class='title'>集合(五) TreeMap<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+        <a class='next' href='/2020/01/03/HashSet/'>
+          <p class='title'>集合(三) HashSet<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
           <p class='content'>结构描述…
 </p>
         </a>
@@ -679,7 +681,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%84"><span class="toc-text">结构</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B1%BB%E4%B8%BB%E8%A6%81%E6%88%90%E5%91%98"><span class="toc-text">类主要成员</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E7%BB%84%E5%8A%A0%E9%93%BE%E8%A1%A8"><span class="toc-text">数组加链表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E7%BB%84%E5%8A%A0%E7%BA%A2%E9%BB%91%E6%A0%91"><span class="toc-text">数组加红黑树</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%84%E9%80%A0%E5%99%A8%E6%BA%90%E7%A0%81"><span class="toc-text">构造器源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#put%E6%BA%90%E7%A0%81"><span class="toc-text">put源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#get%E6%BA%90%E7%A0%81"><span class="toc-text">get源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#resize%E6%BA%90%E7%A0%81"><span class="toc-text">resize源码</span></a></li></ol>
     </div>
   </section>
 
