@@ -534,7 +534,7 @@
 <p>AtomicInteger内部有个int类型的value属性，代表着自身的值，并且AtomicInteger读写操作都是围绕这个值进行的，并且这个类被volatile修饰的。到这里思路就清晰了，volatile修饰符保证了value值的可见性，线程不会出现读到脏数据的情况。</p>
 <p>对于第二种情况百度的资料很少提及，所以也无法确定CPU到底如何解决这个问题。但是我在知乎上看到了俩个感觉还算靠谱的答案。首先被volatile修饰的变量会使用MESI协议确保同一时刻只有一个处理器修改值，并且把其他处理器此值的缓存设为无效，当第二个处理器想要修改值时发现无效，CAS操作失败，返回false，另一个答案则表示当多个处理器同时使用cmpxchg指令(也就是CAS)操作同一个数据时，总线会进行仲裁只有一个处理器执行CAS，其他处理器连比较操作都不会执行，直到上一个处理器执行完毕后总线再次仲裁并选中自己。</p>
 <p>第一种答案强调使用MESI的失效机制解决问题，第二种答案则强调将CAS视为一个整体，在执行比较操作的时候就会利用MESI协议将数据修改为M状态。不同的CPU架构可能解决问题的方式也不同，总之CPU保证多处理器并行执行CAS不会出错，Java保证volatile+自旋CAS修改数据的原子性，以后搞懂了再更新。</p>
-<h2 id="ABA问题"><a href="#ABA问题" class="headerlink" title="ABA问题"></a>ABA问题</h2><p>我实在是不想写这个问题，我也想不到ABA会带来什么后果，通过CAS修改数据也想不到啥业务场景需要记录修改了多少次，百度一堆人云亦云此A非彼A瞎鸡吧复制，就是讲不明白此A和彼A到底有啥区别。<br>但是Java在1.5版本引进了AtomicStampedReference类，采用版本号的机制解决这个操蛋的问题。</p>
+<h2 id="ABA问题"><a href="#ABA问题" class="headerlink" title="ABA问题"></a>ABA问题</h2><p>Java在1.5版本引进了AtomicStampedReference类，采用版本号的机制解决这个操蛋的问题。</p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
 <li>CAS是典型的乐观派操作，每次都迷之自信认为操作一定成功，但是在高并发比较严重的情况下会导致大量线程不断的循环，增大CPU的消耗。</li>
 <li>CAS只能保证单个共享变量的原子操作，如果操作涉及多个共享变量，必须要排他锁解决</li>
@@ -574,10 +574,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-19T15:53:53+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-02-06T15:54:32+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年10月19日</p>
+    <p>更新于：2021年2月6日</p>
   </a>
 </div>
 
