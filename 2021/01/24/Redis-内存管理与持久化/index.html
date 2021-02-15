@@ -21,7 +21,7 @@
   
 
   
-    <meta name="description" content="过期策略、驱逐策略、RDB和AOF持久化方式等实现原理">
+    <meta name="description" content="过期策略、淘汰机制、RDB和AOF持久化方式等实现原理">
   
 
   <!-- feed -->
@@ -518,8 +518,42 @@
   <h2 id="过期策略"><a href="#过期策略" class="headerlink" title="过期策略"></a>过期策略</h2><p><font size="4"><b>定期删除</b></font><br>Redis中所有设置过期时间的KEY都会被记录到一个字典中，通过定时任务每隔一段时间(默认100ms)对字典中的KEY进行扫描删除过期数据，<br>当然这种定时扫描只会发生在master节点上，slave节点会通过主节点同步的DEL命令进行同步达到删除过期键的目的。</p>
 <p>扫描过程中如果过期KEY在总数中占的比例少于25%，则终止循环，这么做的目的是为了节省CPU资源，为了防止过期KEY数量过多导致循环一直执行下去，Redis增加了超时限制，消耗一定时间循环也会被打破。</p>
 <p><font size="4"><b>惰性删除</b></font><br>Redis在执行任何读写命令时都会先找到这个KEY，惰性删除就作为一个切入点在命令执行前判断KEY是否过期，如果过期则进行删除。这种机制主要为了弥补定期删除策略扫描无法覆盖全部KEY的情况。</p>
-<p>Redis对过期数据的管理，整体上来说是对CPU比较友好，对内存不友好。</p>
-<h2 id="驱逐策略"><a href="#驱逐策略" class="headerlink" title="驱逐策略"></a>驱逐策略</h2><p>哈哈….</p>
+<h2 id="淘汰策略"><a href="#淘汰策略" class="headerlink" title="淘汰策略"></a>淘汰策略</h2><p>Redis的内存淘汰机制是针对内存不足的情况下，采用某种策略淘汰掉内存中的部分数据，保证服务可以继续写入数据。淘汰规则可以在redis.conf中配置:</p>
+<figure class="highlight plain"><figcaption><span>redis.conf</span></figcaption><table><tr><td class="code"><pre><span class="line"># 策略启动阈值(单位字节，0表示不限制)</span><br><span class="line">maxmemory 0</span><br><span class="line"></span><br><span class="line"># 清理策略类型(默认noeviction，禁止淘汰)</span><br><span class="line">maxmemory-policy noeviction</span><br><span class="line"></span><br><span class="line"># 扫描样本池数量</span><br><span class="line">maxmemory-samples 5</span><br></pre></td></tr></table></figure>
+
+<p>Redis提供了六种清理策略类型:</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>noeviction</td>
+<td>默认配置，当内存达到阈值时，后续所有需要申请内存的命令都会报错</td>
+</tr>
+<tr>
+<td>allkeys-random</td>
+<td>从数据集中任意选择数据淘汰</td>
+</tr>
+<tr>
+<td>allkeys-lru</td>
+<td>从数据集中挑选最近最少使用的数据淘汰</td>
+</tr>
+<tr>
+<td>volatile-lru</td>
+<td>从设置了过期时间的数据集中挑选最近最少使用的数据淘汰</td>
+</tr>
+<tr>
+<td>volatile-ttl</td>
+<td>从已设置了过期时间的数据集中挑选即将要过期的数据淘汰</td>
+</tr>
+<tr>
+<td>volatile-random</td>
+<td>从已设置了过期时间的数据集中任意选择数据淘汰</td>
+</tr>
+</tbody></table>
 <h2 id="RDB持久化"><a href="#RDB持久化" class="headerlink" title="RDB持久化"></a>RDB持久化</h2><p>哈哈….</p>
 <h2 id="AOF持久化"><a href="#AOF持久化" class="headerlink" title="AOF持久化"></a>AOF持久化</h2><p>哈哈….</p>
 
@@ -556,10 +590,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-02-06T17:39:26+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-02-15T11:42:34+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2021年2月6日</p>
+    <p>更新于：2021年2月15日</p>
   </a>
 </div>
 
@@ -687,7 +721,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%87%E6%9C%9F%E7%AD%96%E7%95%A5"><span class="toc-text">过期策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A9%B1%E9%80%90%E7%AD%96%E7%95%A5"><span class="toc-text">驱逐策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RDB%E6%8C%81%E4%B9%85%E5%8C%96"><span class="toc-text">RDB持久化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#AOF%E6%8C%81%E4%B9%85%E5%8C%96"><span class="toc-text">AOF持久化</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%87%E6%9C%9F%E7%AD%96%E7%95%A5"><span class="toc-text">过期策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5"><span class="toc-text">淘汰策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RDB%E6%8C%81%E4%B9%85%E5%8C%96"><span class="toc-text">RDB持久化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#AOF%E6%8C%81%E4%B9%85%E5%8C%96"><span class="toc-text">AOF持久化</span></a></li></ol>
     </div>
   </section>
 
