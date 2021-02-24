@@ -17,11 +17,11 @@
 
   <!-- 页面元数据 -->
   
-  <title>Redis(三) 内存管理与持久化 - 来杯冰镇可乐</title>
+  <title>Redis(二) 内存管理与发布订阅 - 来杯冰镇可乐</title>
   
 
   
-    <meta name="description" content="过期策略、淘汰机制、RDB和AOF持久化方式等实现原理">
+    <meta name="description" content="过期策略、淘汰机制、发布订阅等实现原理">
   
 
   <!-- feed -->
@@ -416,7 +416,7 @@
  
 <div id="pjax-data" style="display: none"> 
   <div id="pjax-ispage">true</div> 
-  <div id="pjax-pageTitle">Redis(三) 内存管理与持久化</div> 
+  <div id="pjax-pageTitle">Redis(二) 内存管理与发布订阅</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -456,7 +456,7 @@
     
     
       <h1 class="title">
-        Redis(三) 内存管理与持久化
+        Redis(二) 内存管理与发布订阅
       </h1>
       <div class='new-meta-box'>
         
@@ -498,7 +498,7 @@
   <div class="new-meta-item browse leancloud">
     <a class='notlink'>
       
-      <div id="lc-pv" data-title="Redis(三) 内存管理与持久化" data-path="/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E6%8C%81%E4%B9%85%E5%8C%96/">
+      <div id="lc-pv" data-title="Redis(二) 内存管理与发布订阅" data-path="/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/">
         <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
         <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
         次浏览
@@ -515,47 +515,35 @@
 
 
   
-  <h2 id="过期策略"><a href="#过期策略" class="headerlink" title="过期策略"></a>过期策略</h2><p><font size="4"><b>定期删除</b></font><br>Redis中所有设置过期时间的KEY都会被记录到一个字典中，通过定时任务每隔一段时间(默认100ms)对字典中的KEY进行扫描删除过期数据，<br>当然这种定时扫描只会发生在master节点上，slave节点会通过主节点同步的DEL命令进行同步达到删除过期键的目的。</p>
+  <h2 id="过期策略"><a href="#过期策略" class="headerlink" title="过期策略"></a>过期策略</h2><p><font size="4"><b>定期删除</b></font><br>Redis中所有设置过期时间的KEY都会被记录到一个字典中，通过定时任务每隔一段时间(默认100ms)对字典中的KEY进行扫描删除过期数据，当然这种定时扫描只会发生在master节点上，slave节点会通过主节点同步的DEL命令进行同步达到删除过期键的目的。</p>
 <p>扫描过程中如果过期KEY在总数中占的比例少于25%，则终止循环，这么做的目的是为了节省CPU资源，为了防止过期KEY数量过多导致循环一直执行下去，Redis增加了超时限制，消耗一定时间循环也会被打破。</p>
 <p><font size="4"><b>惰性删除</b></font><br>Redis在执行任何读写命令时都会先找到这个KEY，惰性删除就作为一个切入点在命令执行前判断KEY是否过期，如果过期则进行删除。这种机制主要为了弥补定期删除策略扫描无法覆盖全部KEY的情况。</p>
 <h2 id="淘汰策略"><a href="#淘汰策略" class="headerlink" title="淘汰策略"></a>淘汰策略</h2><p>Redis的内存淘汰机制是针对内存不足的情况下，采用某种策略淘汰掉内存中的部分数据，保证服务可以继续写入数据。淘汰规则可以在redis.conf中配置:</p>
-<figure class="highlight plain"><figcaption><span>redis.conf</span></figcaption><table><tr><td class="code"><pre><span class="line"># 策略启动阈值(单位字节，0表示不限制)</span><br><span class="line">maxmemory 0</span><br><span class="line"></span><br><span class="line"># 清理策略类型(默认noeviction，禁止淘汰)</span><br><span class="line">maxmemory-policy noeviction</span><br><span class="line"></span><br><span class="line"># 扫描样本池数量</span><br><span class="line">maxmemory-samples 5</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><figcaption><span>redis.conf</span></figcaption><table><tr><td class="code"><pre><span class="line"># 策略启动阈值(单位字节，64位系统中0表示不限制，32位系统中隐式不能超过3GB)</span><br><span class="line">maxmemory 0</span><br><span class="line"></span><br><span class="line"># 淘汰策略类型</span><br><span class="line">maxmemory-policy noeviction</span><br><span class="line"></span><br><span class="line"># 样本池数量</span><br><span class="line">maxmemory-samples 5</span><br></pre></td></tr></table></figure>
 
-<p>Redis提供了六种清理策略类型:</p>
-<table>
-<thead>
-<tr>
-<th>名称</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>noeviction</td>
-<td>默认配置，当内存达到阈值时，后续所有需要申请内存的命令都会报错</td>
-</tr>
-<tr>
-<td>allkeys-random</td>
-<td>从数据集中任意选择数据淘汰</td>
-</tr>
-<tr>
-<td>allkeys-lru</td>
-<td>从数据集中挑选最近最少使用的数据淘汰</td>
-</tr>
-<tr>
-<td>volatile-lru</td>
-<td>从设置了过期时间的数据集中挑选最近最少使用的数据淘汰</td>
-</tr>
-<tr>
-<td>volatile-ttl</td>
-<td>从已设置了过期时间的数据集中挑选即将要过期的数据淘汰</td>
-</tr>
-<tr>
-<td>volatile-random</td>
-<td>从已设置了过期时间的数据集中任意选择数据淘汰</td>
-</tr>
-</tbody></table>
-<h2 id="RDB持久化"><a href="#RDB持久化" class="headerlink" title="RDB持久化"></a>RDB持久化</h2><p>哈哈….</p>
-<h2 id="AOF持久化"><a href="#AOF持久化" class="headerlink" title="AOF持久化"></a>AOF持久化</h2><p>哈哈….</p>
+<p><font size="4"><b>Redis提供了六种淘汰策略</b></font></p>
+<ul>
+<li>noeviction: 禁止淘汰，当内存达到阈值时，后续所有需要申请内存的命令都会报错</li>
+<li>allkeys-random: 从数据集中任意选择数据淘汰</li>
+<li>allkeys-lru: 从数据集中挑选最近最少使用的数据淘汰</li>
+<li>volatile-lru: 从设置了过期时间的数据集中挑选最近最少使用的数据淘汰</li>
+<li>volatile-ttl: 从已设置了过期时间的数据集中挑选即将要过期的数据淘汰</li>
+<li>volatile-random: 从已设置了过期时间的数据集中任意选择数据淘汰</li>
+</ul>
+<p class="p red">如果内存中不存在设置过期时间的key，会导致前缀为volatile的三种策略找不到任何可以清理的key，结果和noeviction一样报错。</p>
+
+<p><font size="4"><b>淘汰过程</b></font><br>当Redis服务内存达到maxmemory后，对于所有的读写请求，都会触发freeMemoryIfNeeded函数以清理内存，并且这个清理过程是阻塞的，直到腾出足够的内存空间。整个清理过程并不是针对所有key，而是随机抽取maxmemory-samples个样本key，根据设置好的淘汰策略从样本范围中进行淘汰。</p>
+<p>maxmemory-samples的大小对于noeviction和random策略没有任何影响，对于lru和ttl策略来说，值的大小直接影响到淘汰的精准度。值越大则样本范围越大，精准度越高，缺点是CPU耗时也会越高，在清理函数阻塞情况下甚至造成请求卡顿，反之亦然。</p>
+<p><font size="4"><b>Redis的lru算法</b></font><br>lru算法是淘汰掉最近最少使用的数据，由于Redis采用样本随机抽取的机制清理数据，因此并不是严格意义上的lru算法。Redis给每个key额外添加了一个25bit的字段，存储最后一次的访问时间，并以此字段作为参考值实现lru算法。</p>
+<p>在3.0版本进行优化，维护一个大小为16的候选池，池中的数据根据访问时间排序，第一次抽取的样本都会放入池中，后续随机抽取的样本数据只有在访问时间小于池中最小时间的情况下，才会放入池中，直到候选池放满数据。再往后抽取的样本中，如果仍然存在访问时间小于池中的数据，将池中访问时间最大的移除并添加到池中。当需要淘汰数据时，直接从池中选取最久没被访问的key淘汰掉。</p>
+<h2 id="发布订阅"><a href="#发布订阅" class="headerlink" title="发布订阅"></a>发布订阅</h2><p>Redis的发布订阅(pub/sub)是一种消息通信模式，客户端指定某个频道(channel)进行消息的发布和订阅，向channel发送消息的客户端称为发布者(pub)，订阅并接收消息的客户端称为订阅者(sub)。<br><img src="/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E5%85%B3%E7%B3%BB.png" class="lazyload" data-srcset="/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E5%85%B3%E7%B3%BB.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p><font size="4"><b>发布订阅在Redis中的存储结构:</b></font><br><img src="/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>图中可看出结构与Java的HashMap类似，并且关系结构中并没有涉及到发布者，可以断定客户端可以通过命令随意向channel发送消息。当消息发送到channel后，会遍历所有订阅此channel的客户端，逐个进行消息的推送。</p>
+<p><font size="4"><b>常用命令</b></font></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">publish [channel] [message] &#x2F;&#x2F; 向某个频道发布消息</span><br><span class="line"></span><br><span class="line">subscribe [channel-0] [channel-1] &#x2F;&#x2F; 订阅一个或多个频道消息</span><br><span class="line"></span><br><span class="line">unsubscribe [channel] &#x2F;&#x2F; 退订某频道消息</span><br></pre></td></tr></table></figure>
+
+<p><font size="4"><b>与MQ的区别</b></font><br>Redis仅仅提供了最基础的发布订阅功能，无法做到消息的持久化、重试等可靠机制，消息丢失概率较大，不适用消息密集或者可靠性要求很高的场景，甚至说有些鸡肋。另外各种MQ提供的消费模式、消息延迟、消息过滤、事务等可以满足各种复杂的业务场景，也是Redis无法实现的。</p>
+<p>总体上说Redis发布订阅可以满足的场景，各种MQ都可以满足。在项目规模较小且已经集成redis的情况下，并且项目中有低价值、小数据量的消息实时推送需求，可以考虑使用Redis的发布订阅模式，减少搭建MQ服务并集成带来的各种成本。一旦消息可靠性要求变高，或者数据量增大，还是需要切换到MQ来满足业务场景。</p>
 
   
   
@@ -573,7 +561,7 @@
               
             
               
-                <p>本文永久链接是：<a href=http://yoursite.com/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E6%8C%81%E4%B9%85%E5%8C%96/>http://yoursite.com/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E6%8C%81%E4%B9%85%E5%8C%96/</a></p>
+                <p>本文永久链接是：<a href=http://yoursite.com/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/>http://yoursite.com/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/</a></p>
               
             
           </blockquote>
@@ -590,10 +578,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-02-15T11:42:34+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-02-19T17:19:47+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2021年2月15日</p>
+    <p>更新于：2021年2月19日</p>
   </a>
 </div>
 
@@ -612,7 +600,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E6%8C%81%E4%B9%85%E5%8C%96/&title=Redis(三) 内存管理与持久化 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/&title=Redis(二) 内存管理与发布订阅 - 来杯冰镇可乐&summary="
           
           >
           
@@ -624,7 +612,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E6%8C%81%E4%B9%85%E5%8C%96/&title=Redis(三) 内存管理与持久化 - 来杯冰镇可乐&summary="
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/&title=Redis(二) 内存管理与发布订阅 - 来杯冰镇可乐&summary="
           
           >
           
@@ -636,7 +624,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E6%8C%81%E4%B9%85%E5%8C%96/&title=Redis(三) 内存管理与持久化 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/&title=Redis(二) 内存管理与发布订阅 - 来杯冰镇可乐&summary="
           
           >
           
@@ -666,18 +654,14 @@
   
     <div class="prev-next">
       
-        <a class='prev' href='/2021/01/27/Redis-%E9%9B%86%E7%BE%A4%E6%A8%A1%E5%BC%8F/'>
-          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Redis(四) 集群模式</p>
-          <p class='content'>单机模式哈哈….
-主从模式哈哈….
-哨兵模式哈哈….
-分片模式哈哈….
-</p>
+        <a class='prev' href='/2021/01/27/Redis-%E6%8C%81%E4%B9%85%E5%8C%96%E6%96%B9%E5%BC%8F/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Redis(三) 持久化方式</p>
+          <p class='content'>前言Redis所有的数据都存储在内存中，当服务器重启或宕机会导致内存数据全部丢失，如果仅仅将Redis作为缓存使用则不存在数据丢失这一说。如果将Redis作为内存数据库使用，例如存储购物车信息、...</p>
         </a>
       
       
         <a class='next' href='/2021/01/22/Redis-%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/'>
-          <p class='title'>Redis(二) 常用数据类型<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='title'>Redis(一) 常用数据类型<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
           <p class='content'>字符串(string)string是Redis最基础的数据类型，底层通过int或SDS(动态字符串:Simple Dynamic String)实现。在设置一个字符串键值对后，Redis会根据v...</p>
         </a>
       
@@ -721,7 +705,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%87%E6%9C%9F%E7%AD%96%E7%95%A5"><span class="toc-text">过期策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5"><span class="toc-text">淘汰策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RDB%E6%8C%81%E4%B9%85%E5%8C%96"><span class="toc-text">RDB持久化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#AOF%E6%8C%81%E4%B9%85%E5%8C%96"><span class="toc-text">AOF持久化</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%87%E6%9C%9F%E7%AD%96%E7%95%A5"><span class="toc-text">过期策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5"><span class="toc-text">淘汰策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85"><span class="toc-text">发布订阅</span></a></li></ol>
     </div>
   </section>
 
