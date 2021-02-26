@@ -566,17 +566,10 @@
 <p><font size="4"><b>AOF文件修复</b></font><br>在将命令写入AOF文件过程中，可能因为宕机造成文件有错误，导致Redis服务重启时拒绝加载此AOF文件，可以通过redis-check-aof工具修正AOF文件。</p>
 <p><font size="4"><b>优缺点</b></font><br>优点是大部分情况下仅仅是对AOF文件追加写日志，对服务器性能影响较小，并且在默认配置下最多丢失一秒的数据。AOF文件的内容都是命令，可以兼容任何Redis版本。</p>
 <p>缺点是在数据量较大的情况下，会不断触发rewrite，对AOF文件进行压缩。即使经过压缩，由于自身是文本文件，体积相对RDB(二进制文件)要大得多。并且在服务重启过程中需要重演命令式的恢复数据，相对于RDB要慢上许多。</p>
-<h2 id="混合持久化"><a href="#混合持久化" class="headerlink" title="混合持久化"></a>混合持久化</h2><p>RDB与AOF俩种持久化方式的优缺点都很明显，Redis4.0为了解决这个问题，推出了新的想法:混合持久化，大致思想是将RDB文件的内容和AOF文件内容存在一个文件中。</p>
-<ul>
-<li>最开始仍然是使用AOF方式持久化</li>
-<li>当文件逐渐变大后触发rewrite</li>
-<li>fork出子进程扫描并转化为RDB格式的二进制内容</li>
-<li>将RDB内容写入新的AOF文件中</li>
-<li>写入新的AOF文件期间的增量命令仍然同步到原AOF文件中，同时保存一份到增量命令缓存中</li>
-<li>子进程执行完RDB后通知主进程</li>
-<li>主进程将增量命令缓存以日志格式写入新的AOF</li>
-<li>新的AOF文件替换掉原AOF文件</li>
-</ul>
+<h2 id="混合持久化"><a href="#混合持久化" class="headerlink" title="混合持久化"></a>混合持久化</h2><p>RDB与AOF俩种持久化方式的优缺点都很明显，因此Redis4.0推出了混合持久化方式，将原AOF文件内容变成了前部分存储RDB格式数据、后部分存储AOF格式数据，既保证了服务运行期间数据不丢失，又避免了服务重启数据恢复慢的问题:<br><img src="/2021/01/27/Redis-%E6%8C%81%E4%B9%85%E5%8C%96%E6%96%B9%E5%BC%8F/%E6%B7%B7%E5%90%88%E6%8C%81%E4%B9%85%E5%8C%96.png" class="lazyload" data-srcset="/2021/01/27/Redis-%E6%8C%81%E4%B9%85%E5%8C%96%E6%96%B9%E5%BC%8F/%E6%B7%B7%E5%90%88%E6%8C%81%E4%B9%85%E5%8C%96.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p><font size="4"><b>开启方式</b></font></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># yes开启 no关闭</span><br><span class="line">aof-use-rdb-preamble yes</span><br></pre></td></tr></table></figure>
+
 
   
   
@@ -611,10 +604,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-02-25T00:28:57+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-02-26T13:41:26+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2021年2月25日</p>
+    <p>更新于：2021年2月26日</p>
   </a>
 </div>
 
