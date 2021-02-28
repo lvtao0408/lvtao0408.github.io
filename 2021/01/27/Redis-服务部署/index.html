@@ -17,11 +17,11 @@
 
   <!-- 页面元数据 -->
   
-  <title>Redis(五) 集成springboot - 来杯冰镇可乐</title>
+  <title>Redis(四) 服务部署 - 来杯冰镇可乐</title>
   
 
   
-    <meta name="description" content="使用springboot实现jedis、redisTemplate、redission连接方式">
+    <meta name="description" content="单机、主从、哨兵、分片服务部署">
   
 
   <!-- feed -->
@@ -416,7 +416,7 @@
  
 <div id="pjax-data" style="display: none"> 
   <div id="pjax-ispage">true</div> 
-  <div id="pjax-pageTitle">Redis(五) 集成springboot</div> 
+  <div id="pjax-pageTitle">Redis(四) 服务部署</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -456,7 +456,7 @@
     
     
       <h1 class="title">
-        Redis(五) 集成springboot
+        Redis(四) 服务部署
       </h1>
       <div class='new-meta-box'>
         
@@ -487,7 +487,7 @@
             <div class="new-meta-item date">
   <a class='notlink'>
     <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
-    <p>发布于：2021年1月31日</p>
+    <p>发布于：2021年1月27日</p>
   </a>
 </div>
 
@@ -498,7 +498,7 @@
   <div class="new-meta-item browse leancloud">
     <a class='notlink'>
       
-      <div id="lc-pv" data-title="Redis(五) 集成springboot" data-path="/2021/01/31/Redis-%E9%9B%86%E6%88%90springboot/">
+      <div id="lc-pv" data-title="Redis(四) 服务部署" data-path="/2021/01/27/Redis-%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2/">
         <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
         <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
         次浏览
@@ -515,7 +515,25 @@
 
 
   
-  <h2 id="jedis"><a href="#jedis" class="headerlink" title="jedis"></a>jedis</h2><h2 id="redisTemplate"><a href="#redisTemplate" class="headerlink" title="redisTemplate"></a>redisTemplate</h2><h2 id="redission"><a href="#redission" class="headerlink" title="redission"></a>redission</h2>
+  <h2 id="1-单机模式"><a href="#1-单机模式" class="headerlink" title="1.单机模式"></a>1.单机模式</h2><p>下载并解压安装包(/usr/local目录):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@iz2zedt5 local]# wget http:&#x2F;&#x2F;download.redis.io&#x2F;releases&#x2F;redis-5.0.0.tar.gz</span><br><span class="line">[root@iz2zedt5 local]# tar -zxvf redis-5.0.0.tar.gz</span><br><span class="line">[root@iz2zedt5 local]# cd redis-5.0.0</span><br></pre></td></tr></table></figure>
+
+<p>由于redis通过源码安装，依赖gcc编译器，首先检查机器gcc是否已安装，并且版本在4.2以上:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@iz2zedt5 &#x2F;]# gcc –v</span><br><span class="line">[root@iz2zedt5 redis-5.0.0]# gcc version 4.8.5 20150623 (Red Hat 4.8.5-39) (GCC)</span><br></pre></td></tr></table></figure>
+
+<p>如果没有安装gcc，使用yum命令安装:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@iz2zedt5 redis-5.0.0]# yum install gcc</span><br></pre></td></tr></table></figure>
+
+<p>进行编译安装，安装完毕后Redis服务相关命令脚本都会安装到src文件夹下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 不建议直接使用make，具体原因往下看</span><br><span class="line">[root@iz2zedt5 redis-5.0.0]# make</span><br></pre></td></tr></table></figure>
+
+<p>由于src文件夹存在大量脚本文件，因此不建议Redis的命令脚本和这些混合在一个文件夹下，可以给make命令添加PREFIX参数，指定新的文件夹存放:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@iz2zedt5 redis-5.0.0]# make PREFIX&#x3D;&#x2F;usr&#x2F;local&#x2F;redis-5.0.0 install</span><br></pre></td></tr></table></figure>
+
+<p>安装完毕后，可以看到多出一个bin目录:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@iz2zedt5 redis-5.0.0]# cd bin&#x2F;</span><br><span class="line">[root@iz2zedt5 bin]ls</span><br><span class="line">[root@iz2zedt5 bin]# ls</span><br><span class="line">redis-benchmark  redis-check-aof  redis-check-rdb  redis-cli  redis-sentinel  redis-server</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-主从模式"><a href="#2-主从模式" class="headerlink" title="2.主从模式"></a>2.主从模式</h2><h2 id="3-哨兵模式"><a href="#3-哨兵模式" class="headerlink" title="3.哨兵模式"></a>3.哨兵模式</h2>
   
   
     
@@ -532,7 +550,7 @@
               
             
               
-                <p>本文永久链接是：<a href=http://yoursite.com/2021/01/31/Redis-%E9%9B%86%E6%88%90springboot/>http://yoursite.com/2021/01/31/Redis-%E9%9B%86%E6%88%90springboot/</a></p>
+                <p>本文永久链接是：<a href=http://yoursite.com/2021/01/27/Redis-%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2/>http://yoursite.com/2021/01/27/Redis-%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2/</a></p>
               
             
           </blockquote>
@@ -549,10 +567,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-02-15T13:32:08+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-02-28T13:44:29+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2021年2月15日</p>
+    <p>更新于：2021年2月28日</p>
   </a>
 </div>
 
@@ -571,7 +589,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2021/01/31/Redis-%E9%9B%86%E6%88%90springboot/&title=Redis(五) 集成springboot - 来杯冰镇可乐&summary="
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2021/01/27/Redis-%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2/&title=Redis(四) 服务部署 - 来杯冰镇可乐&summary="
           
           >
           
@@ -583,7 +601,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2021/01/31/Redis-%E9%9B%86%E6%88%90springboot/&title=Redis(五) 集成springboot - 来杯冰镇可乐&summary="
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2021/01/27/Redis-%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2/&title=Redis(四) 服务部署 - 来杯冰镇可乐&summary="
           
           >
           
@@ -595,7 +613,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2021/01/31/Redis-%E9%9B%86%E6%88%90springboot/&title=Redis(五) 集成springboot - 来杯冰镇可乐&summary="
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2021/01/27/Redis-%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2/&title=Redis(四) 服务部署 - 来杯冰镇可乐&summary="
           
           >
           
@@ -625,23 +643,15 @@
   
     <div class="prev-next">
       
-        <a class='prev' href='/2021/01/31/Redis-%E7%BC%93%E5%AD%98%E8%AE%BE%E8%AE%A1/'>
-          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Redis(六) 缓存设计</p>
-          <p class='content'>一致性哈哈….
-缓存击穿哈哈….
-缓存穿透哈哈….
-缓存雪崩哈哈….
-</p>
+        <a class='prev' href='/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Redis(五) 运行模式</p>
+          <p class='content'>1.单机模式关于Redis单节点服务的并发性能，官方提供的数据表示读的速度为110000次/每秒,写的速度是81000次/每秒。当然，官方数据只能代表大概情况，毕竟机器内存大小、网络带宽等因素都...</p>
         </a>
       
       
-        <a class='next' href='/2021/01/27/Redis-%E9%9B%86%E7%BE%A4%E6%A8%A1%E5%BC%8F/'>
-          <p class='title'>Redis(四) 集群模式<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>单机模式哈哈….
-主从模式哈哈….
-哨兵模式哈哈….
-分片模式哈哈….
-</p>
+        <a class='next' href='/2021/01/25/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E4%B8%8E%E7%AE%A1%E9%81%93%E6%9C%BA%E5%88%B6/'>
+          <p class='title'>Redis(三) 发布订阅与管道机制<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>1.发布订阅(pub/sub)1.1 工作原理Redis的发布订阅(pub/sub)是一种消息通信模式，客户端指定某个频道(channel)进行消息的发布和订阅，向channel发送消息的客户端...</p>
         </a>
       
     </div>
@@ -684,7 +694,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#jedis"><span class="toc-text">jedis</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#redisTemplate"><span class="toc-text">redisTemplate</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#redission"><span class="toc-text">redission</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%8D%95%E6%9C%BA%E6%A8%A1%E5%BC%8F"><span class="toc-text">1.单机模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%B8%BB%E4%BB%8E%E6%A8%A1%E5%BC%8F"><span class="toc-text">2.主从模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F"><span class="toc-text">3.哨兵模式</span></a></li></ol>
     </div>
   </section>
 
