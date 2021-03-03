@@ -671,7 +671,7 @@
 <h2 id="4-分片模式"><a href="#4-分片模式" class="headerlink" title="4.分片模式"></a>4.分片模式</h2><p>分片模式是将数据集分成几个小部分，存储在不同的服务节点中，在处理读写请求时，通过对key的hash取余定位到具体的节点，然后转发命令到该节点进行处理。分片模式的出现是为了解决主从模式、哨兵模式下，单节点存储瓶颈以及在线扩容的问题。</p>
 <p>早期为了应对哨兵模式单节点存储的弱点，需要借助代理中间件在客户端实现分区存储以及对key的定位查询功能，常见的中间件有codis、twemproxy等。直到Redis发布3.0版本后，才开始在服务端支持分片模式，下面只讲述redis自己提供的分片模式。</p>
 <h3 id="4-1-集群架构"><a href="#4-1-集群架构" class="headerlink" title="4.1 集群架构"></a>4.1 集群架构</h3><p><img src="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/%E5%88%86%E7%89%87%E6%A8%A1%E5%BC%8F-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84.png" class="lazyload" data-srcset="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/%E5%88%86%E7%89%87%E6%A8%A1%E5%BC%8F-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>图中为3个master节点的分片集群，包括slave在内的6个节点，每个节点都会实时同步其他所有节点的信息。服务端只有master节点处理请求(如果需要实现读写分离，需要在客户端进行改造)，当请求命令涉及的key不属于本节点负责时，会根据实时同步的节点信息进行转发。</p>
+<p>图中为3个master节点的分片集群，每个master节点拥有一个slave节点，每个节点(包括slave节点)都会实时同步其他所有节点的信息。服务端只有master节点处理请求(如果需要实现读写分离，需要在客户端进行改造)，当请求命令涉及的key不属于本节点负责时，会根据实时同步的节点信息进行转发。</p>
 <h3 id="4-2-槽位分配"><a href="#4-2-槽位分配" class="headerlink" title="4.2 槽位分配"></a>4.2 槽位分配</h3><p>Redis分片模式在存储数据时采用虚拟哈希槽的方式存储，预先分配16384(2^14)个卡槽，集群内各master节点均摊所有卡槽，并对外提供服务:<br><img src="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/%E8%99%9A%E6%8B%9F%E5%93%88%E5%B8%8C%E6%A7%BD.png" class="lazyload" data-srcset="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/%E8%99%9A%E6%8B%9F%E5%93%88%E5%B8%8C%E6%A7%BD.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
 <p>服务端接收读到写命令后，通过key定位出所在的节点:<br><img src="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/%E5%88%86%E7%89%87%E6%A8%A1%E5%BC%8F%E5%AE%9A%E4%BD%8D%E8%8A%82%E7%82%B9.png" class="lazyload" data-srcset="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/%E5%88%86%E7%89%87%E6%A8%A1%E5%BC%8F%E5%AE%9A%E4%BD%8D%E8%8A%82%E7%82%B9.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
 <p>Redis在分片设计上，并没有直接使用一致性哈希算法(hash值%节点数，定位节点)，而是在中间添加了一层哈希槽的定位计算。这样节点新增或删除后进行数据转移，只需要操作卡槽到对应节点即可，如果采用一致性哈希算法，还需要遍历节点内所有数据并逐个计算，得出哪些数据需要转移的。</p>
@@ -702,7 +702,7 @@
 <li>master节点接收到投票后响应FAILOVER_AUTH_ACK，并且在NODE_TIMEOUT*2时间内不给同一master的其他slave投票</li>
 <li>slave接收FAILOVER_AUTH_ACK的epoch如果小于自身，直接丢失</li>
 <li>如果slave接收到半数以上符合条件的FAILOVER_AUTH_ACK，则声明自己选举成功</li>
-<li>如果在等待的NODE_TIMEOUT*2时间内没有赢得选举，放弃本次选举，然后在四倍的NODE_TIMEOUT时间后重新发起选举</li>
+<li>如果在等待的NODE_TIMEOUT<em>2时间内没有赢得选举，放弃本次选举，然后在NODE_TIMEOUT</em>4时间后重新发起选举</li>
 <li>选举成功后，广播通知集群内其他节点</li>
 </ul>
 <p>节点中的epoch全称为currentEpoch，集群中新加入或重启的节点(无论master或slave)currentEpoch值都为0，某节点需要请求其他节点提供协助时(目前只有选举)currentEpoch+1。当节点接收到其他节点的包时(比如slave发起的选举)，如果包中的currentEpoch大于自身的currentEpoch，那么会更新为发送者的currentEpoch。这种规则下集群中所有节点的currentEpoch最终会达成一致，也是代表自身在集群中的通信是健康的。</p>
@@ -744,7 +744,7 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-03-03T23:33:12+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-03-03T23:40:46+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2021年3月3日</p>
