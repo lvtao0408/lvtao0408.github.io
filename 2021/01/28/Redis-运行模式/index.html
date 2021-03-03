@@ -665,12 +665,52 @@
 </ul>
 <p>缺点:</p>
 <ul>
-<li>所有数据仍然存在一个节点中，单节点的存储能力就是整个集群的存储瓶颈</li>
-<li>存储一旦达到上限，很难在线扩容，单台机器的配置提升上限明显</li>
+<li>所有数据仍然存储在单节点中，很难在线扩容</li>
 <li>配置太繁琐</li>
 </ul>
 <h2 id="4-分片模式"><a href="#4-分片模式" class="headerlink" title="4.分片模式"></a>4.分片模式</h2><p>分片模式是将数据集分成几个小部分，存储在不同的服务节点中，在处理读写请求时，通过对key的hash取余定位到具体的节点，然后转发命令到该节点进行处理。分片模式的出现是为了解决主从模式、哨兵模式下，单节点存储瓶颈以及在线扩容的问题。</p>
-<h3 id="4-1-集群架构"><a href="#4-1-集群架构" class="headerlink" title="4.1 集群架构"></a>4.1 集群架构</h3><h3 id="4-2-槽位分配"><a href="#4-2-槽位分配" class="headerlink" title="4.2 槽位分配"></a>4.2 槽位分配</h3><h3 id="4-3-客户端路由"><a href="#4-3-客户端路由" class="headerlink" title="4.3 客户端路由"></a>4.3 客户端路由</h3><h3 id="4-4-重新分区"><a href="#4-4-重新分区" class="headerlink" title="4.4 重新分区"></a>4.4 重新分区</h3><h2 id="5-总结"><a href="#5-总结" class="headerlink" title="5.总结"></a>5.总结</h2>
+<p>早期为了应对哨兵模式单节点存储的弱点，需要借助代理中间件在客户端实现分区存储以及对key的定位查询功能，常见的中间件有codis、twemproxy等。直到Redis发布3.0版本后，才开始在服务端支持分片模式，下面只讲述redis自己提供的分片模式。</p>
+<h3 id="4-1-集群架构"><a href="#4-1-集群架构" class="headerlink" title="4.1 集群架构"></a>4.1 集群架构</h3><p><img src="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/%E5%88%86%E7%89%87%E6%A8%A1%E5%BC%8F-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84.png" class="lazyload" data-srcset="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/%E5%88%86%E7%89%87%E6%A8%A1%E5%BC%8F-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>图中为3个master节点的分片集群，包括slave在内的6个节点，每个节点都会实时同步其他所有节点的信息。服务端只有master节点处理请求(如果需要实现读写分离，需要在客户端进行改造)，当请求命令涉及的key不属于本节点负责时，会根据实时同步的节点信息进行转发。</p>
+<h3 id="4-2-槽位分配"><a href="#4-2-槽位分配" class="headerlink" title="4.2 槽位分配"></a>4.2 槽位分配</h3><p>Redis分片模式在存储数据时采用虚拟哈希槽的方式存储，预先分配16384(2^14)个卡槽，集群内各master节点均摊所有卡槽，并对外提供服务:<br><img src="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/%E8%99%9A%E6%8B%9F%E5%93%88%E5%B8%8C%E6%A7%BD.png" class="lazyload" data-srcset="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/%E8%99%9A%E6%8B%9F%E5%93%88%E5%B8%8C%E6%A7%BD.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>服务端接收读到写命令后，通过key定位出所在的节点:<br><img src="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/%E5%88%86%E7%89%87%E6%A8%A1%E5%BC%8F%E5%AE%9A%E4%BD%8D%E8%8A%82%E7%82%B9.png" class="lazyload" data-srcset="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/%E5%88%86%E7%89%87%E6%A8%A1%E5%BC%8F%E5%AE%9A%E4%BD%8D%E8%8A%82%E7%82%B9.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>Redis在分片设计上，并没有直接使用一致性哈希算法(hash值%节点数，定位节点)，而是在中间添加了一层哈希槽的定位计算。这样节点新增或删除后进行数据转移，只需要操作卡槽到对应节点即可，如果采用一致性哈希算法，还需要遍历节点内所有数据并逐个计算，得出哪些数据需要转移的。</p>
+<p>另外卡槽的存储概念仅针对master节点，slave节点仅根据master节点同步的数据正常存储。</p>
+<h3 id="4-3-节点伸缩"><a href="#4-3-节点伸缩" class="headerlink" title="4.3 节点伸缩"></a>4.3 节点伸缩</h3><p>当对集群进行缩容或扩容后，整个集群的master节点数量发生变化，为了保证所有正常节点对哈希槽的分配是均匀的，需要对所有哈希槽进行重新分配并迁移。</p>
+<p>例如三个master节点的集群中，新增一个master节点后的哈希槽分配变化:<br><img src="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/%E8%8A%82%E7%82%B9%E6%89%A9%E5%AE%B9-%E5%93%88%E5%B8%8C%E6%A7%BD%E8%BF%81%E7%A7%BB.png" class="lazyload" data-srcset="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/%E8%8A%82%E7%82%B9%E6%89%A9%E5%AE%B9-%E5%93%88%E5%B8%8C%E6%A7%BD%E8%BF%81%E7%A7%BB.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>图中可以看出哈希槽迁移的范围:</p>
+<ul>
+<li>master-0节点的4097～5461哈希槽转移到master-1节点中</li>
+<li>master-1节点的8193～10922哈希槽转移到master-2节点中</li>
+<li>master-2节点的12289～16384哈希槽转移到master-3节点中</li>
+</ul>
+<h3 id="4-4-客户端路由"><a href="#4-4-客户端路由" class="headerlink" title="4.4 客户端路由"></a>4.4 客户端路由</h3><p>客户端向服务端发送读写命令时，并不知道此次操作涉及的key到底在哪个分片节点上，因此只能请求集群中的任意一个节点(包括从节点)，如果响应的是moved重定向异常，则从异常中获取正确的节点信息并再次请求:<br><img src="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/moved%E9%87%8D%E5%AE%9A%E5%90%91.png" class="lazyload" data-srcset="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/moved%E9%87%8D%E5%AE%9A%E5%90%91.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>在集群正常运行期间，moved重定向机制完全可以解决key的路由访问，当节点正常退出或者有新节点加入集群后，部分卡槽数据进行迁移。此时moved重定向节点的数据已经迁移到别的节点中，仍然会出现查询不到数据的情况，此时节点会返回ask重定向给客户端，再次请求服务端:<br><img src="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/ask%E9%87%8D%E5%AE%9A%E5%90%91.png" class="lazyload" data-srcset="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/ask%E9%87%8D%E5%AE%9A%E5%90%91.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>上述的路由转发机制可以看出，数据量过多或者集群节点过多时，客户端的请求会产生大量的重定向，对redis的性能造成影响，因此客户端都会对分片节点负责的哈希槽信息进行缓存，从而减少无用的网络请求，当节点伸缩导致负责的哈希槽变化时，客户端也会做出相应的更新。</p>
+<p>比如java提供的Jedis客户端，内部JedisCluster类久实现了类似机制。JedisCluster在创建后会从集群中选择一个正常运行的节点，查询哈希槽的分布情况并将映射关系保存到本地，然后为集群的每个节点建立连接池，所有的请求命令都会先去映射缓存查询，然后再调用指定的连接池发送请求命令。</p>
+<h3 id="4-5-故障恢复"><a href="#4-5-故障恢复" class="headerlink" title="4.5 故障恢复"></a>4.5 故障恢复</h3><p>分片模式并没有哨兵模式那种单独监控节点实现故障恢复，当某个master节点挂掉后，需要借助集群内其他master节点，从故障master的众多slave节点中选举出一个继续工作。</p>
+<p>首先有两种情况会导致redis-cluster不可用，也就是集群无法提供服务:</p>
+<ul>
+<li>超过半数master节点挂掉(无视对应的slave)</li>
+<li>某个节点的master、slave全挂</li>
+</ul>
+<p>在集群可用的情况下，master挂掉后会触发选举，选出新的master节点:</p>
+<ul>
+<li>slave节点发现自己的master变为FAIL</li>
+<li>slave节点先给自己epoch+1，然后请求集群内其他master节点给自己投票，并将事件广播给其他所有节点</li>
+<li>slave节点发起投票后，会等待至少NODE_TIMEOUT*2时间接受投票结果(最少也会2秒)</li>
+<li>master节点接收到投票后响应FAILOVER_AUTH_ACK，并且在NODE_TIMEOUT*2时间内不给同一master的其他slave投票</li>
+<li>slave接收FAILOVER_AUTH_ACK的epoch如果小于自身，直接丢失</li>
+<li>如果slave接收到半数以上符合条件的FAILOVER_AUTH_ACK，则声明自己选举成功</li>
+<li>如果在等待的NODE_TIMEOUT*2时间内没有赢得选举，放弃本次选举，然后在四倍的NODE_TIMEOUT时间后重新发起选举</li>
+<li>选举成功后，广播通知集群内其他节点</li>
+</ul>
+<p>节点中的epoch全称为currentEpoch，集群中新加入或重启的节点(无论master或slave)currentEpoch值都为0，某节点需要请求其他节点提供协助时(目前只有选举)currentEpoch+1。当节点接收到其他节点的包时(比如slave发起的选举)，如果包中的currentEpoch大于自身的currentEpoch，那么会更新为发送者的currentEpoch。这种规则下集群中所有节点的currentEpoch最终会达成一致，也是代表自身在集群中的通信是健康的。</p>
+<p>另外slave节点发现master挂掉后，不会立即发起投票，而是通过延迟公式计算出一定延迟时间后在发起:</p>
+<p class="p red">500ms + random(0 ~ 500ms) + SLAVE_RANK * 1000ms</p>
+
+<p>延迟发送选举是为了确保master挂掉的信息在整个集群内传开(让子弹飞一会)，如果没有延迟的情况下可能部分master接收到选举请求时还没有感知到master挂了，造成误判。在0.5秒的基础上增加随机时间，是为了防止多个slave同时发起选举。公式最后的SLAVE_RANK代表slave节点已经从master节点复制的总量的rank，越小代表复制的越新，这个参数理论上可以保证持有最新数据的slave会先发起选举。</p>
+
   
   
     
@@ -704,10 +744,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-03-01T23:08:23+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-03-03T23:33:12+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2021年3月1日</p>
+    <p>更新于：2021年3月3日</p>
   </a>
 </div>
 
@@ -831,7 +871,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%8D%95%E6%9C%BA%E6%A8%A1%E5%BC%8F"><span class="toc-text">1.单机模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E5%8D%95%E6%9C%BA%E6%80%A7%E8%83%BD"><span class="toc-text">1.1 单机性能</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">1.2 优缺点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%B8%BB%E4%BB%8E%E6%A8%A1%E5%BC%8F"><span class="toc-text">2.主从模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84"><span class="toc-text">2.1 集群架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="toc-text">2.2 主从复制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB"><span class="toc-text">2.3 读写分离</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">2.4 优缺点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F"><span class="toc-text">3.哨兵模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84"><span class="toc-text">3.1 集群架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E5%93%A8%E5%85%B5%E7%9B%91%E6%8E%A7%E5%8E%9F%E7%90%86"><span class="toc-text">3.2 哨兵监控原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E4%B8%BB%E8%A7%82-%E5%AE%A2%E8%A7%82%E4%B8%8B%E7%BA%BF"><span class="toc-text">3.2 主观&#x2F;客观下线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E6%95%85%E9%9A%9C%E6%81%A2%E5%A4%8D"><span class="toc-text">3.3 故障恢复</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">3.4 优缺点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%88%86%E7%89%87%E6%A8%A1%E5%BC%8F"><span class="toc-text">4.分片模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84"><span class="toc-text">4.1 集群架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E6%A7%BD%E4%BD%8D%E5%88%86%E9%85%8D"><span class="toc-text">4.2 槽位分配</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%B7%AF%E7%94%B1"><span class="toc-text">4.3 客户端路由</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E9%87%8D%E6%96%B0%E5%88%86%E5%8C%BA"><span class="toc-text">4.4 重新分区</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E6%80%BB%E7%BB%93"><span class="toc-text">5.总结</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%8D%95%E6%9C%BA%E6%A8%A1%E5%BC%8F"><span class="toc-text">1.单机模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E5%8D%95%E6%9C%BA%E6%80%A7%E8%83%BD"><span class="toc-text">1.1 单机性能</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">1.2 优缺点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%B8%BB%E4%BB%8E%E6%A8%A1%E5%BC%8F"><span class="toc-text">2.主从模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84"><span class="toc-text">2.1 集群架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="toc-text">2.2 主从复制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB"><span class="toc-text">2.3 读写分离</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">2.4 优缺点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F"><span class="toc-text">3.哨兵模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84"><span class="toc-text">3.1 集群架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E5%93%A8%E5%85%B5%E7%9B%91%E6%8E%A7%E5%8E%9F%E7%90%86"><span class="toc-text">3.2 哨兵监控原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E4%B8%BB%E8%A7%82-%E5%AE%A2%E8%A7%82%E4%B8%8B%E7%BA%BF"><span class="toc-text">3.2 主观&#x2F;客观下线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E6%95%85%E9%9A%9C%E6%81%A2%E5%A4%8D"><span class="toc-text">3.3 故障恢复</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">3.4 优缺点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%88%86%E7%89%87%E6%A8%A1%E5%BC%8F"><span class="toc-text">4.分片模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84"><span class="toc-text">4.1 集群架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E6%A7%BD%E4%BD%8D%E5%88%86%E9%85%8D"><span class="toc-text">4.2 槽位分配</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E8%8A%82%E7%82%B9%E4%BC%B8%E7%BC%A9"><span class="toc-text">4.3 节点伸缩</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%B7%AF%E7%94%B1"><span class="toc-text">4.4 客户端路由</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-5-%E6%95%85%E9%9A%9C%E6%81%A2%E5%A4%8D"><span class="toc-text">4.5 故障恢复</span></a></li></ol></li></ol>
     </div>
   </section>
 
