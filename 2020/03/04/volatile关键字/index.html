@@ -529,7 +529,7 @@
 <li>使用总线锁或缓存一致性协议来保证数据的可见性。</li>
 <li>不是内存屏障却能完成类似内存屏障的功能，阻止屏障两遍的指令重排序保证有序性。</li>
 </ul>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>volatile的使用场景不是很多，常用在多线程下的状态标记量和双重检查等，也有很多地方配合CAS来实现无锁编程。因为volatile只能保证线程每次拿到的数据是最新的，对于数据的单纯查询没有任何问题(jvm自动保证基本数据类型和引用的取值赋值为原子操作)，但是对于i++、懒汉式单例模式等对变量操作依赖当前值的情况，就显得无能为力。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>volatile的使用场景不是很多，常用在多线程下的状态标记量和双重检查等，也有很多地方配合CAS来实现无锁编程。因为volatile只能保证线程每次拿到的数据是最新的，对于数据的单纯查询没有任何问题(jvm自动保证基本数据类型和引用的取值赋值为原子操作，lock指令保证有序性和可见性)，但是对于i++、懒汉式单例模式等对变量操作依赖当前值的情况，就显得无能为力。</p>
 
   
   
@@ -564,10 +564,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2020-10-19T15:53:31+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-03-15T23:33:13+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2020年10月19日</p>
+    <p>更新于：2021年3月15日</p>
   </a>
 </div>
 
