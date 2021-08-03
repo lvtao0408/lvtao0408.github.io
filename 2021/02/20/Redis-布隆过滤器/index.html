@@ -17,11 +17,11 @@
 
   <!-- 页面元数据 -->
   
-  <title>Redis(八) 缓存设计 - 来杯冰镇可乐</title>
+  <title>Redis(十一) 布隆过滤器 - 来杯冰镇可乐</title>
   
 
   
-    <meta name="description" content="如何解决数据一致性，以及如何避免击穿、穿透、雪崩等场景">
+    <meta name="description" content="如何基于BitMap和随机映射函数实现布隆过滤器">
   
 
   <!-- feed -->
@@ -416,7 +416,7 @@
  
 <div id="pjax-data" style="display: none"> 
   <div id="pjax-ispage">true</div> 
-  <div id="pjax-pageTitle">Redis(八) 缓存设计</div> 
+  <div id="pjax-pageTitle">Redis(十一) 布隆过滤器</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -456,7 +456,7 @@
     
     
       <h1 class="title">
-        Redis(八) 缓存设计
+        Redis(十一) 布隆过滤器
       </h1>
       <div class='new-meta-box'>
         
@@ -487,7 +487,7 @@
             <div class="new-meta-item date">
   <a class='notlink'>
     <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
-    <p>发布于：2021年2月28日</p>
+    <p>发布于：2021年2月20日</p>
   </a>
 </div>
 
@@ -498,7 +498,7 @@
   <div class="new-meta-item browse leancloud">
     <a class='notlink'>
       
-      <div id="lc-pv" data-title="Redis(八) 缓存设计" data-path="/2021/02/28/Redis-%E7%BC%93%E5%AD%98%E8%AE%BE%E8%AE%A1/">
+      <div id="lc-pv" data-title="Redis(十一) 布隆过滤器" data-path="/2021/02/20/Redis-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8/">
         <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
         <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
         次浏览
@@ -515,10 +515,26 @@
 
 
   
-  <h2 id="一致性"><a href="#一致性" class="headerlink" title="一致性"></a>一致性</h2><p>哈哈….</p>
-<h2 id="缓存击穿"><a href="#缓存击穿" class="headerlink" title="缓存击穿"></a>缓存击穿</h2><p>哈哈….</p>
-<h2 id="缓存穿透"><a href="#缓存穿透" class="headerlink" title="缓存穿透"></a>缓存穿透</h2><p>哈哈….</p>
-<h2 id="缓存雪崩"><a href="#缓存雪崩" class="headerlink" title="缓存雪崩"></a>缓存雪崩</h2><p>哈哈….</p>
+  <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1.概述"></a>1.概述</h2><p>布隆过滤器由二进制向量(位数组)和一系列随机映射函数组成，用于快速定位某个元素是否存在。如果你需要判断的元素都是数字，那么Redis提供的BitMap结构完全可以胜任，但很多场景我们需要对字符串进行判断，这就必须运用随机映射(哈希)函数将字符串转化为数字放入BitMap中，考虑到哈希值碰撞的情况，就需要多个随机映射函数来减少误判率。</p>
+<h2 id="2-二进制向量"><a href="#2-二进制向量" class="headerlink" title="2.二进制向量"></a>2.二进制向量</h2><p>BitMap也称为位图，实质上是一个二进制形式的字节数组，由0和1俩个数组构成，如图所示:<br><img src="/2021/02/20/Redis-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8/BitMap%E5%88%9D%E5%A7%8B%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2021/02/20/Redis-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8/BitMap%E5%88%9D%E5%A7%8B%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>现在往创建的BitMap中添加7、15、24三个数字，看看bit结构的变化:<br><img src="/2021/02/20/Redis-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8/BitMap%E8%B5%8B%E5%80%BC%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2021/02/20/Redis-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8/BitMap%E8%B5%8B%E5%80%BC%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p class="p red">BitMap添加、查询元素的本质是对二进制数组的位与运算，并且这种结构并不直接存储元素本身，而是以偏移量的形式记录，每个元素在BitMap中仅占有一个bit空间(1亿个bit也仅占有12MB内存空间)。</p>
+
+<h2 id="3-基本原理"><a href="#3-基本原理" class="headerlink" title="3.基本原理"></a>3.基本原理</h2><p>如果存储的元素为字符串或者复杂对象，那么BitMap是无法通过一个bit表示的，这时候需要随机散列函数转化为数字，假设某个布隆过滤器有三个哈希函数，然后往该布隆过滤器中添加<span class="p red">张三</span>、<span class="p blue">李四</span>俩个字符串:<br><img src="/2021/02/20/Redis-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8/BloomFilter%E6%B7%BB%E5%8A%A0%E5%85%83%E7%B4%A0.png" class="lazyload" data-srcset="/2021/02/20/Redis-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8/BloomFilter%E6%B7%BB%E5%8A%A0%E5%85%83%E7%B4%A0.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>图中可以看出布隆过滤器并没有存储元素本身，只是记录对应的多个随机映射函数值，这样大大节省了存储空间。在判断某个元素是否存在时，会将计算出该元素的所有随机映射函数值，<span class="p red">如果返回不存在，那么元素必定是不存在的。</span></p>
+<p>另外图中也能看出随机映射函数的数量、BitMap的容量，直接影响到随机散列函数值碰撞的几率，也就是我们最关心的误判几率。在判断某个元素是否存在时，<span class="p red">如果返回存在，有可能真的存在，也可能只是随机散列函数值发生碰撞造成的假象，实际元素是不存在的。</span></p>
+<h2 id="4-Redisson实现"><a href="#4-Redisson实现" class="headerlink" title="4.Redisson实现"></a>4.Redisson实现</h2><p>RedisTemplate客户端实现布隆过滤器比较麻烦，需要借助google的guava框架提供的功能，然后实现对BitMap的操作达到布隆过滤器的效果。而Redisson客户端对布隆过滤器进行了封装，可以直接调用API。</p>
+<p>创建一个普通的布隆过滤器:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 创建对象</span></span><br><span class="line">RBloomFilter&lt;SomeObject&gt; bloomFilter = redisson.getBloomFilter(<span class="string">&quot;sample&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 初始化布隆过滤器，预计统计元素数量为55000000，期望误差率为0.03(误差率必须小于1大于0，否则报错)</span></span><br><span class="line">bloomFilter.tryInit(<span class="number">55000000L</span>,<span class="number">0.03</span>);</span><br><span class="line">bloomFilter.add(newSomeObject(<span class="string">&quot;field1Value&quot;</span>,<span class="string">&quot;field2Value&quot;</span>));</span><br><span class="line">bloomFilter.add(newSomeObject(<span class="string">&quot;field5Value&quot;</span>,<span class="string">&quot;field8Value&quot;</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">// 判断元素是否存在</span></span><br><span class="line">bloomFilter.contains(newSomeObject(<span class="string">&quot;field1Value&quot;</span>,<span class="string">&quot;field8Value&quot;</span>));</span><br></pre></td></tr></table></figure>
+
+<p>创建一个分布式布隆过滤器:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 创建分布式对象</span></span><br><span class="line">RClusteredBloomFilter&lt;SomeObject&gt; bloomFilter = redisson.getClusteredBloomFilter(<span class="string">&quot;sample&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 初始化布隆过滤器，预计统计元素数量为255000000，期望误差率为0.03</span></span><br><span class="line">bloomFilter.tryInit(<span class="number">255000000L</span>,<span class="number">0.03</span>);</span><br><span class="line">bloomFilter.add(newSomeObject(<span class="string">&quot;field1Value&quot;</span>,<span class="string">&quot;field2Value&quot;</span>));</span><br><span class="line">bloomFilter.add(newSomeObject(<span class="string">&quot;field5Value&quot;</span>,<span class="string">&quot;field8Value&quot;</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">// 判断元素是否存在</span></span><br><span class="line">bloomFilter.contains(newSomeObject(<span class="string">&quot;field1Value&quot;</span>,<span class="string">&quot;field8Value&quot;</span>));</span><br></pre></td></tr></table></figure>
+
+<p class="p red">注: Redisson客户端创建的布隆过滤器，不支持删除元素操作。</p>
+
+<h2 id="5-删除元素"><a href="#5-删除元素" class="headerlink" title="5.删除元素"></a>5.删除元素</h2><p>布隆过滤器在初始化时，期望误差率是无法设置为0的，也就是说无论怎么设置都会出现哈希碰撞，这就导致了元素无法删除，因为你不能确定某个bit位到底被几个元素映射，也就无法删除某个元素映射的bit值。</p>
+<p>第一个解决方案是定时重构BitMap结构，首先无论怎么设置都会出现哈希碰撞，因此必然会考虑到误判的处理逻辑，元素在删除后重构前这段时间被查询时，可以直接按误判处理。这种方案适合数据量不高、修改频率小的场景。</p>
+<p>第二种方案是参考guava的设计，为BitMap结构中的每个bit设置一个计数器，添加元素后映射的位置计数+1，删除元素时计数-1，计数减少到0时将bit位的值设置为0，达到删除元素的效果。这种方案相对定时重构要灵活很多，并且在大数据量的情况下同步数据也不会占用多少CPU，缺点是占用空间过多，并且Redisson客户端没有支持这种功能，需要手动去实现(用到这种场景在更新)。</p>
 
   
   
@@ -536,7 +552,7 @@
               
             
               
-                <p>本文永久链接是：<a href=http://yoursite.com/2021/02/28/Redis-%E7%BC%93%E5%AD%98%E8%AE%BE%E8%AE%A1/>http://yoursite.com/2021/02/28/Redis-%E7%BC%93%E5%AD%98%E8%AE%BE%E8%AE%A1/</a></p>
+                <p>本文永久链接是：<a href=http://yoursite.com/2021/02/20/Redis-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8/>http://yoursite.com/2021/02/20/Redis-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8/</a></p>
               
             
           </blockquote>
@@ -553,10 +569,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-03-07T16:30:46+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-07-26T16:44:21+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2021年3月7日</p>
+    <p>更新于：2021年7月26日</p>
   </a>
 </div>
 
@@ -575,7 +591,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2021/02/28/Redis-%E7%BC%93%E5%AD%98%E8%AE%BE%E8%AE%A1/&title=Redis(八) 缓存设计 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2021/02/20/Redis-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8/&title=Redis(十一) 布隆过滤器 - 来杯冰镇可乐&summary="
           
           >
           
@@ -587,7 +603,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2021/02/28/Redis-%E7%BC%93%E5%AD%98%E8%AE%BE%E8%AE%A1/&title=Redis(八) 缓存设计 - 来杯冰镇可乐&summary="
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2021/02/20/Redis-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8/&title=Redis(十一) 布隆过滤器 - 来杯冰镇可乐&summary="
           
           >
           
@@ -599,7 +615,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2021/02/28/Redis-%E7%BC%93%E5%AD%98%E8%AE%BE%E8%AE%A1/&title=Redis(八) 缓存设计 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2021/02/20/Redis-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8/&title=Redis(十一) 布隆过滤器 - 来杯冰镇可乐&summary="
           
           >
           
@@ -629,10 +645,15 @@
   
     <div class="prev-next">
       
+        <a class='prev' href='/2021/03/04/Redis-lua%E8%84%9A%E6%9C%AC/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Redis(十二) lua脚本</p>
+          <p class='content'></p>
+        </a>
       
-        <a class='next' href='/2021/02/25/Redis-Springboot%E9%9B%86%E6%88%90Jedis/'>
-          <p class='title'>Redis(五) SpringBoot集成Jedis<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>1.版本依赖1234&lt;dependency&gt;    &lt;groupId&gt;redis.clients&lt;/groupId&gt;    &lt;artifactId&gt...</p>
+      
+        <a class='next' href='/2021/02/10/Redis-%E4%BA%8B%E5%8A%A1%E6%9C%BA%E5%88%B6/'>
+          <p class='title'>Redis(九) 事务机制<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>1.概述Redis的事务的本质是将一组命令进行打包，然后按照顺序执行命令，并且执行过程不会被其他客户端发送的命令打断插入，执行过程中若出现失败的命令也不会导致事务终止，而是跳过并执行下一条命令。...</p>
         </a>
       
     </div>
@@ -675,7 +696,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E8%87%B4%E6%80%A7"><span class="toc-text">一致性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E5%87%BB%E7%A9%BF"><span class="toc-text">缓存击穿</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F"><span class="toc-text">缓存穿透</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9"><span class="toc-text">缓存雪崩</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%A6%82%E8%BF%B0"><span class="toc-text">1.概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%90%91%E9%87%8F"><span class="toc-text">2.二进制向量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86"><span class="toc-text">3.基本原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-Redisson%E5%AE%9E%E7%8E%B0"><span class="toc-text">4.Redisson实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E5%88%A0%E9%99%A4%E5%85%83%E7%B4%A0"><span class="toc-text">5.删除元素</span></a></li></ol>
     </div>
   </section>
 

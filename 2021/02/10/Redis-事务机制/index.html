@@ -17,11 +17,11 @@
 
   <!-- 页面元数据 -->
   
-  <title>Redis(三) 发布订阅与管道机制 - 来杯冰镇可乐</title>
+  <title>Redis(九) 事务机制 - 来杯冰镇可乐</title>
   
 
   
-    <meta name="description" content="发布订阅、管道机制等实现原理">
+    <meta name="description" content="Redis事务原理">
   
 
   <!-- feed -->
@@ -416,7 +416,7 @@
  
 <div id="pjax-data" style="display: none"> 
   <div id="pjax-ispage">true</div> 
-  <div id="pjax-pageTitle">Redis(三) 发布订阅与管道机制</div> 
+  <div id="pjax-pageTitle">Redis(九) 事务机制</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -456,7 +456,7 @@
     
     
       <h1 class="title">
-        Redis(三) 发布订阅与管道机制
+        Redis(九) 事务机制
       </h1>
       <div class='new-meta-box'>
         
@@ -487,7 +487,7 @@
             <div class="new-meta-item date">
   <a class='notlink'>
     <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
-    <p>发布于：2021年1月25日</p>
+    <p>发布于：2021年2月10日</p>
   </a>
 </div>
 
@@ -498,7 +498,7 @@
   <div class="new-meta-item browse leancloud">
     <a class='notlink'>
       
-      <div id="lc-pv" data-title="Redis(三) 发布订阅与管道机制" data-path="/2021/01/25/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E4%B8%8E%E7%AE%A1%E9%81%93%E6%9C%BA%E5%88%B6/">
+      <div id="lc-pv" data-title="Redis(九) 事务机制" data-path="/2021/02/10/Redis-%E4%BA%8B%E5%8A%A1%E6%9C%BA%E5%88%B6/">
         <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
         <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
         次浏览
@@ -515,14 +515,36 @@
 
 
   
-  <h2 id="1-发布订阅-pub-sub"><a href="#1-发布订阅-pub-sub" class="headerlink" title="1.发布订阅(pub/sub)"></a>1.发布订阅(pub/sub)</h2><h3 id="1-1-工作原理"><a href="#1-1-工作原理" class="headerlink" title="1.1 工作原理"></a>1.1 工作原理</h3><p>Redis的发布订阅(pub/sub)是一种消息通信模式，客户端指定某个频道(channel)进行消息的发布和订阅，向channel发送消息的客户端称为发布者(pub)，订阅并接收消息的客户端称为订阅者(sub)。<br><img src="/2021/01/25/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E4%B8%8E%E7%AE%A1%E9%81%93%E6%9C%BA%E5%88%B6/%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E5%85%B3%E7%B3%BB.png" class="lazyload" data-srcset="/2021/01/25/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E4%B8%8E%E7%AE%A1%E9%81%93%E6%9C%BA%E5%88%B6/%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E5%85%B3%E7%B3%BB.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<h3 id="1-2-存储结构"><a href="#1-2-存储结构" class="headerlink" title="1.2 存储结构"></a>1.2 存储结构</h3><p><img src="/2021/01/25/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E4%B8%8E%E7%AE%A1%E9%81%93%E6%9C%BA%E5%88%B6/%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2021/01/25/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E4%B8%8E%E7%AE%A1%E9%81%93%E6%9C%BA%E5%88%B6/%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
-<p>图中可看出结构与Java的HashMap类似，并且关系结构中并没有涉及到发布者，可以断定客户端可以通过命令随意向channel发送消息。当消息发送到channel后，会遍历所有订阅此channel的客户端，逐个进行消息的推送。</p>
-<h3 id="1-3-常用命令"><a href="#1-3-常用命令" class="headerlink" title="1.3 常用命令"></a>1.3 常用命令</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">publish [channel] [message] &#x2F;&#x2F; 向某个频道发布消息</span><br><span class="line"></span><br><span class="line">subscribe [channel-0] [channel-1] &#x2F;&#x2F; 订阅一个或多个频道消息</span><br><span class="line"></span><br><span class="line">unsubscribe [channel] &#x2F;&#x2F; 退订某频道消息</span><br></pre></td></tr></table></figure>
+  <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1.概述"></a>1.概述</h2><p>Redis的事务的本质是将一组命令进行打包，然后按照顺序执行命令，并且执行过程不会被其他客户端发送的命令打断插入，执行过程中若出现失败的命令也不会导致事务终止，而是跳过并执行下一条命令。</p>
+<h2 id="2-执行过程"><a href="#2-执行过程" class="headerlink" title="2.执行过程"></a>2.执行过程</h2><p>事务相关命令:</p>
+<ul>
+<li>MULTI: 开启事务，redis会将后续的命令逐个放入队列中，然后使用EXEC命令来原子化执行这个命令系列。</li>
+<li>EXEC: 执行事务中的所有操作命令。</li>
+<li>DISCARD: 取消事务，放弃执行事务块中的所有命令。</li>
+<li>WATCH: 监视一个或多个key,如果事务在执行前，这个key(或多个key)被其他命令修改，则事务被中断，不会执行事务中的任何命令。</li>
+<li>UNWATCH: 取消WATCH对所有key的监视。</li>
+</ul>
+<p><img src="/2021/02/10/Redis-%E4%BA%8B%E5%8A%A1%E6%9C%BA%E5%88%B6/%E4%BA%8B%E5%8A%A1%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B.png" class="lazyload" data-srcset="/2021/02/10/Redis-%E4%BA%8B%E5%8A%A1%E6%9C%BA%E5%88%B6/%E4%BA%8B%E5%8A%A1%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<br>
+<p class="p red">Redis事务提供的watch监控，必须在事务开启前执行。这个很容易理解，因为事务一旦开始执行就不会被上下文切换打断，那么执行期间也不可能执行其他命令，也就没有监控的意义。另外考虑到并发问题，事务在执行命令队列前会通过CAS进行检查，一旦发现修改记录，会阻止命令队列的执行。最后watch的监控是一次性的，无论执行是否成功，都会释放监控。</p>
 
-<h3 id="1-4-与MQ的区别"><a href="#1-4-与MQ的区别" class="headerlink" title="1.4 与MQ的区别"></a>1.4 与MQ的区别</h3><p>Redis仅仅提供了最基础的发布订阅功能，无法做到消息的持久化、重试等可靠机制，消息丢失概率较大，不适用消息密集或者可靠性要求很高的场景，甚至说有些鸡肋。另外各种MQ提供的消费模式、消息延迟、消息过滤、事务等可以满足各种复杂的业务场景，也是Redis无法实现的。</p>
-<p>Redis内部的哨兵-集群模式在相互监控的时候使用了此功能进行通信，其他的场景没遇到过。总体上说Redis发布订阅可以满足的场景，各种MQ都可以满足，因此在已经有MQ中间件的前提下，尽量不要考虑Redis的发布订阅。</p>
-<h2 id="2-管道机制-pipeline"><a href="#2-管道机制-pipeline" class="headerlink" title="2.管道机制(pipeline)"></a>2.管道机制(pipeline)</h2>
+<h2 id="3-客户端命令"><a href="#3-客户端命令" class="headerlink" title="3.客户端命令"></a>3.客户端命令</h2><p>RedisTemplate默认不支持事务操作，并且每次执行命令都会从连接池获取资源，使用完毕后归还。如果开启事务需要将enableTransactionSupport属性设置为true，这种情况下会将连接池获取的资源绑定到当前线程，直到事务提交后归还，以减少频繁的获取资源带来的消耗。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">template.setEnableTransactionSupport(<span class="keyword">true</span>); <span class="comment">// 开启事务支持</span></span><br></pre></td></tr></table></figure>
+
+<br>
+如果在@Transactional修饰的方法中使用Redis事务，Spring会自动帮我们开启、提交/回滚事务，在没有被@Transactional修饰的方法中，就需要手动调用API控制事务。
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 监控，一定要在事务开启前执行，不然会报错！</span></span><br><span class="line">redisTemplate.watch(<span class="string">&quot;testKey3&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 开启事务</span></span><br><span class="line">template..multi();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 执行命令</span></span><br><span class="line">redisTemplate.opsForValue().set(<span class="string">&quot;testKey1&quot;</span>, <span class="string">&quot;abc&quot;</span>);</span><br><span class="line">redisTemplate.opsForValue().increment(<span class="string">&quot;testKey2&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 提交事务</span></span><br><span class="line">List&lt;Object&gt; execResultList = template.exec();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 如果集合为空，说明watch监控的key被修改过</span></span><br><span class="line"><span class="keyword">if</span>(execResultList.isEmpty())&#123;</span><br><span class="line">	<span class="comment">// 逻辑处理...</span></span><br><span class="line">&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">	<span class="comment">// 逻辑处理...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-与关系型数据库事务的区别"><a href="#4-与关系型数据库事务的区别" class="headerlink" title="4.与关系型数据库事务的区别"></a>4.与关系型数据库事务的区别</h2><h3 id="4-1-原子性"><a href="#4-1-原子性" class="headerlink" title="4.1 原子性"></a>4.1 原子性</h3><p>原子性是指一个事务内的SQL或命令集是不可分割的，要么都执行要么都不执行。关系型数据库以Mysql为例，事务内的多条SQL执行会先写入redolog中，直到事务提交才会执行磁盘IO进行持久化，如果执行过程中断电、异常、手动回滚事务则不会将SQL的执行效果刷回磁盘，达到要么都执行要么都不执行的效果。</p>
+<p>Redis的事务原子性属于弱原子性，我们都知道Redis执行命令是单线程执行，Redis仅仅保证某个事务的命令集执行过程中不会被CPU的上下文切换打断，并且不支持异常回滚，出现异常的命令会跳过继续往下执行。<span class="p red">所以说Redis事务不是严格意义上的原子性，因为达不到要么都执行，要么都不执行的效果。</span></p>
+<p>在原子性这方面Redis也增加一些机制减少命令执行错误带来的影响，比如命令总是发送到服务端的命令池里，这样服务端就可以对命令进行一些名称、格式之类的校验，以减少事务执行过程中的异常几率，如果在测试环境前做了充足的测试，出现命令异常的可能性很小，在这种理论前提下，Redis的原子性与关系型数据库也不会有太大差距，但是断电的情况就无法做任何保证。</p>
+<h3 id="4-2-一致性"><a href="#4-2-一致性" class="headerlink" title="4.2 一致性"></a>4.2 一致性</h3><p>关系型数据库的一致性是事务执行成功后，涉及到的数据从一个一致状态转移到另一个一致状态，但完整性约束没有被破坏，比如经典的转账，先扣钱A账户的钱，在添加B账号的钱，在事务执行完毕后两者的钱总合不应该发生变化(不考虑扣手续费情况)，这就是完整性约束，关系型数据的一致性是由其他三大特性和应用程序来保证的，而Redis并不满足原子性和持久性，所以一致性也无法保证。</p>
+<h3 id="4-3-隔离性"><a href="#4-3-隔离性" class="headerlink" title="4.3 隔离性"></a>4.3 隔离性</h3><p>这个没啥好说的，Redis以单线程模式处理所有命令，并且执行过程中不会被上下文切换打断，因此Redis的事务总是串行化执行，不存在隔离性这种问题。</p>
+<h3 id="4-4-持久性"><a href="#4-4-持久性" class="headerlink" title="4.4 持久性"></a>4.4 持久性</h3><p>关系型数据库每次事务提交后就会进行持久化，Redis的持久化并不与事务的提交挂钩，因此Redis的事务是没有持久化这个特性的。</p>
+<h2 id="5-为什么不支持异常回滚"><a href="#5-为什么不支持异常回滚" class="headerlink" title="5.为什么不支持异常回滚?"></a>5.为什么不支持异常回滚?</h2><p>通常我们应用程序都是通过各种客户端连接Redis服务，执行命令也都是调用API，最终客户端帮我们生成命令并发送，不会出现语法错误，其次客户端在真正执行事务前也会对命令进行校验，比如对某个HashMap类型的key使用了add，或者对value非数字的String类型key，使用了increment命令，这些服务端都会检测出来并拒绝执行，另外还有watch来提高事务的原子性。再加上开发过程中的测试，几乎不会存在命令执行异常的情况。</p>
+<p>对于事务执行过程中出现宕机、断电情况，也不是没法保证，只是这种保证会让整个Redis的设计更加复杂，命令的处理效率变低，而Redis设计的首要目的是让程序快速运行，事务操作会让整个服务阻塞点增多，降低命令处理的吞吐量，为了这种小概率发生的场景提高设计复杂度和性能，似乎不划算。</p>
+
   
   
     
@@ -539,7 +561,7 @@
               
             
               
-                <p>本文永久链接是：<a href=http://yoursite.com/2021/01/25/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E4%B8%8E%E7%AE%A1%E9%81%93%E6%9C%BA%E5%88%B6/>http://yoursite.com/2021/01/25/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E4%B8%8E%E7%AE%A1%E9%81%93%E6%9C%BA%E5%88%B6/</a></p>
+                <p>本文永久链接是：<a href=http://yoursite.com/2021/02/10/Redis-%E4%BA%8B%E5%8A%A1%E6%9C%BA%E5%88%B6/>http://yoursite.com/2021/02/10/Redis-%E4%BA%8B%E5%8A%A1%E6%9C%BA%E5%88%B6/</a></p>
               
             
           </blockquote>
@@ -556,10 +578,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-02-28T15:17:18+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-07-01T08:31:49+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2021年2月28日</p>
+    <p>更新于：2021年7月1日</p>
   </a>
 </div>
 
@@ -578,7 +600,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2021/01/25/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E4%B8%8E%E7%AE%A1%E9%81%93%E6%9C%BA%E5%88%B6/&title=Redis(三) 发布订阅与管道机制 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2021/02/10/Redis-%E4%BA%8B%E5%8A%A1%E6%9C%BA%E5%88%B6/&title=Redis(九) 事务机制 - 来杯冰镇可乐&summary="
           
           >
           
@@ -590,7 +612,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2021/01/25/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E4%B8%8E%E7%AE%A1%E9%81%93%E6%9C%BA%E5%88%B6/&title=Redis(三) 发布订阅与管道机制 - 来杯冰镇可乐&summary="
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2021/02/10/Redis-%E4%BA%8B%E5%8A%A1%E6%9C%BA%E5%88%B6/&title=Redis(九) 事务机制 - 来杯冰镇可乐&summary="
           
           >
           
@@ -602,7 +624,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2021/01/25/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E4%B8%8E%E7%AE%A1%E9%81%93%E6%9C%BA%E5%88%B6/&title=Redis(三) 发布订阅与管道机制 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2021/02/10/Redis-%E4%BA%8B%E5%8A%A1%E6%9C%BA%E5%88%B6/&title=Redis(九) 事务机制 - 来杯冰镇可乐&summary="
           
           >
           
@@ -632,15 +654,15 @@
   
     <div class="prev-next">
       
-        <a class='prev' href='/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/'>
-          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Redis(四) 运行模式</p>
-          <p class='content'>1.单机模式关于Redis单节点服务的并发性能，官方提供的数据表示读的速度为110000次/每秒,写的速度是81000次/每秒。当然，官方数据只能代表大概情况，毕竟机器内存大小、网络带宽等因素都...</p>
+        <a class='prev' href='/2021/02/20/Redis-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Redis(十一) 布隆过滤器</p>
+          <p class='content'>1.概述布隆过滤器由二进制向量(位数组)和一系列随机映射函数组成，用于快速定位某个元素是否存在。如果你需要判断的元素都是数字，那么Redis提供的BitMap结构完全可以胜任，但很多场景我们需要...</p>
         </a>
       
       
-        <a class='next' href='/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E6%8C%81%E4%B9%85%E5%8C%96/'>
-          <p class='title'>Redis(二) 内存管理与持久化<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>1.过期策略1.1 定期删除Redis中所有设置过期时间的KEY都会被记录到一个字典中，通过定时任务每隔一段时间(默认100ms)对字典中的KEY进行扫描删除过期数据，当然这种定时扫描只会发生在...</p>
+        <a class='next' href='/2021/02/07/Redis-%E7%AE%A1%E9%81%93%E6%9C%BA%E5%88%B6/'>
+          <p class='title'>Redis(八) 管道机制<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>1.工作原理在使用Redis客户端发送请求命令时，每条命令都会与Redis服务端进行一次socket通信，那么每次请求的耗时等于服务端处理时间+网络传输时间(三次握手、四次挥手)。服务端的操作都...</p>
         </a>
       
     </div>
@@ -683,7 +705,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85-pub-sub"><span class="toc-text">1.发布订阅(pub&#x2F;sub)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="toc-text">1.1 工作原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84"><span class="toc-text">1.2 存储结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">1.3 常用命令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-4-%E4%B8%8EMQ%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text">1.4 与MQ的区别</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E7%AE%A1%E9%81%93%E6%9C%BA%E5%88%B6-pipeline"><span class="toc-text">2.管道机制(pipeline)</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%A6%82%E8%BF%B0"><span class="toc-text">1.概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B"><span class="toc-text">2.执行过程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%91%BD%E4%BB%A4"><span class="toc-text">3.客户端命令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E4%B8%8E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BA%8B%E5%8A%A1%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text">4.与关系型数据库事务的区别</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E5%8E%9F%E5%AD%90%E6%80%A7"><span class="toc-text">4.1 原子性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E4%B8%80%E8%87%B4%E6%80%A7"><span class="toc-text">4.2 一致性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E9%9A%94%E7%A6%BB%E6%80%A7"><span class="toc-text">4.3 隔离性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E6%8C%81%E4%B9%85%E6%80%A7"><span class="toc-text">4.4 持久性</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E6%94%AF%E6%8C%81%E5%BC%82%E5%B8%B8%E5%9B%9E%E6%BB%9A"><span class="toc-text">5.为什么不支持异常回滚?</span></a></li></ol>
     </div>
   </section>
 

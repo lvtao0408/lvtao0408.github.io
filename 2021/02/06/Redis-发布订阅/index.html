@@ -17,11 +17,11 @@
 
   <!-- 页面元数据 -->
   
-  <title>Redis(五) SpringBoot集成Jedis - 来杯冰镇可乐</title>
+  <title>Redis(七) 发布订阅 - 来杯冰镇可乐</title>
   
 
   
-    <meta name="description" content="Jedis是老牌的Java实现客户端，提供了比较全面的Redis命令的支持">
+    <meta name="description" content="发布订阅的实现原理">
   
 
   <!-- feed -->
@@ -416,7 +416,7 @@
  
 <div id="pjax-data" style="display: none"> 
   <div id="pjax-ispage">true</div> 
-  <div id="pjax-pageTitle">Redis(五) SpringBoot集成Jedis</div> 
+  <div id="pjax-pageTitle">Redis(七) 发布订阅</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -456,7 +456,7 @@
     
     
       <h1 class="title">
-        Redis(五) SpringBoot集成Jedis
+        Redis(七) 发布订阅
       </h1>
       <div class='new-meta-box'>
         
@@ -487,7 +487,7 @@
             <div class="new-meta-item date">
   <a class='notlink'>
     <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
-    <p>发布于：2021年2月25日</p>
+    <p>发布于：2021年2月6日</p>
   </a>
 </div>
 
@@ -498,7 +498,7 @@
   <div class="new-meta-item browse leancloud">
     <a class='notlink'>
       
-      <div id="lc-pv" data-title="Redis(五) SpringBoot集成Jedis" data-path="/2021/02/25/Redis-Springboot%E9%9B%86%E6%88%90Jedis/">
+      <div id="lc-pv" data-title="Redis(七) 发布订阅" data-path="/2021/02/06/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/">
         <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
         <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
         次浏览
@@ -515,16 +515,23 @@
 
 
   
-  <h2 id="1-版本依赖"><a href="#1-版本依赖" class="headerlink" title="1.版本依赖"></a>1.版本依赖</h2><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;redis.clients&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;jedis&lt;/artifactId&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+  <h2 id="1-工作原理"><a href="#1-工作原理" class="headerlink" title="1.工作原理"></a>1.工作原理</h2><p>Redis的发布订阅(pub/sub)是一种消息通信模式，客户端指定某个频道(channel)进行消息的发布和订阅，向channel发送消息的客户端称为发布者(pub)，订阅并接收消息的客户端称为订阅者(sub)。<br><img src="/2021/02/06/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E5%85%B3%E7%B3%BB.png" class="lazyload" data-srcset="/2021/02/06/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E5%85%B3%E7%B3%BB.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<h2 id="2-存储结构"><a href="#2-存储结构" class="headerlink" title="2.存储结构"></a>2.存储结构</h2><p><img src="/2021/02/06/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2021/02/06/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>图中可看出结构与Java的HashMap类似，并且关系结构中并没有涉及到发布者，可以断定客户端可以通过命令随意向channel发送消息。当消息发送到channel后，会遍历所有订阅此channel的客户端，逐个进行消息的推送。</p>
+<h2 id="3-终端命令"><a href="#3-终端命令" class="headerlink" title="3.终端命令"></a>3.终端命令</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">publish [channel] [message] &#x2F;&#x2F; 向某个频道发布消息</span><br><span class="line"></span><br><span class="line">subscribe [channel-0] [channel-1] &#x2F;&#x2F; 订阅一个或多个频道消息</span><br><span class="line"></span><br><span class="line">unsubscribe [channel] &#x2F;&#x2F; 退订某频道消息</span><br></pre></td></tr></table></figure>
 
-<h2 id="2-配置类"><a href="#2-配置类" class="headerlink" title="2.配置类"></a>2.配置类</h2><p>Jedis的单机版使用JedisPool类实现，集群版使用JedisCluster类实现。并且Redis的客户端不支持读写分离功能，如果想达到此效果，需手动配置两个连接类注入IOC，在代码层面自己实现。</p>
-<h3 id="2-1-单机版"><a href="#2-1-单机版" class="headerlink" title="2.1 单机版"></a>2.1 单机版</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"># IP地址</span><br><span class="line">spring.jedis.host&#x3D;127.0.0.1</span><br><span class="line"></span><br><span class="line"># 端口</span><br><span class="line">spring.jedis.port&#x3D;6379</span><br><span class="line"></span><br><span class="line"># 连接密码</span><br><span class="line">spring.jedis.password&#x3D;123456</span><br><span class="line"></span><br><span class="line"># 连接超时时间</span><br><span class="line">spring.jedis.timeout&#x3D;2000</span><br><span class="line"></span><br><span class="line"># 连接池最大连接数(使用负值表示没有限制)</span><br><span class="line">spring.jedis.pool.max-total&#x3D;200</span><br><span class="line"></span><br><span class="line"># 连接池最大空闲连接</span><br><span class="line">spring.jedis.pool.max-idle&#x3D;10</span><br><span class="line"></span><br><span class="line"># 连接池最小空闲连接</span><br><span class="line">spring.jedis.max-idle&#x3D;5</span><br><span class="line"></span><br><span class="line"># 获取连接最大等待时间</span><br><span class="line">spring.jedis.max-wait-millis&#x3D;10000</span><br></pre></td></tr></table></figure>
+<h2 id="4-客户端命令"><a href="#4-客户端命令" class="headerlink" title="4.客户端命令"></a>4.客户端命令</h2><h3 id="4-1-发布消息"><a href="#4-1-发布消息" class="headerlink" title="4.1 发布消息"></a>4.1 发布消息</h3><p>RedisTemplate客户端提供了发布消息的API:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redisTemplate.convertAndSend(<span class="string">&quot;频道名称&quot;</span>, <span class="string">&quot;消息Object&quot;</span>);</span><br></pre></td></tr></table></figure>
 
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JedisConfig</span></span>&#123;</span><br><span class="line">	</span><br><span class="line">    <span class="meta">@Value(&quot;$&#123;spring.jedis.host&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> String host;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Value(&quot;$&#123;spring.jedis.port&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> port;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Value(&quot;$&#123;spring.jedis.password&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> String password;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Value(&quot;$&#123;spring.jedis.timeout&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> timeout;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Value(&quot;$&#123;spring.jedis.pool.max-total&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> maxTotal;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Value(&quot;$&#123;spring.jedis.pool.max-idle&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> maxIdle;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Value(&quot;$&#123;spring.jedis.pool.min-idle&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> minIdle;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Value(&quot;$&#123;spring.jedis.max-wait-millis&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">long</span> maxWaitMillis;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> JedisPool <span class="title">jedisPool</span><span class="params">()</span></span>&#123;</span><br><span class="line">        JedisPoolConfig jedisPoolConfig = <span class="keyword">new</span> JedisPoolConfig();</span><br><span class="line">        jedisPoolConfig.setMaxTotal(maxTotal);</span><br><span class="line">        jedisPoolConfig.setMaxIdle(maxIdle);</span><br><span class="line">        jedisPoolConfig.setMinIdle(minIdle);</span><br><span class="line">        jedisPoolConfig.setMaxWaitMillis(maxWaitMillis);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> JedisPool(jedisPoolConfig,host,port,timeout,password);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"># 集群节点</span><br><span class="line">spring.jedis.nodes&#x3D;127.0.0.1:6379,127.0.0.2:6379,127.0.0.3:6379</span><br><span class="line"></span><br><span class="line"># 连接密码</span><br><span class="line">spring.jedis.password&#x3D;123456</span><br><span class="line"></span><br><span class="line"># 连接超时时间</span><br><span class="line">spring.jedis.timeout&#x3D;2000</span><br><span class="line"></span><br><span class="line"># 连接池最大连接数(使用负值表示没有限制)</span><br><span class="line">spring.jedis.pool.max-total&#x3D;200</span><br><span class="line"></span><br><span class="line"># 连接池最大空闲连接</span><br><span class="line">spring.jedis.pool.max-idle&#x3D;10</span><br><span class="line"></span><br><span class="line"># 连接池最小空闲连接</span><br><span class="line">spring.jedis.max-idle&#x3D;5</span><br><span class="line"></span><br><span class="line"># 获取连接最大等待时间</span><br><span class="line">spring.jedis.max-wait-millis&#x3D;10000</span><br></pre></td></tr></table></figure>
+<h3 id="4-2-接受消息"><a href="#4-2-接受消息" class="headerlink" title="4.2 接受消息"></a>4.2 接受消息</h3><p>关于订阅的配置类:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RedisConfig</span></span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Redis消息监听器容器</span></span><br><span class="line"><span class="comment">     * 这个容器加载了RedisConnectionFactory和消息监听器</span></span><br><span class="line"><span class="comment">     * 可以添加多个监听不同话题的redis监听器，只需要把消息监听器和相应的消息订阅处理器绑定，该消息监听器</span></span><br><span class="line"><span class="comment">     * 通过反射技术调用消息订阅处理器的相关方法进行一些业务处理</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> connectionFactory 链接工厂</span></span><br><span class="line"><span class="comment">    * <span class="doctag">@param</span> adapter 适配器</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> redis消息监听容器</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> RedisMessageListenerContainer <span class="title">container</span><span class="params">(RedisConnectionFactory connectionFactory,</span></span></span><br><span class="line"><span class="function"><span class="params">        MessageListenerAdapter adapter)</span> </span>&#123;</span><br><span class="line">        RedisMessageListenerContainer container = <span class="keyword">new</span> RedisMessageListenerContainer();</span><br><span class="line">        container.setConnectionFactory(connectionFactory);</span><br><span class="line">        <span class="comment">//可以添加多个 messageListener</span></span><br><span class="line">        container.addMessageListener(adapter, <span class="keyword">new</span> PatternTopic(<span class="string">&quot;频道名称1&quot;</span>));</span><br><span class="line">        container.addMessageListener(adapter, <span class="keyword">new</span> PatternTopic(<span class="string">&quot;频道名称2&quot;</span>));</span><br><span class="line">        <span class="keyword">return</span> container;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 消息监听器适配器，绑定消息处理器，利用反射技术调用消息处理器的业务方法</span></span><br><span class="line"><span class="comment">     * 将MessageReceiver注册为一个消息监听器，可以自定义消息接收的方法（handleMessage）</span></span><br><span class="line"><span class="comment">     * 如果不指定消息接收的方法，消息监听器会默认的寻找MessageReceiver中的onMessage这个方法作为消息接收的方法</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> messageReceiver 消息接受</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> 适配器</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> MessageListenerAdapter <span class="title">adapter</span><span class="params">(MessageReceiverSupport messageReceiver)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> MessageListenerAdapter(messageReceiver, <span class="string">&quot;onMessage&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h3 id="2-2-集群版"><a href="#2-2-集群版" class="headerlink" title="2.2 集群版"></a>2.2 集群版</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JedisConfig</span></span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Value(&quot;$&#123;spring.jedis.nodes&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> String nodes;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Value(&quot;$&#123;spring.jedis.password&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> String password;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Value(&quot;$&#123;spring.jedis.timeout&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> timeout;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Value(&quot;$&#123;spring.jedis.pool.max-total&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> maxTotal;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Value(&quot;$&#123;spring.jedis.pool.max-idle&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> maxIdle;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Value(&quot;$&#123;spring.jedis.pool.min-idle&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> minIdle;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Value(&quot;$&#123;spring.jedis.max-wait-millis&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">long</span> maxWaitMillis;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> JedisCluster <span class="title">jedisCluster</span><span class="params">()</span></span>&#123;</span><br><span class="line"></span><br><span class="line">        JedisPoolConfig jedisPoolConfig = <span class="keyword">new</span> JedisPoolConfig();</span><br><span class="line">        jedisPoolConfig.setMaxTotal(maxTotal);</span><br><span class="line">        jedisPoolConfig.setMaxIdle(maxIdle);</span><br><span class="line">        jedisPoolConfig.setMinIdle(minIdle);</span><br><span class="line">        jedisPoolConfig.setMaxWaitMillis(maxWaitMillis);</span><br><span class="line"></span><br><span class="line">        String[] nodesArray = nodes.split(<span class="string">&quot;,&quot;</span>);</span><br><span class="line">        Set&lt;HostAndPort&gt; nodeSet = <span class="keyword">new</span> HashSet&lt;&gt;();</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; nodesArray.length; i++)&#123;</span><br><span class="line">            String[] nodeInfo = nodesArray[i].split(<span class="string">&quot;:&quot;</span>);</span><br><span class="line">            String host = nodeInfo[<span class="number">0</span>];</span><br><span class="line">            Integer port = Integer.valueOf(nodeInfo[<span class="number">1</span>]);</span><br><span class="line">            nodeSet.add(<span class="keyword">new</span> HostAndPort(host, port));</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> JedisPool(nodeSet,timeout,jedisPoolConfig);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>监听类:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Slf4j</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MessageReceiverSupport</span> <span class="keyword">implements</span> <span class="title">MessageListener</span> </span>&#123;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> RedisTemplate&lt;String, Object&gt; redisTemplate;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onMessage</span><span class="params">(Message message, <span class="keyword">byte</span>[] pattern)</span> </span>&#123;</span><br><span class="line">        RedisSerializer&lt;String&gt; redisSerializer = redisTemplate.getStringSerializer();</span><br><span class="line">        String msg= redisSerializer.deserialize(message.getBody());</span><br><span class="line">        System.out.println(<span class="string">&quot;接收到的消息是：&quot;</span>+ msg);</span><br><span class="line">        log.info(<span class="string">&quot;Received &lt;&quot;</span> + msg + <span class="string">&quot;&gt;&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
+<h2 id="5-与MQ的区别"><a href="#5-与MQ的区别" class="headerlink" title="5.与MQ的区别"></a>5.与MQ的区别</h2><p>Redis仅仅提供了最基础的发布订阅功能，无法做到消息的持久化、重试等可靠机制，消息丢失概率较大，不适用消息密集或者可靠性要求很高的场景，甚至说有些鸡肋。另外各种MQ提供的负载均衡、消费模式、消息延迟、消息过滤、事务等可以满足各种复杂的业务场景，也是Redis无法实现的。</p>
+<p>最后Redis的发布订阅完全基于内存操作，不过目前流行的MQ都会尽可能的将磁盘IO进行顺序读写，性能不会拉开太多差距，另外还可以通过增加队列来均摊压力，不考虑运维成本的情况下，性能也是优于Redis的。总体上说Redis发布订阅可以满足的场景，各种MQ都可以满足，因此在已经有MQ中间件的前提下，尽量不要考虑Redis的发布订阅。</p>
+<h2 id="6-应用场景"><a href="#6-应用场景" class="headerlink" title="6.应用场景"></a>6.应用场景</h2><p>Redis内部的哨兵集群模式在相互监控的时候使用了此功能进行通信。</p>
 
   
   
@@ -542,7 +549,7 @@
               
             
               
-                <p>本文永久链接是：<a href=http://yoursite.com/2021/02/25/Redis-Springboot%E9%9B%86%E6%88%90Jedis/>http://yoursite.com/2021/02/25/Redis-Springboot%E9%9B%86%E6%88%90Jedis/</a></p>
+                <p>本文永久链接是：<a href=http://yoursite.com/2021/02/06/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/>http://yoursite.com/2021/02/06/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/</a></p>
               
             
           </blockquote>
@@ -559,10 +566,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-03-23T09:43:27+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-06-16T10:15:56+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2021年3月23日</p>
+    <p>更新于：2021年6月16日</p>
   </a>
 </div>
 
@@ -581,7 +588,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2021/02/25/Redis-Springboot%E9%9B%86%E6%88%90Jedis/&title=Redis(五) SpringBoot集成Jedis - 来杯冰镇可乐&summary="
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2021/02/06/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/&title=Redis(七) 发布订阅 - 来杯冰镇可乐&summary="
           
           >
           
@@ -593,7 +600,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2021/02/25/Redis-Springboot%E9%9B%86%E6%88%90Jedis/&title=Redis(五) SpringBoot集成Jedis - 来杯冰镇可乐&summary="
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2021/02/06/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/&title=Redis(七) 发布订阅 - 来杯冰镇可乐&summary="
           
           >
           
@@ -605,7 +612,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2021/02/25/Redis-Springboot%E9%9B%86%E6%88%90Jedis/&title=Redis(五) SpringBoot集成Jedis - 来杯冰镇可乐&summary="
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2021/02/06/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/&title=Redis(七) 发布订阅 - 来杯冰镇可乐&summary="
           
           >
           
@@ -635,19 +642,15 @@
   
     <div class="prev-next">
       
-        <a class='prev' href='/2021/02/28/Redis-%E7%BC%93%E5%AD%98%E8%AE%BE%E8%AE%A1/'>
-          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Redis(八) 缓存设计</p>
-          <p class='content'>一致性哈哈….
-缓存击穿哈哈….
-缓存穿透哈哈….
-缓存雪崩哈哈….
-</p>
+        <a class='prev' href='/2021/02/07/Redis-%E7%AE%A1%E9%81%93%E6%9C%BA%E5%88%B6/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Redis(八) 管道机制</p>
+          <p class='content'>1.工作原理在使用Redis客户端发送请求命令时，每条命令都会与Redis服务端进行一次socket通信，那么每次请求的耗时等于服务端处理时间+网络传输时间(三次握手、四次挥手)。服务端的操作都...</p>
         </a>
       
       
-        <a class='next' href='/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/'>
-          <p class='title'>Redis(四) 运行模式<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>1.单机模式关于Redis单节点服务的并发性能，官方提供的数据表示读的速度为110000次/每秒,写的速度是81000次/每秒。当然，官方数据只能代表大概情况，毕竟机器内存大小、网络带宽等因素都...</p>
+        <a class='next' href='/2021/02/05/Redis-RedisTemplate%E5%AE%A2%E6%88%B7%E7%AB%AF/'>
+          <p class='title'>Redis(六) RedisTemplate客户端<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>前言RedisTemplate客户端是spring对底层依赖Jedis、Lettuce的高度封装，在Springboot1.X版本默认使用Jedis进行自动装配，在Springboot2.X版本...</p>
         </a>
       
     </div>
@@ -690,7 +693,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E7%89%88%E6%9C%AC%E4%BE%9D%E8%B5%96"><span class="toc-text">1.版本依赖</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E9%85%8D%E7%BD%AE%E7%B1%BB"><span class="toc-text">2.配置类</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E5%8D%95%E6%9C%BA%E7%89%88"><span class="toc-text">2.1 单机版</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E9%9B%86%E7%BE%A4%E7%89%88"><span class="toc-text">2.2 集群版</span></a></li></ol></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="toc-text">1.工作原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84"><span class="toc-text">2.存储结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E7%BB%88%E7%AB%AF%E5%91%BD%E4%BB%A4"><span class="toc-text">3.终端命令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%91%BD%E4%BB%A4"><span class="toc-text">4.客户端命令</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E5%8F%91%E5%B8%83%E6%B6%88%E6%81%AF"><span class="toc-text">4.1 发布消息</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E6%8E%A5%E5%8F%97%E6%B6%88%E6%81%AF"><span class="toc-text">4.2 接受消息</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E4%B8%8EMQ%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text">5.与MQ的区别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">6.应用场景</span></a></li></ol>
     </div>
   </section>
 

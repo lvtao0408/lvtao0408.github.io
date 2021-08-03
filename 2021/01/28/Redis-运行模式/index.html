@@ -17,7 +17,7 @@
 
   <!-- 页面元数据 -->
   
-  <title>Redis(四) 运行模式 - 来杯冰镇可乐</title>
+  <title>Redis(三) 运行模式 - 来杯冰镇可乐</title>
   
 
   
@@ -416,7 +416,7 @@
  
 <div id="pjax-data" style="display: none"> 
   <div id="pjax-ispage">true</div> 
-  <div id="pjax-pageTitle">Redis(四) 运行模式</div> 
+  <div id="pjax-pageTitle">Redis(三) 运行模式</div> 
   <div id="pjax-enable-cover">true</div> 
   <div id="pjax-comment-path"></div> 
   <div id="pjax-comment-placeholder"></div> 
@@ -456,7 +456,7 @@
     
     
       <h1 class="title">
-        Redis(四) 运行模式
+        Redis(三) 运行模式
       </h1>
       <div class='new-meta-box'>
         
@@ -498,7 +498,7 @@
   <div class="new-meta-item browse leancloud">
     <a class='notlink'>
       
-      <div id="lc-pv" data-title="Redis(四) 运行模式" data-path="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/">
+      <div id="lc-pv" data-title="Redis(三) 运行模式" data-path="/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/">
         <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
         <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
         次浏览
@@ -629,8 +629,10 @@
 <li>每次主节点收到命令都会发送给从节点同步数据</li>
 </ul>
 <h3 id="2-3-读写分离"><a href="#2-3-读写分离" class="headerlink" title="2.3 读写分离"></a>2.3 读写分离</h3><p>Redis的读写分离机制是主节点处理所有的写命令，从节点处理所有的读命令，从而减轻主节点的请求压力。然而引用这种机制是要付出一定代价的，首先是数据一致性问题，毕竟主节点的数据同步到从节点需要时间，比如秒杀业务的库存数据，就需要强一致性。其次Redis服务端并不支持这个功能，服务端接收到命令后并不会根据命令类型转发到主节点或从节点，需要客户端自己区分哪些IP的服务是拥有写权限，哪些是只读权限。</p>
-<p>从java客户端的角度来实现读写分离，需要创建两个连接bean，一个连接主节点，另一个连接从节点，并根据命令类型分别调用不同bean的API。还有个比较操蛋的地方，哨兵模式下，主节点挂掉后会自动把某个从节点升级为主节点，在代码设计上还需要考虑这种情况，并及时修改bean的连接信息，保证读请求仍然可用。</p>
+<p>单纯的主从模式，从java客户端的角度来实现读写分离，需要创建两个连接bean，一个连接主节点，另一个连接从节点，并根据命令类型分别调用不同bean的API。哨兵模式配置相对较为简单，客户端只需要连接哨兵节点，就可以定位主节点与从节点，然后进行读写分离操作。</p>
 <p>读写分离机制更多的是针对mysql这种需要磁盘IO的数据库，因为磁盘IO是比较耗时的操作，对于Redis这种内存IO的数据库很少能达到这种瓶颈。如果你项目中对于Redis仅仅作为缓存使用，换句话说就是读请求数量远大于写请求数量，并且可以接受一定程度的数据一致性问题，可以考虑使用读写分离。</p>
+<p class="p red">由于Redis的内存管理机制并不能保证某个Key过期后立马被清除，导致在3.2版本以前会把过期数据同步到从节点，在读写分离的场景下会读取到脏数据，这个问题在3.2版本后修复，使用读写分离的一定要注意Redis的版本号!</p>
+
 <h3 id="2-4-优缺点"><a href="#2-4-优缺点" class="headerlink" title="2.4 优缺点"></a>2.4 优缺点</h3><p>优点:</p>
 <ul>
 <li>数据可以保持多个备份，不会出现由于磁盘损坏导致的数据丢失。</li>
@@ -706,10 +708,10 @@
 <li>选举成功后，广播通知集群内其他节点</li>
 </ul>
 <p>节点中的epoch全称为currentEpoch，集群中新加入或重启的节点(无论master或slave)currentEpoch值都为0，某节点需要请求其他节点提供协助时(目前只有选举)currentEpoch+1。当节点接收到其他节点的包时(比如slave发起的选举)，如果包中的currentEpoch大于自身的currentEpoch，那么会更新为发送者的currentEpoch。这种规则下集群中所有节点的currentEpoch最终会达成一致，也是代表自身在集群中的通信是健康的。</p>
-<p>另外slave节点发现master挂掉后，不会立即发起投票，而是通过延迟公式计算出一定延迟时间后在发起:</p>
-<p class="p red">500ms + random(0 ~ 500ms) + SLAVE_RANK * 1000ms</p>
-
+<p>另外slave节点发现master挂掉后，不会立即发起投票，而是通过延迟公式计算出一定延迟时间后在发起:<br>延迟公式: 500ms + random(0 ~ 500ms) + SLAVE_RANK * 1000ms</p>
 <p>延迟发送选举是为了确保master挂掉的信息在整个集群内传开(让子弹飞一会)，如果没有延迟的情况下可能部分master接收到选举请求时还没有感知到master挂了，造成误判。在0.5秒的基础上增加随机时间，是为了防止多个slave同时发起选举。公式最后的SLAVE_RANK代表slave节点已经从master节点复制的总量的rank，越小代表复制的越新，这个参数理论上可以保证持有最新数据的slave会先发起选举。</p>
+<h3 id="4-6-slave自动迁移"><a href="#4-6-slave自动迁移" class="headerlink" title="4.6 slave自动迁移"></a>4.6 slave自动迁移</h3><p>Redis为了保证整个集群的高可用，让每个分片都正常提供服务，某些情况下会对slave节点迁移到别的分片下面。假设某个集群拥有3主3从共6个节点，万一某个master对应的slave发生宕机，这时候就不存在高可用这一说，因为master在发生宕机就没有任何节点可以代替它工作，会导致整个集群不可用。</p>
+<p>针对这种情况，集群在发现某个master节点没有任何slave节点时，会将其他master节点多余的slave节点迁移过来，继续保证集群的高可用。因此在搭建集群模式时，一定要多部署几台slave节点备用，提高集群的高可用状态。</p>
 
   
   
@@ -744,10 +746,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-03-03T23:40:46+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-06-08T17:39:47+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2021年3月3日</p>
+    <p>更新于：2021年6月8日</p>
   </a>
 </div>
 
@@ -766,7 +768,7 @@
       
         <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/&title=Redis(四) 运行模式 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/&title=Redis(三) 运行模式 - 来杯冰镇可乐&summary="
           
           >
           
@@ -778,7 +780,7 @@
       
         <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/&title=Redis(四) 运行模式 - 来杯冰镇可乐&summary="
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/&title=Redis(三) 运行模式 - 来杯冰镇可乐&summary="
           
           >
           
@@ -790,7 +792,7 @@
       
         <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
           
-          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/&title=Redis(四) 运行模式 - 来杯冰镇可乐&summary="
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2021/01/28/Redis-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F/&title=Redis(三) 运行模式 - 来杯冰镇可乐&summary="
           
           >
           
@@ -820,15 +822,15 @@
   
     <div class="prev-next">
       
-        <a class='prev' href='/2021/02/25/Redis-Springboot%E9%9B%86%E6%88%90Jedis/'>
-          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Redis(五) SpringBoot集成Jedis</p>
-          <p class='content'>1.版本依赖1234&lt;dependency&gt;    &lt;groupId&gt;redis.clients&lt;/groupId&gt;    &lt;artifactId&gt...</p>
+        <a class='prev' href='/2021/02/05/Redis-Jedis%E5%AE%A2%E6%88%B7%E7%AB%AF/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Redis(四) Jedis客户端</p>
+          <p class='content'>前言Jedis客户端提供的API比较全面，方法名与redis的命令名非常相似，了解redis的命令也就能熟练使用Jedis客户端。由于提供的功能偏低层，springboot不支持依赖自动装配，且...</p>
         </a>
       
       
-        <a class='next' href='/2021/01/25/Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E4%B8%8E%E7%AE%A1%E9%81%93%E6%9C%BA%E5%88%B6/'>
-          <p class='title'>Redis(三) 发布订阅与管道机制<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>1.发布订阅(pub/sub)1.1 工作原理Redis的发布订阅(pub/sub)是一种消息通信模式，客户端指定某个频道(channel)进行消息的发布和订阅，向channel发送消息的客户端...</p>
+        <a class='next' href='/2021/01/24/Redis-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E6%8C%81%E4%B9%85%E5%8C%96/'>
+          <p class='title'>Redis(二) 内存管理与持久化<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>1.过期策略1.1 定期删除Redis中所有设置过期时间的KEY都会被记录到一个字典中，通过定时任务每隔一段时间(默认100ms)对字典中的KEY进行扫描删除过期数据，当然这种定时扫描只会发生在...</p>
         </a>
       
     </div>
@@ -871,7 +873,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%8D%95%E6%9C%BA%E6%A8%A1%E5%BC%8F"><span class="toc-text">1.单机模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E5%8D%95%E6%9C%BA%E6%80%A7%E8%83%BD"><span class="toc-text">1.1 单机性能</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">1.2 优缺点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%B8%BB%E4%BB%8E%E6%A8%A1%E5%BC%8F"><span class="toc-text">2.主从模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84"><span class="toc-text">2.1 集群架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="toc-text">2.2 主从复制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB"><span class="toc-text">2.3 读写分离</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">2.4 优缺点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F"><span class="toc-text">3.哨兵模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84"><span class="toc-text">3.1 集群架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E5%93%A8%E5%85%B5%E7%9B%91%E6%8E%A7%E5%8E%9F%E7%90%86"><span class="toc-text">3.2 哨兵监控原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E4%B8%BB%E8%A7%82-%E5%AE%A2%E8%A7%82%E4%B8%8B%E7%BA%BF"><span class="toc-text">3.2 主观&#x2F;客观下线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E6%95%85%E9%9A%9C%E6%81%A2%E5%A4%8D"><span class="toc-text">3.3 故障恢复</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">3.4 优缺点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%88%86%E7%89%87%E6%A8%A1%E5%BC%8F"><span class="toc-text">4.分片模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84"><span class="toc-text">4.1 集群架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E6%A7%BD%E4%BD%8D%E5%88%86%E9%85%8D"><span class="toc-text">4.2 槽位分配</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E8%8A%82%E7%82%B9%E4%BC%B8%E7%BC%A9"><span class="toc-text">4.3 节点伸缩</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%B7%AF%E7%94%B1"><span class="toc-text">4.4 客户端路由</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-5-%E6%95%85%E9%9A%9C%E6%81%A2%E5%A4%8D"><span class="toc-text">4.5 故障恢复</span></a></li></ol></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%8D%95%E6%9C%BA%E6%A8%A1%E5%BC%8F"><span class="toc-text">1.单机模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E5%8D%95%E6%9C%BA%E6%80%A7%E8%83%BD"><span class="toc-text">1.1 单机性能</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">1.2 优缺点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%B8%BB%E4%BB%8E%E6%A8%A1%E5%BC%8F"><span class="toc-text">2.主从模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84"><span class="toc-text">2.1 集群架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="toc-text">2.2 主从复制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB"><span class="toc-text">2.3 读写分离</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">2.4 优缺点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F"><span class="toc-text">3.哨兵模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84"><span class="toc-text">3.1 集群架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E5%93%A8%E5%85%B5%E7%9B%91%E6%8E%A7%E5%8E%9F%E7%90%86"><span class="toc-text">3.2 哨兵监控原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E4%B8%BB%E8%A7%82-%E5%AE%A2%E8%A7%82%E4%B8%8B%E7%BA%BF"><span class="toc-text">3.2 主观&#x2F;客观下线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E6%95%85%E9%9A%9C%E6%81%A2%E5%A4%8D"><span class="toc-text">3.3 故障恢复</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">3.4 优缺点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%88%86%E7%89%87%E6%A8%A1%E5%BC%8F"><span class="toc-text">4.分片模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84"><span class="toc-text">4.1 集群架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E6%A7%BD%E4%BD%8D%E5%88%86%E9%85%8D"><span class="toc-text">4.2 槽位分配</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E8%8A%82%E7%82%B9%E4%BC%B8%E7%BC%A9"><span class="toc-text">4.3 节点伸缩</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%B7%AF%E7%94%B1"><span class="toc-text">4.4 客户端路由</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-5-%E6%95%85%E9%9A%9C%E6%81%A2%E5%A4%8D"><span class="toc-text">4.5 故障恢复</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-6-slave%E8%87%AA%E5%8A%A8%E8%BF%81%E7%A7%BB"><span class="toc-text">4.6 slave自动迁移</span></a></li></ol></li></ol>
     </div>
   </section>
 
