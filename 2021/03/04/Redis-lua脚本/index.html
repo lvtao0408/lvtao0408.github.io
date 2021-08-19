@@ -21,7 +21,7 @@
   
 
   
-    <meta name="description" content="待更新">
+    <meta name="description" content="lua脚本的使用">
   
 
   <!-- feed -->
@@ -515,7 +515,106 @@
 
 
   
-  
+  <h2 id="1-Lua简介"><a href="#1-Lua简介" class="headerlink" title="1.Lua简介"></a>1.Lua简介</h2><p>Lua是一个<span class="p red">轻量级的</span>、<span class="p red">可嵌入的</span>脚本语言，并且每次的执行都是作为一个原子命令来执行。Lua的体积很小，是因为自身并没有像其他语言那样提供强大的库，因此Lua不适合用来开发独立应用。但是Lua脚本由标准C编写而成，可以很容易实现和C/C++代码的互相调用，因此常嵌入其他语言开发的应用程序(例如Redis)中，从而为应用程序提供灵活的扩展和定制功能。</p>
+<p>Redis在2.6版本后支持Lua脚本功能，嵌入Lua脚本的原因无非就是利用其原子执行的特性，开发者可以定制一套命令满足某个业务场景。虽然Redis自身的事务机制也能提供原子操作，但对于分布式锁、秒杀扣库存(一个用户只能抢购一次)等高并发的应用场景，执行效率远低于Lua脚本。</p>
+<h2 id="2-常用命令"><a href="#2-常用命令" class="headerlink" title="2.常用命令"></a>2.常用命令</h2><table>
+<thead>
+<tr>
+<th>名称</th>
+<th>版本</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>EVAL</td>
+<td>2.6.0</td>
+<td>执行一段Lua脚本字符串，每次都需要将完整的lua脚本传递给redis服务器</td>
+</tr>
+<tr>
+<td>SCRIPT LOAD</td>
+<td>2.6.0</td>
+<td>将一段lua脚本缓存到redis中并返回一个sha1校验码，仅仅存储并不会执行</td>
+</tr>
+<tr>
+<td>EVALSHA</td>
+<td>2.6.0</td>
+<td>传递tag字符串到redis服务器，执行对应脚本(逻辑复用、减少网络带宽)</td>
+</tr>
+<tr>
+<td>SCRIPT EXISTS</td>
+<td>2.6.0</td>
+<td>传递一个sha1校验码串redis服务器，判断服务器中是否存在</td>
+</tr>
+<tr>
+<td>SCRIPT FLUSH</td>
+<td>2.6.0</td>
+<td>清除服务器上的所有缓存的脚本</td>
+</tr>
+<tr>
+<td>SCRIPT KILL</td>
+<td>2.6.0</td>
+<td>杀死正在运行的脚本</td>
+</tr>
+<tr>
+<td>SCRIPT DEBUG</td>
+<td>3.2.0</td>
+<td>设置调试模式，可设置同步、异步、关闭，同步会阻塞所有请求</td>
+</tr>
+</tbody></table>
+<h3 id="2-1-EVAL"><a href="#2-1-EVAL" class="headerlink" title="2.1 EVAL"></a>2.1 EVAL</h3><span class="p blue">命令格式: EVAL script numkeys key [key …] arg [arg …]</span>
+<ul>
+<li>script: 一段Lua脚本字符串，要传具体的命令内容，不能传tag字符串</li>
+<li>numkeys: 指定Lua脚本需要处理键的数量，其实就是key数组的长度(必填,没数组填0)</li>
+<li>key [key …]: 表示脚本命令中用到了哪些Redis的键(非必传)</li>
+<li>arg [arg …]: 附带参数(非必传)，在script中可以通过ARGV[index]获取</li>
+</ul>
+<p>例如对一个键为name1的字符串，设置值为疾风剑豪，使用Lua命令实现:<br><img src="/2021/03/04/Redis-lua%E8%84%9A%E6%9C%AC/EVAL%E5%91%BD%E4%BB%A4%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2021/03/04/Redis-lua%E8%84%9A%E6%9C%AC/EVAL%E5%91%BD%E4%BB%A4%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>更多时候我们希望借助Lua脚本实现多条命令的原子操作，下面举几个执行多条命令的例子:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 同时设置俩个String键值对，并且key的值通过附带参数传入(不需要返回值)</span></span><br><span class="line"><span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">6379</span>&gt;EVAL <span class="string">&quot;redis.call(&#x27;set&#x27;,KEYS[1],ARGV[1]);redis.call(&#x27;set&#x27;,KEYS[2],ARGV[2])&quot;</span> <span class="number">2</span> <span class="string">&quot;name1&quot;</span> <span class="string">&quot;name2&quot;</span> <span class="string">&quot;疾风剑豪&quot;</span> <span class="string">&quot;快乐风男&quot;</span></span><br><span class="line">(nil)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 设置一个String键值对，并对另一个键值对递增，然后返回递增后的值</span></span><br><span class="line"><span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">6379</span>&gt;EVAL <span class="string">&quot;redis.call(&#x27;set&#x27;,KEYS[1],ARGV[1]);return redis.call(&#x27;incr&#x27;,KEYS[2])&quot;</span> <span class="number">2</span> <span class="string">&quot;name1&quot;</span> <span class="string">&quot;clickCount&quot;</span> <span class="string">&quot;疾风剑豪&quot;</span></span><br><span class="line">(integer) <span class="number">6</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 同时修改某个hash结构的俩个属性(name、age)</span></span><br><span class="line"><span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">6379</span>&gt;EVAL <span class="string">&quot;redis.call(&#x27;hset&#x27;,KEYS[1], ARGV[1], ARGV[2]);redis.call(&#x27;hset&#x27;,KEYS[1], ARGV[3], ARGV[4])&quot;</span> <span class="number">1</span> <span class="string">&quot;user&quot;</span> <span class="string">&quot;name&quot;</span> <span class="string">&quot;张三&quot;</span> <span class="string">&quot;age&quot;</span> <span class="string">&quot;18&quot;</span></span><br><span class="line">(nil)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 对某个值为数字的字符串，值+3</span></span><br><span class="line"><span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">6379</span>&gt;EVAL <span class="string">&quot;redis.call(&#x27;set&#x27;,KEYS[1], redis.call(&#x27;get&#x27;, KEYS[1]) + ARGV[1])&quot;</span> <span class="number">1</span> <span class="string">&quot;quantity&quot;</span> <span class="string">&quot;3&quot;</span></span><br><span class="line">(nil)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 对某个值为数字的字符串，值+3，并返回增加后的值</span></span><br><span class="line"><span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">6379</span>&gt;EVAL <span class="string">&quot;redis.call(&#x27;set&#x27;,KEYS[1], redis.call(&#x27;get&#x27;, KEYS[1]) + ARGV[1]);return redis.call(&#x27;get&#x27;, KEYS[1])&quot;</span> <span class="number">1</span> <span class="string">&quot;quantity&quot;</span> <span class="string">&quot;3&quot;</span></span><br><span class="line"><span class="string">&quot;7&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 设置一个字符串，并对key2的值递增，如果key2的值并非数字，执行报错，但第一条命令仍然执行成功</span></span><br><span class="line"><span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">6379</span>&gt;EVAL <span class="string">&quot;redis.call(&#x27;set&#x27;,KEYS[1],ARGV[1]);redis.call(&#x27;incr&#x27;,KEYS[2])&quot;</span> <span class="number">2</span> <span class="string">&quot;key1&quot;</span> <span class="string">&quot;key2&quot;</span> <span class="string">&quot;二桃杀三士&quot;</span></span><br><span class="line">(nil)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 上述命令后面再加一个正常命令，执行仍然报错，但是第一条命令生效，第三条不生效，可以判定遇到异常命令直接终止脚本执行</span></span><br><span class="line"><span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">6379</span>&gt;EVAL <span class="string">&quot;redis.call(&#x27;set&#x27;,KEYS[1],ARGV[1]);redis.call(&#x27;incr&#x27;,KEYS[2]);redis.call(&#x27;set&#x27;,KEYS[3],ARGV[1])&quot;</span> <span class="number">3</span> <span class="string">&quot;key1&quot;</span> <span class="string">&quot;key2&quot;</span> <span class="string">&quot;key3&quot;</span> <span class="string">&quot;二桃杀三士&quot;</span></span><br><span class="line">(nil)</span><br></pre></td></tr></table></figure>
+
+<p class="p red">注: script中的每个call都可以替换为pcall，如果Redis命令调用发生了错误，call将抛出一个Lua类型的错误，再强制EVAL命令把错误返回给命令的调用者，而pcall将捕获错误并返回表示错误的Lua表类型。</p>
+
+<h3 id="2-2-SCRIPT-LOAD"><a href="#2-2-SCRIPT-LOAD" class="headerlink" title="2.2 SCRIPT LOAD"></a>2.2 SCRIPT LOAD</h3><p>将Lua脚本内容存储到Redis服务器，然后返回sha1校验码，但不会执行脚本内容。应用程序可以将sha1保存起来，后续需要执行此命令，只需要传sha1字符串即可。</p>
+<p class="p blue">命令格式: EVAL LOAD script</p>
+
+<h3 id="2-3-EVALSHA"><a href="#2-3-EVALSHA" class="headerlink" title="2.3 EVALSHA"></a>2.3 EVALSHA</h3><p>与EVAL命令几乎一致，只是将Lua脚本内容换成sha1校验码了。这么做一方面是提高Lua脚本的复用性，保证一个脚本逻辑可以在应用程序的多个地方调用，另一方面是减少网络带宽(特别是并发时)，毕竟多数场景Lua脚本内容的长度是远大于sha1校验码长度的，这种方式可以减少网络传输的消耗。</p>
+<span class="p blue">命令格式: EVALSHA sha1 numkeys key [key …] arg [arg …]</span>
+
+<h3 id="2-4-SCRIPT-EXISTS"><a href="#2-4-SCRIPT-EXISTS" class="headerlink" title="2.4 SCRIPT EXISTS"></a>2.4 SCRIPT EXISTS</h3><p>检查一或多个sha1校验码在redis服务器的缓存中是否存在，返回一个元素内容为0或1的有序列表，列表长度和传入的sha1校验码数组长度一致，通过返回列表的下坐标判断传入的sha1校验码是否存在。</p>
+<p class="p blue">命令格式: SCRIPT EXISTS sha1 [sha1 ...]</p>
+
+<h3 id="2-5-SCRIPT-FLUSH"><a href="#2-5-SCRIPT-FLUSH" class="headerlink" title="2.5 SCRIPT FLUSH"></a>2.5 SCRIPT FLUSH</h3><p>清空Redis服务器的所有Lua脚本缓存，此命令不需要任何参数，并且返回值永远是OK。</p>
+<p class="p blue">命令格式: SCRIPT FLUSH</p>
+
+<h3 id="2-6-SCRIPT-KILL"><a href="#2-6-SCRIPT-KILL" class="headerlink" title="2.6 SCRIPT KILL"></a>2.6 SCRIPT KILL</h3><p>杀死Redis服务器当前正在执行的脚本，也不需要任何参数，当且仅当脚本没有执行过写操作，这个命令才生效。此命令主要用于终止运行时间过长的脚本，或因为编写不当导致无限循环的脚本。如果当前脚本已经执行了写操作，则kill命令执行失败并报错，这主要为了保证脚本命令的原子性。</p>
+<p class="p blue">命令格式: SCRIPT KILL</p>
+
+<h2 id="3-复杂命令"><a href="#3-复杂命令" class="headerlink" title="3.复杂命令"></a>3.复杂命令</h2><p>上述的EVAL命令仅仅是将多个Redis原生命令打包并原子执行，但实际开发中我们可能会遇到更复杂的需求，比如涉及到一些if、boolean、运算符等判断，或者迭代器遍历等逻辑处理，这就需要去了解Lua的数据类型以及语法，才可以编写出业务复杂的脚本。具体的可以参考菜鸟教程:</p>
+<p><a target="_blank" rel="noopener" href="https://www.runoob.com/lua/lua-iterators.html">https://www.runoob.com/lua/lua-iterators.html</a></p>
+<h3 id="3-1-弹出list多个元素"><a href="#3-1-弹出list多个元素" class="headerlink" title="3.1 弹出list多个元素"></a>3.1 弹出list多个元素</h3><p>利用list的lpop命令，一次请求弹出多个元素，直到获取到n个元素或list为空，在Lua脚本中可以将list的键、指定数量n设置为参数，然后编写一个脚本:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">-- 返回结果集合</span><br><span class="line">local list = &#123;&#125;;</span><br><span class="line"></span><br><span class="line">-- 元素数量参数转化为lua数据类型</span><br><span class="line">local num = tonumber(ARGV[<span class="number">1</span>]);</span><br><span class="line"></span><br><span class="line">-- 循环</span><br><span class="line"><span class="keyword">while</span> (num &gt; <span class="number">0</span>)</span><br><span class="line"><span class="keyword">do</span></span><br><span class="line">	-- 弹出第一个元素(如果为空返回nil)</span><br><span class="line">	local item = redis.call(<span class="string">&#x27;LPOP&#x27;</span>, KEYS[<span class="number">1</span>]);</span><br><span class="line"></span><br><span class="line">	-- 如果为空，终止循环(虽然命令返回nil，但逻辑判断要用布尔)</span><br><span class="line">	<span class="keyword">if</span> item == <span class="keyword">false</span> then</span><br><span class="line">		<span class="keyword">break</span>;</span><br><span class="line">	end;</span><br><span class="line"></span><br><span class="line">	-- 将元素添加到返回结果集</span><br><span class="line">	table.insert(list, item);</span><br><span class="line"></span><br><span class="line">	-- 元素数量递减<span class="number">1</span></span><br><span class="line">	num = num -<span class="number">1</span>;</span><br><span class="line">end;</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> list;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-DDOS防护"><a href="#3-2-DDOS防护" class="headerlink" title="3.2 DDOS防护"></a>3.2 DDOS防护</h3><p>防止DDOS攻击的一个简单方法就是限制n秒内同IP的访问次数，在Lua脚本中可以将n秒、ip地址、访问限制数设置为参数，然后编写一个防御脚本:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">-- ip地址对应value递增，并返回给局部变量cnt</span><br><span class="line">local cnt = redis.call(<span class="string">&#x27;INCR&#x27;</span>, KEYS[<span class="number">1</span>])</span><br><span class="line"></span><br><span class="line">-- 如果递增后的值大于访问限制数,返回<span class="number">1</span></span><br><span class="line"><span class="keyword">if</span> cnt &gt; tonumber(ARGV[<span class="number">1</span>])</span><br><span class="line">	then</span><br><span class="line">		<span class="keyword">return</span> <span class="number">1</span></span><br><span class="line">	end</span><br><span class="line"></span><br><span class="line">-- 如果递增后的值等于<span class="number">1</span>，说明key之前不存在。要么之前没有访问，要么正好到下一个时间窗，设置key的过期时间(参数n秒)</span><br><span class="line"><span class="keyword">if</span> cnt == <span class="number">1</span></span><br><span class="line">	then</span><br><span class="line">		redis.call(<span class="string">&#x27;PEXPIRE&#x27;</span>, KEYS[<span class="number">1</span>], ARGV[<span class="number">2</span>])</span><br><span class="line">	end</span><br><span class="line"><span class="keyword">return</span> <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
+
+<p class="p red">Lua不支持精度数据类型，如果返回值可能携带小数，一定要使用toString()函数转化为字符串返回，否则小数部分会丢失!</p>
+
+<!-- getway令牌桶: https://zhuanlan.zhihu.com/p/61661082?utm_source=wechat_timeline -->
+
+<h2 id="4-客户端实现"><a href="#4-客户端实现" class="headerlink" title="4.客户端实现"></a>4.客户端实现</h2><h3 id="4-1-RedisTemplate"><a href="#4-1-RedisTemplate" class="headerlink" title="4.1 RedisTemplate"></a>4.1 RedisTemplate</h3><p>RedisTemplate客户端的execute重载方法支持Lua脚本的执行，但方法仅支持EVAL命令，并且集群模式调用会抛出不支持异常，因此只能通过redis的原始connection对象来执行脚本命令，并且底层使用Jedis、Lettuce，调用的api也有所不同。</p>
+<figure class="highlight java"><figcaption><span>底层依赖Jedis客户端</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// lua脚本</span></span><br><span class="line">String lua = <span class="string">&quot;redis.call(&#x27;set&#x27;,KEYS[1],ARGV[1]);redis.call(&#x27;set&#x27;,KEYS[2],ARGV[2])&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// keys数组</span></span><br><span class="line">List&lt;String&gt; keys = Arrays.asList(<span class="string">&quot;key1&quot;</span>, <span class="string">&quot;key2&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// args数组</span></span><br><span class="line">List&lt;String&gt; args = Arrays.asList(<span class="string">&quot;aaaaa&quot;</span>, <span class="string">&quot;bbbbb&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 通过connection执行EVAL命令</span></span><br><span class="line">Object evalResult = redisTemplate.execute(<span class="keyword">new</span> RedisCallback&lt;Object&gt;() &#123;</span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> Object <span class="title">doInRedis</span><span class="params">(RedisConnection redisConnection)</span> <span class="keyword">throws</span> DataAccessException </span>&#123;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 获取connection</span></span><br><span class="line">		Object nativeConnection = redisConnection.getNativeConnection();</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 单机模式(jedis)</span></span><br><span class="line">		<span class="keyword">if</span> (nativeConnection <span class="keyword">instanceof</span> Jedis) &#123;</span><br><span class="line">			<span class="keyword">return</span> (Object) ((Jedis) nativeConnection).eval(lua, keys, args);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 集群模式(jedis)</span></span><br><span class="line">		<span class="keyword">if</span> (nativeConnection <span class="keyword">instanceof</span> JedisCluster) &#123;</span><br><span class="line">			<span class="keyword">return</span> (Object) ((JedisCluster) nativeConnection).eval(lua, keys, args);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<br>
+
+<figure class="highlight java"><figcaption><span>底层依赖Lettuce客户端</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// lua脚本</span></span><br><span class="line">String lua = <span class="string">&quot;redis.call(&#x27;set&#x27;,KEYS[1],ARGV[1]);redis.call(&#x27;set&#x27;,KEYS[2],ARGV[2])&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// keys、args字节数组的数组(前2个字节数组为keys，后俩个为args)</span></span><br><span class="line"><span class="keyword">byte</span>[][] keysAndArgsBytesArray = <span class="keyword">new</span> <span class="keyword">byte</span>[][]&#123;<span class="string">&quot;key1&quot;</span>.getBytes(), <span class="string">&quot;key2&quot;</span>.getBytes(), <span class="string">&quot;aaaaa&quot;</span>.getBytes(), <span class="string">&quot;bbbbb&quot;</span>.getBytes()&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 通过connection执行EVAL命令</span></span><br><span class="line">Object evalResult = redisTemplate.execute(<span class="keyword">new</span> RedisCallback&lt;Object&gt;() &#123;</span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> Object <span class="title">doInRedis</span><span class="params">(RedisConnection redisConnection)</span> <span class="keyword">throws</span> DataAccessException </span>&#123;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 获取connection</span></span><br><span class="line">		Object nativeConnection = redisConnection.getNativeConnection();</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 单机模式(lettuce)</span></span><br><span class="line">		<span class="keyword">if</span> (nativeConnection <span class="keyword">instanceof</span> LettuceConnection) &#123;</span><br><span class="line">			RedisScriptingCommands commands = ((LettuceConnection) nativeConnection).scriptingCommands();</span><br><span class="line">			<span class="keyword">return</span> (Object) commands.eval(lua.getBytes(), ReturnType.BOOLEAN, <span class="number">2</span>, keysAndArgsBytesArray);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 集群模式(lettuce)</span></span><br><span class="line">		<span class="keyword">if</span> (nativeConnection <span class="keyword">instanceof</span> LettuceClusterConnection) &#123;</span><br><span class="line">			RedisScriptingCommands commands = ((LettuceConnection) nativeConnection).scriptingCommands();</span><br><span class="line">			<span class="keyword">return</span> (Object) commands.eval(lua.getBytes(), ReturnType.BOOLEAN, <span class="number">2</span>, keysAndArgsBytesArray);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-Redisson"><a href="#4-2-Redisson" class="headerlink" title="4.2 Redisson"></a>4.2 Redisson</h3><p>Redisson客户端执行Lua脚本代码就简洁多了，也不需要考虑单机/集群模式，支持同步和异步两种形式调用，并且可以通过RScript.Mode枚举参数控制请求发送到主节点还是从节点(如果存在):</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// lua脚本</span></span><br><span class="line">String lua = <span class="string">&quot;redis.call(&#x27;set&#x27;,KEYS[1],ARGV[1]);redis.call(&#x27;set&#x27;,KEYS[2],ARGV[2])&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 执行EVAL命令，READ_ONLY优先发送到从节点，READ_WRITE发送到主节点</span></span><br><span class="line">Object evalResult = redissonClient.getScript().eval(RScript.Mode.READ_ONLY, lua, RScript.ReturnType.INTEGER, keys, args);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将Lua脚本内容上传到Redis服务器</span></span><br><span class="line">String sha1 = redissonClient.getScript().scriptLoad(lua);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 执行sha1脚本</span></span><br><span class="line">Object evalShaResult = redissonClient.getScript().evalSha(RScript.Mode.READ_ONLY, sha1, RScript.ReturnType.INTEGER, keys, args);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 判断一或多个sha1是否存在</span></span><br><span class="line">String sha1Test = <span class="string">&quot;asdasdasdasdasd&quot;</span>;</span><br><span class="line">List&lt;Boolean&gt; exist = redissonClient.getScript().scriptExists(sha1, sha1Test);</span><br></pre></td></tr></table></figure>
+
+<h2 id="5-其他细节"><a href="#5-其他细节" class="headerlink" title="5.其他细节"></a>5.其他细节</h2><h3 id="5-1-主从复制"><a href="#5-1-主从复制" class="headerlink" title="5.1 主从复制"></a>5.1 主从复制</h3><p>如果Redis的持久化策略是AOF，那么每一条Lua脚本执行完毕后，都会将整个脚本内容发送到从节点，但由于主从节点的操作系统环境存在差异(特别是时间)，因此Redis脚本禁用了Lua语言库中与<span class="p red">文件</span>、<span class="p red">系统调用(例如获取当前时间)</span>相关函数，确保主节点与从节点的数据一致性。</p>
+<p>在确保主从节点的数据一致性上，Redis还对Lua的随机函数做了特殊处理，替换了Lua的math.random和math.randomseed函数，使得每次执行脚本生成的随机值都是相同的(根据参数)。</p>
+<h3 id="5-2-脚本超时-amp-死循环"><a href="#5-2-脚本超时-amp-死循环" class="headerlink" title="5.2 脚本超时&amp;死循环"></a>5.2 脚本超时&amp;死循环</h3><p>为了防止Lua脚本执行时间过长，导致其他命令阻塞，Redis提供了一个超时时间的参数<span class="p red">lua-time-limit(单位毫秒)</span>，来控制脚本的执行时间。但是这个参数并没有啥卵用，Redis不会因为超时就中断脚本的运行，仅仅在日志中打印警告，这是因为必须保证Lua脚本执行的原子性。</p>
+<p>Lua脚本执行超时后，Redis服务器开始允许其他客户端的请求，但是仅仅处理<span class="p red">SCRIPT KILL</span>和<span class="p red">SHUTDOWN NOSAVE</span>命令，其他请求返回busy错误。另外如果脚本内容涉及并已执行过写操作，SCRIPT KILL命令是无法杀死的，只能采用SHUTDOWN NOSAVE命令强制关闭服务器。</p>
+
   
   
     
@@ -549,10 +648,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-07-22T09:42:17+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-08-19T17:31:24+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2021年7月22日</p>
+    <p>更新于：2021年8月19日</p>
   </a>
 </div>
 
@@ -660,6 +759,20 @@
     
 
 
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-Lua%E7%AE%80%E4%BB%8B"><span class="toc-text">1.Lua简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">2.常用命令</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-EVAL"><span class="toc-text">2.1 EVAL</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-SCRIPT-LOAD"><span class="toc-text">2.2 SCRIPT LOAD</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-EVALSHA"><span class="toc-text">2.3 EVALSHA</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-SCRIPT-EXISTS"><span class="toc-text">2.4 SCRIPT EXISTS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-5-SCRIPT-FLUSH"><span class="toc-text">2.5 SCRIPT FLUSH</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-6-SCRIPT-KILL"><span class="toc-text">2.6 SCRIPT KILL</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%A4%8D%E6%9D%82%E5%91%BD%E4%BB%A4"><span class="toc-text">3.复杂命令</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E5%BC%B9%E5%87%BAlist%E5%A4%9A%E4%B8%AA%E5%85%83%E7%B4%A0"><span class="toc-text">3.1 弹出list多个元素</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-DDOS%E9%98%B2%E6%8A%A4"><span class="toc-text">3.2 DDOS防护</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%AE%9E%E7%8E%B0"><span class="toc-text">4.客户端实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-RedisTemplate"><span class="toc-text">4.1 RedisTemplate</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-Redisson"><span class="toc-text">4.2 Redisson</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E5%85%B6%E4%BB%96%E7%BB%86%E8%8A%82"><span class="toc-text">5.其他细节</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="toc-text">5.1 主从复制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-%E8%84%9A%E6%9C%AC%E8%B6%85%E6%97%B6-amp-%E6%AD%BB%E5%BE%AA%E7%8E%AF"><span class="toc-text">5.2 脚本超时&amp;死循环</span></a></li></ol></li></ol>
+    </div>
+  </section>
 
 
   
