@@ -614,7 +614,13 @@
 <p>在确保主从节点的数据一致性上，Redis还对Lua的随机函数做了特殊处理，替换了Lua的math.random和math.randomseed函数，使得每次执行脚本生成的随机值都是相同的(根据参数)。</p>
 <h3 id="5-2-脚本超时-amp-死循环"><a href="#5-2-脚本超时-amp-死循环" class="headerlink" title="5.2 脚本超时&amp;死循环"></a>5.2 脚本超时&amp;死循环</h3><p>为了防止Lua脚本执行时间过长，导致其他命令阻塞，Redis提供了一个超时时间的参数<span class="p red">lua-time-limit(单位毫秒)</span>，来控制脚本的执行时间。但是这个参数并没有啥卵用，Redis不会因为超时就中断脚本的运行，仅仅在日志中打印警告，这是因为必须保证Lua脚本执行的原子性。</p>
 <p>Lua脚本执行超时后，Redis服务器开始允许其他客户端的请求，但是仅仅处理<span class="p red">SCRIPT KILL</span>和<span class="p red">SHUTDOWN NOSAVE</span>命令，其他请求返回busy错误。另外如果脚本内容涉及并已执行过写操作，SCRIPT KILL命令是无法杀死的，只能采用SHUTDOWN NOSAVE命令强制关闭服务器。</p>
+<h2 id="6-与事务区别"><a href="#6-与事务区别" class="headerlink" title="6.与事务区别"></a>6.与事务区别</h2><p class="p "></p><span class="p red">在原子执行方面</span>，两者均可保证执行的原子性，不会被CPU的线程上下文切换机制中断，因此编写Lua脚本时要控制执行时间，避免长时间阻塞影响其他命令的处理。另外事务在执行过程中某条命令出现异常会记录下来继续向下执行，Lua脚本遇到错误命令则停止执行。因此俩者都不能严格的保证原子性。
 
+<p class="p "></p><span class="p red">在网络开销方面</span>，事务中的每一条命令(包括开启、提交、回滚)都需要向Redis服务器发送一次网络请求，而Lua脚本一组命令仅需要一次请求，并且可以通过sha1校验码减少请求携带的内容，网络开销更小。对于Redis来说相当一大部分开销都来自网络传输，因此Lua脚本的效率更高。
+
+<p class="p "></p><span class="p red">在代码维护方面</span>，事务的命令是写在应用程序中，阅读起来简洁易懂，修改起来也比较容易。Lua脚本在维护方面的优势在于可以热部署，业务逻辑发生改变不需要像事务那样重新编译、启动，只需要修改Lua脚本内容即可，前提是Lua脚本写在文件或缓存中，而不是硬编码在程序中。
+
+<p class="p "></p><span class="p red">在功能支持方面</span>，Lua脚本仅仅支持命令的原子执行，事务不仅支持命令的原子执行，还可以设定监听、回滚的功能(我真觉得没啥卵用)。
   
   
     
@@ -648,10 +654,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-08-19T17:31:24+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-08-22T14:40:06+08:00">
   <a class='notlink'>
     <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
-    <p>更新于：2021年8月19日</p>
+    <p>更新于：2021年8月22日</p>
   </a>
 </div>
 
@@ -770,7 +776,7 @@
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-Lua%E7%AE%80%E4%BB%8B"><span class="toc-text">1.Lua简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">2.常用命令</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-EVAL"><span class="toc-text">2.1 EVAL</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-SCRIPT-LOAD"><span class="toc-text">2.2 SCRIPT LOAD</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-EVALSHA"><span class="toc-text">2.3 EVALSHA</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-SCRIPT-EXISTS"><span class="toc-text">2.4 SCRIPT EXISTS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-5-SCRIPT-FLUSH"><span class="toc-text">2.5 SCRIPT FLUSH</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-6-SCRIPT-KILL"><span class="toc-text">2.6 SCRIPT KILL</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%A4%8D%E6%9D%82%E5%91%BD%E4%BB%A4"><span class="toc-text">3.复杂命令</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E5%BC%B9%E5%87%BAlist%E5%A4%9A%E4%B8%AA%E5%85%83%E7%B4%A0"><span class="toc-text">3.1 弹出list多个元素</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-DDOS%E9%98%B2%E6%8A%A4"><span class="toc-text">3.2 DDOS防护</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%AE%9E%E7%8E%B0"><span class="toc-text">4.客户端实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-RedisTemplate"><span class="toc-text">4.1 RedisTemplate</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-Redisson"><span class="toc-text">4.2 Redisson</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E5%85%B6%E4%BB%96%E7%BB%86%E8%8A%82"><span class="toc-text">5.其他细节</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="toc-text">5.1 主从复制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-%E8%84%9A%E6%9C%AC%E8%B6%85%E6%97%B6-amp-%E6%AD%BB%E5%BE%AA%E7%8E%AF"><span class="toc-text">5.2 脚本超时&amp;死循环</span></a></li></ol></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-Lua%E7%AE%80%E4%BB%8B"><span class="toc-text">1.Lua简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">2.常用命令</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-EVAL"><span class="toc-text">2.1 EVAL</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-SCRIPT-LOAD"><span class="toc-text">2.2 SCRIPT LOAD</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-EVALSHA"><span class="toc-text">2.3 EVALSHA</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-SCRIPT-EXISTS"><span class="toc-text">2.4 SCRIPT EXISTS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-5-SCRIPT-FLUSH"><span class="toc-text">2.5 SCRIPT FLUSH</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-6-SCRIPT-KILL"><span class="toc-text">2.6 SCRIPT KILL</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%A4%8D%E6%9D%82%E5%91%BD%E4%BB%A4"><span class="toc-text">3.复杂命令</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E5%BC%B9%E5%87%BAlist%E5%A4%9A%E4%B8%AA%E5%85%83%E7%B4%A0"><span class="toc-text">3.1 弹出list多个元素</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-DDOS%E9%98%B2%E6%8A%A4"><span class="toc-text">3.2 DDOS防护</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%AE%9E%E7%8E%B0"><span class="toc-text">4.客户端实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-RedisTemplate"><span class="toc-text">4.1 RedisTemplate</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-Redisson"><span class="toc-text">4.2 Redisson</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E5%85%B6%E4%BB%96%E7%BB%86%E8%8A%82"><span class="toc-text">5.其他细节</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="toc-text">5.1 主从复制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-%E8%84%9A%E6%9C%AC%E8%B6%85%E6%97%B6-amp-%E6%AD%BB%E5%BE%AA%E7%8E%AF"><span class="toc-text">5.2 脚本超时&amp;死循环</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-%E4%B8%8E%E4%BA%8B%E5%8A%A1%E5%8C%BA%E5%88%AB"><span class="toc-text">6.与事务区别</span></a></li></ol>
     </div>
   </section>
 
