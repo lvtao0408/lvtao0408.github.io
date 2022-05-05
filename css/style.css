@@ -62,8 +62,8 @@ html {
   font-size: 16px;
 }
 html >::-webkit-scrollbar {
-  height: 4px;
-  width: 4px;
+  height: 6px;
+  width: 6px;
 }
 html >::-webkit-scrollbar-track-piece {
   background: transparent;
@@ -71,7 +71,7 @@ html >::-webkit-scrollbar-track-piece {
 html >::-webkit-scrollbar-thumb {
   background: #44d7b6;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 html >::-webkit-scrollbar-thumb:hover {
   background: #ff5722;
@@ -4343,7 +4343,7 @@ footer.footer .copyright p {
 .l_main.no_sidebar {
   width: 100%;
   padding-right: 0;
-  max-width: 840px;
+  max-width: 1040px;
   margin: auto;
 }
 @media screen and (min-width: 2048px) {
@@ -4640,7 +4640,7 @@ footer.footer .copyright p {
   position: relative;
   display: flex;
   width: 100%;
-  max-width: 1080px;
+  max-width: 1280px;
   margin: 0 auto;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -4931,7 +4931,7 @@ img.lazyload:not(.placeholder).loaded {
   height: 64px;
 }
 .l_header .nav-sub {
-  max-width: 1080px;
+  max-width: 1280px;
   margin: auto;
 }
 .l_header .nav-sub .title {
@@ -5317,7 +5317,7 @@ ul.list-v >li>a:hover {
   right: calc(100% - 0.5 * 16px);
 }
 .l_header .wrapper {
-  max-width: 1080px;
+  max-width: 1280px;
   margin: auto;
 }
 @media screen and (min-width: 2048px) {
@@ -5367,11 +5367,11 @@ ul.list-v >li>a:hover {
 }
 @media screen and (max-width: 2048px) {
   .l_header {
-    max-width: 1112px;
-    left: calc((100% - 1112px) * 0.5);
+    max-width: 1312px;
+    left: calc((100% - 1312px) * 0.5);
   }
 }
-@media screen and (max-width: 1112px) {
+@media screen and (max-width: 1312px) {
   .l_header {
     left: 0;
     border-radius: 0;
@@ -6388,10 +6388,10 @@ ul.list-v >li>a:hover {
   z-index: 2;
 }
 .snackbar-content {
-  max-width: 1080px;
+  max-width: 1280px;
   margin: 16px auto;
 }
-@media screen and (max-width: 1080px) {
+@media screen and (max-width: 1280px) {
   .snackbar-content {
     max-width: 100%;
   }
