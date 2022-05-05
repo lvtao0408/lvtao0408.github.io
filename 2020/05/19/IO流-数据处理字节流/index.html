@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.0.0'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+
+  <!-- 页面元数据 -->
+  
+  <title>IO流(七) 数据处理字节流 - 来杯冰镇可乐</title>
+  
+
+  
+    <meta name="description" content="DataInputStream、DataOutputStream的实现原理">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css">
+
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/l-lin/font-awesome-animation/dist/font-awesome-animation.min.css">
+
+  
+
+  
+
+  
+    <link rel="shortcut icon" type='image/x-icon' href="https://cdn.jsdelivr.net/gh/xaoxuu/assets@master/favicon/favicon.ico">
+  
+
+  
+
+  
+
+  <!-- import link -->
+  
+
+  
+  
+    
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  <!-- 脚本懒加载函数 -->
+  <script>
+  function loadScript(src, cb) {
+    var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+    var script = document.createElement('script');
+    script.setAttribute('type','text/javascript');
+    if (cb) script.onload = cb;
+    script.setAttribute('src', src);
+    HEAD.appendChild(script);
+  }
+  //https://github.com/filamentgroup/loadCSS
+  !function(c){"use strict";var e=function(e,t,n,r){var o,i=c.document,a=i.createElement("link");if(t)o=t;else{var d=(i.body||i.getElementsByTagName("head")[0]).childNodes;o=d[d.length-1]}var f=i.styleSheets;if(r)for(var l in r)r.hasOwnProperty(l)&&a.setAttribute(l,r[l]);a.rel="stylesheet",a.href=e,a.media="only x",function e(t){if(i.body)return t();setTimeout(function(){e(t)})}(function(){o.parentNode.insertBefore(a,t?o:o.nextSibling)});var s=function(e){for(var t=a.href,n=f.length;n--;)if(f[n].href===t)return e();setTimeout(function(){s(e)})};function u(){a.addEventListener&&a.removeEventListener("load",u),a.media=n||"all"}return a.addEventListener&&a.addEventListener("load",u),(a.onloadcssdefined=s)(u),a};"undefined"!=typeof exports?exports.loadCSS=e:c.loadCSS=e}("undefined"!=typeof global?global:this);
+  </script>
+  <script id="loadcss"></script>
+</head>
+
+<body>
+  <header class="l_header auto shadow blur " style='opacity: 0' >
+  <div class='container'>
+  <div class='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a class="s-comment fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+          
+            <i class='fas fa-anchor'></i>
+          
+          
+            Zoke
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-home fa-fw'></i>首页
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-bug fa-fw'></i>日记
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" 
+                  
+                  
+                  >
+                  <i class='fas fa-bahai fa-fw'></i>娱乐
+                </a>
+                
+                  <ul class="list-v">
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-camera-retro fa-fw'></i>相册
+                </a>
+                
+              </li>
+            
+          
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-guitar fa-fw'></i>视频
+                </a>
+                
+              </li>
+            
+          
+                    
+                  </ul>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-home fa-fw'></i>首页
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-bug fa-fw'></i>日记
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" 
+                  
+                  
+                  >
+                  <i class='fas fa-bahai fa-fw'></i>娱乐
+                </a>
+                
+                  <ul class="list-v">
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-camera-retro fa-fw'></i>相册
+                </a>
+                
+              </li>
+            
+          
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-guitar fa-fw'></i>视频
+                </a>
+                
+              </li>
+            
+          
+                    
+                  </ul>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+  <div class="l_body">
+    <div class="l_cover">
+  
+    
+    
+        <div class='cover-wrapper post search' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://cdn.jsdelivr.net/gh/volantis-x/cdn-wallpaper-minimalist@1.0.0/2020/001.jpg"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">冰镇可乐</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <input type="text" class="input u-search-input" placeholder="search you want .." />
+          <i class="icon fas fa-search fa-fw"></i>
+        </form>
+      </div>
+    
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div class="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+  
+    <div class='safearea'>
+      <div class='body-wrapper' id="pjax-container">
+        
+          <!--此文件用来存放一些不方便取值的变量--> 
+<!--思路大概是将值藏到重加载的区域内--> 
+ 
+ 
+ 
+<div id="pjax-data" style="display: none"> 
+  <div id="pjax-ispage">true</div> 
+  <div id="pjax-pageTitle">IO流(七) 数据处理字节流</div> 
+  <div id="pjax-enable-cover">true</div> 
+  <div id="pjax-comment-path"></div> 
+  <div id="pjax-comment-placeholder"></div> 
+</div> 
+ 
+ 
+<script> 
+  // 处理封面 此时 jquery 还没加载 
+  if ("none" == "none") { // 移除封面 
+    document.getElementsByClassName('cover-wrapper')[0].style.display = "none"; 
+    document.getElementsByClassName('l_header', 'cover-wrapper')[0].classList.add("show"); 
+  } else { 
+    if ("none" == "half") { // 半屏 
+      document.getElementsByClassName('cover-wrapper')[0].setAttribute('id', 'half'); 
+      document.getElementsByClassName('scroll-down')[0].style.display = "none"; 
+    } else if ("none" == "full") { // 全屏 
+      document.getElementsByClassName('cover-wrapper')[0].setAttribute('id', 'full'); 
+      document.getElementsByClassName('scroll-down')[0].style.display = ""; 
+    } 
+    document.getElementsByClassName('cover-wrapper')[0].style.display = ""; 
+    document.getElementsByClassName('l_header', 'cover-wrapper')[0].classList.remove("show"); 
+  } 
+</script> 
+ 
+
+        
+        
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        IO流(七) 数据处理字节流
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+<div class='new-meta-item author'>
+  <a class='author' href="/" rel="nofollow">
+    <img no-lazy src="">
+    <p>lvtao</p>
+  </a>
+</div>
+
+          
+        
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/io%E6%B5%81/">io流</a>
+    </a>
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2020年5月19日</p>
+  </a>
+</div>
+
+          
+        
+          
+            
+  <div class="new-meta-item browse leancloud">
+    <a class='notlink'>
+      
+      <div id="lc-pv" data-title="IO流(七) 数据处理字节流" data-path="/2020/05/19/IO%E6%B5%81-%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86%E5%AD%97%E8%8A%82%E6%B5%81/">
+        <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
+        <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
+        次浏览
+      </div>
+    </a>
+  </div>
+
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1.概述"></a>1.概述</h2><p>DataInputStream即数据输入流，DataOutputStream即数据输出流，允许应用程序以<span class="p red">与机器无关方式</span>从底层输入流中读取<span class="p red">Java基本数据类型</span>。这俩个类分别继承FilterInput/OutputStream，内部采用装饰器模式对Input/OutputStream的功能进行增强。</p>
+<p>与机器无关是因为Java基础数据类型结构简单，转化为字节并存储的逻辑也相对简单，其他机器或语言可以轻松复原。另外数据处理流通过UTF-8编码封装了对String类型的读写，UTF-8编码在各机器或者语言都是通用的，因此字符串的处理也不受平台的影响。</p>
+<h2 id="2-简单使用"><a href="#2-简单使用" class="headerlink" title="2.简单使用"></a>2.简单使用</h2><h3 id="2-1-数据写入"><a href="#2-1-数据写入" class="headerlink" title="2.1 数据写入"></a>2.1 数据写入</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span>&#123;</span><br><span class="line"></span><br><span class="line">       <span class="comment">// 基于文件输出流，创建数据处理输出流</span></span><br><span class="line">       FileOutputStream fos = <span class="keyword">new</span> FileOutputStream(<span class="string">&quot;you path&quot;</span>);</span><br><span class="line">       DataOutputStream dos = <span class="keyword">new</span> DataOutputStream(fos);</span><br><span class="line"></span><br><span class="line">       <span class="comment">// 写入基本数据类型</span></span><br><span class="line">       dos.writeBoolean(<span class="keyword">true</span>);</span><br><span class="line">       dos.writeChar(<span class="string">&#x27;哈&#x27;</span>);</span><br><span class="line">       dos.writeByte(<span class="number">7</span>);</span><br><span class="line">       dos.writeShort(<span class="number">12</span>);</span><br><span class="line">       dos.writeInt(<span class="number">25</span>);</span><br><span class="line">       dos.writeLong(<span class="number">39</span>);</span><br><span class="line">       dos.writeFloat(<span class="number">4.1f</span>);</span><br><span class="line">       dos.writeDouble(<span class="number">9.8</span>);</span><br><span class="line">       dos.writeUTF(<span class="string">&quot;IO流&quot;</span>);</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<p>查看生成的文件内容:<br><img src="/2020/05/19/IO%E6%B5%81-%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86%E5%AD%97%E8%8A%82%E6%B5%81/%E6%95%B0%E6%8D%AE%E5%86%99%E5%85%A5.png" class="lazyload" data-srcset="/2020/05/19/IO%E6%B5%81-%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86%E5%AD%97%E8%8A%82%E6%B5%81/%E6%95%B0%E6%8D%AE%E5%86%99%E5%85%A5.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>对应结构:<br><img src="/2020/05/19/IO%E6%B5%81-%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86%E5%AD%97%E8%8A%82%E6%B5%81/%E6%95%B0%E6%8D%AE%E5%86%99%E5%85%A5%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2020/05/19/IO%E6%B5%81-%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86%E5%AD%97%E8%8A%82%E6%B5%81/%E6%95%B0%E6%8D%AE%E5%86%99%E5%85%A5%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>首次写入不同的基本数据类型，生成文件的默认编码集也不同，例如写入boolean、char字母或数字、正整数等类型生成的文件是<span class="p red">binary编码</span>，这种编码通过文本编辑器打开文件后，会以上图所示的16进制正常展示。</p>
+<p>写入char汉字生成的文件是<span class="p red">iso-8859-1编码(不支持中文表达)</span>，因此打开的文件内容是乱码。最后Double、Int负数、UTF等类型是<span class="p red">unkown-8bit编码</span>，文本编辑器软件仍然无法正常识别并展示，还是会出现奇奇怪怪的字符。</p>
+<p>Mac笔记本可以通过<span class="p blue">file -I 文件路径</span>查看文件的编码集，如果文件的编码集无法被文本编辑器正常显示(我使用的是Sublime Text，也可能是文本编辑器的原因)，通过<span class="p blue">hexdump -v 文件路径</span>命令查看原始16进制内容，得到上图的查看效果。</p>
+<h3 id="2-2-数据读取"><a href="#2-2-数据读取" class="headerlink" title="2.2 数据读取"></a>2.2 数据读取</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 基于文件输入流，创建数据处理输入流</span></span><br><span class="line">    FileInputStream fis = <span class="keyword">new</span> FileInputStream(<span class="string">&quot;you path&quot;</span>);</span><br><span class="line">    DataInputStream dis = <span class="keyword">new</span> DataInputStream(fis);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 读取基本数据类型</span></span><br><span class="line">    System.out.println(dos.readBoolean());</span><br><span class="line">    System.out.println(dos.readChar());</span><br><span class="line">    System.out.println(dos.readByte());</span><br><span class="line">    System.out.println(dos.readShort());</span><br><span class="line">    System.out.println(dos.readInt());</span><br><span class="line">    System.out.println(dos.readLong());</span><br><span class="line">    System.out.println(dos.readFloat());</span><br><span class="line">    System.out.println(dos.readDouble());</span><br><span class="line">    System.out.println(dis.readUTF());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p class="p red">注: DataOutputStream是将基本数据类型转化为字节挨个存储，因此DataInputStream在读取数据时，要遵循写入时的顺序，否则会读取失败。</p>
+
+<h2 id="3-DataOutputStream"><a href="#3-DataOutputStream" class="headerlink" title="3.DataOutputStream"></a>3.DataOutputStream</h2><p>先从写入开始研究，提供的写入方法整体比较多，但万变不离其宗，都是转化为字节然后调用内部装饰的InputStream类进行字节写入，就简单研究几个有代表性的方法。</p>
+<h3 id="3-1-writeBoolean"><a href="#3-1-writeBoolean" class="headerlink" title="3.1 writeBoolean"></a>3.1 writeBoolean</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">writeBoolean</span><span class="params">(<span class="keyword">boolean</span> v)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="comment">// boolean占用1bit，为了方便管理，这里使用1字节存储</span></span><br><span class="line">    out.write(v ? <span class="number">1</span> : <span class="number">0</span>);</span><br><span class="line">    <span class="comment">// 将写入的字节数量纪录到计数器中</span></span><br><span class="line">    incCount(<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<br>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">incCount</span><span class="params">(<span class="keyword">int</span> value)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 计算递增后的值</span></span><br><span class="line">    <span class="keyword">int</span> temp = written + value;</span><br><span class="line">    <span class="comment">// 如果超过int类型最大值，则停止递增</span></span><br><span class="line">    <span class="keyword">if</span> (temp &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        temp = Integer.MAX_VALUE;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 开始递增</span></span><br><span class="line">    written = temp;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-writeInt"><a href="#3-2-writeInt" class="headerlink" title="3.2 writeInt"></a>3.2 writeInt</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// int类型占用4字节，因此需要把int值拆成4份字节，然后从高位到低位逐次写入</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">writeInt</span><span class="params">(<span class="keyword">int</span> v)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="comment">// 从左开始取二进制的0-8位，位与运算成字节，写入输出流</span></span><br><span class="line">    out.write((v &gt;&gt;&gt; <span class="number">24</span>) &amp; <span class="number">0xFF</span>);</span><br><span class="line">    <span class="comment">// 从左开始取二进制的8-16位，位与运算成字节，写入输出流</span></span><br><span class="line">    out.write((v &gt;&gt;&gt; <span class="number">16</span>) &amp; <span class="number">0xFF</span>);</span><br><span class="line">    <span class="comment">// 从左开始取二进制的16-24位，位与运算成字节，写入输出流</span></span><br><span class="line">    out.write((v &gt;&gt;&gt;  <span class="number">8</span>) &amp; <span class="number">0xFF</span>);</span><br><span class="line">    <span class="comment">// 从左开始取二进制的24-32位，位与运算成字节，写入输出流</span></span><br><span class="line">    out.write((v &gt;&gt;&gt;  <span class="number">0</span>) &amp; <span class="number">0xFF</span>);</span><br><span class="line">    <span class="comment">// 递增4字节</span></span><br><span class="line">    incCount(<span class="number">4</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<br>
+
+<p>例如现在写入一个值为<span class="p blue">330067683</span>的int数据类型:<br><img src="/2020/05/19/IO%E6%B5%81-%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86%E5%AD%97%E8%8A%82%E6%B5%81/writeInt%E6%B5%81%E7%A8%8B%E5%9B%BE.png" class="lazyload" data-srcset="/2020/05/19/IO%E6%B5%81-%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86%E5%AD%97%E8%8A%82%E6%B5%81/writeInt%E6%B5%81%E7%A8%8B%E5%9B%BE.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p class="p red">类似的还有char、byte、sort、long这四个基本类型的写入，都是直接将对应二进制以字节为单位进行拆分，然后调用内部装饰OutputStream类的write单字节逐次写入。long类型稍微特殊一点，是将拆分的8个字节放进数组中批量写入，只和操作系统交互一次。</p>
+
+<h3 id="3-3-writeFloat"><a href="#3-3-writeFloat" class="headerlink" title="3.3 writeFloat"></a>3.3 writeFloat</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">writeFloat</span><span class="params">(<span class="keyword">float</span> v)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="comment">// 将浮点类型转化为int，然后调用writeInt方法</span></span><br><span class="line">    writeInt(Float.floatToIntBits(v));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<br>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">floatToIntBits</span><span class="params">(<span class="keyword">float</span> value)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用native方法，将浮点数字转化为正数</span></span><br><span class="line">    <span class="keyword">int</span> result = floatToRawIntBits(value);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果是无效的数字(NaN)，返回0x7fc00000</span></span><br><span class="line">    <span class="keyword">if</span> ( ((result &amp; FloatConsts.EXP_BIT_MASK) ==</span><br><span class="line">          FloatConsts.EXP_BIT_MASK) &amp;&amp;</span><br><span class="line">         (result &amp; FloatConsts.SIGNIF_BIT_MASK) != <span class="number">0</span>)</span><br><span class="line">        result = <span class="number">0x7fc00000</span>;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-4-writeUTF"><a href="#3-4-writeUTF" class="headerlink" title="3.4 writeUTF"></a>3.4 writeUTF</h3><p>writeUTF方法并没有真正写入，而是将自身作为参数交给静态方法处理:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">writeUTF</span><span class="params">(String str)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    writeUTF(str, <span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<br>
+
+<p>真正处理写入逻辑的静态方法:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 真正使用UTF-8编码处理字符串的静态方法</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">writeUTF</span><span class="params">(String str, DataOutput out)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取要写入的字符串的长度 </span></span><br><span class="line">    <span class="keyword">int</span> strlen = str.length();</span><br><span class="line">    <span class="comment">// 转化为utf编码后的长度计数器</span></span><br><span class="line">    <span class="keyword">int</span> utflen = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">// c用于遍历字符串的循环中赋值，记录当前char类型的数值</span></span><br><span class="line">    <span class="comment">// count表示写入缓冲区的字节位置</span></span><br><span class="line">    <span class="keyword">int</span> c, count = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 循环字符串的每个字符，判断字符对应的utf编码长度，并递增到utflen变量</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; strlen; i++) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取字符并赋值给当前变量c</span></span><br><span class="line">        c = str.charAt(i);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 0x007F为ASCII编码表的最大值，代表当前字符在ASCII编码表范围内，可以用1个字节表示，utf长度视为1</span></span><br><span class="line">        <span class="keyword">if</span> ((c &gt;= <span class="number">0x0001</span>) &amp;&amp; (c &lt;= <span class="number">0x007F</span>)) &#123;</span><br><span class="line">            utflen++;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 值大于0x07FF就是汉字，需要用3个字节表示，utf长度视为3</span></span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (c &gt; <span class="number">0x07FF</span>) &#123;</span><br><span class="line">            utflen += <span class="number">3</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 0x007F和0x07FF之间是其他特殊符号，需要用2个字节表示，utf长度视为2</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            utflen += <span class="number">2</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 字符串转化为utf编码的长度，不能超过65535，这是因为字符串的长度会采用2个字节在文件中标记</span></span><br><span class="line">    <span class="comment">// 65535是2字节的最大值，16进制也就是0xFFFF</span></span><br><span class="line">    <span class="keyword">if</span> (utflen &gt; <span class="number">65535</span>)</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> UTFDataFormatException(</span><br><span class="line">            <span class="string">&quot;encoded string too long: &quot;</span> + utflen + <span class="string">&quot; bytes&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 临时缓冲区，用于非DataOutputStream的装饰输出流</span></span><br><span class="line">    <span class="keyword">byte</span>[] bytearr = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果DataOutputStream内部装饰的输出流还是是一个DataOutputStream</span></span><br><span class="line">    <span class="keyword">if</span> (out <span class="keyword">instanceof</span> DataOutputStream) &#123;</span><br><span class="line">        <span class="comment">// 强转引用类型</span></span><br><span class="line">        DataOutputStream dos = (DataOutputStream)out;</span><br><span class="line">        <span class="comment">// 使用内部的成员变量建立缓存，长度不够就进行扩容</span></span><br><span class="line">        <span class="keyword">if</span>(dos.bytearr == <span class="keyword">null</span> || (dos.bytearr.length &lt; (utflen+<span class="number">2</span>)))</span><br><span class="line">            dos.bytearr = <span class="keyword">new</span> <span class="keyword">byte</span>[(utflen*<span class="number">2</span>) + <span class="number">2</span>];</span><br><span class="line">        bytearr = dos.bytearr;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 内部装饰的输出流不是DataOutputStream，就需要创建临时缓冲区</span></span><br><span class="line">        bytearr = <span class="keyword">new</span> <span class="keyword">byte</span>[utflen+<span class="number">2</span>];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将utf编码长度拆成2个字节，写入缓冲区</span></span><br><span class="line">    bytearr[count++] = (<span class="keyword">byte</span>) ((utflen &gt;&gt;&gt; <span class="number">8</span>) &amp; <span class="number">0xFF</span>);</span><br><span class="line">    bytearr[count++] = (<span class="keyword">byte</span>) ((utflen &gt;&gt;&gt; <span class="number">0</span>) &amp; <span class="number">0xFF</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 开始循环每个字符，并写入缓冲区，遇到需要2个字节表示的字符时循环终止，</span></span><br><span class="line">    <span class="comment">// 也就是说如果你写入的都是ASCII编码表的简单字符，这个循环就能完成</span></span><br><span class="line">    <span class="keyword">int</span> i=<span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">0</span>; i&lt;strlen; i++) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果字符范围超出ASCII编码表范围，单个字符无法用单字节表示，终止循环</span></span><br><span class="line">       c = str.charAt(i);</span><br><span class="line">       <span class="keyword">if</span> (!((c &gt;= <span class="number">0x0001</span>) &amp;&amp; (c &lt;= <span class="number">0x007F</span>))) <span class="keyword">break</span>;</span><br><span class="line">       <span class="comment">// 将单字符的字节值写入缓冲区</span></span><br><span class="line">       bytearr[count++] = (<span class="keyword">byte</span>) c;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果上个循环中途被终止，那么表示字符串中有需要2或3个字节表示的字符</span></span><br><span class="line">    <span class="keyword">for</span> (;i &lt; strlen; i++)&#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 提取字符</span></span><br><span class="line">        c = str.charAt(i);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果是ASCII编码表范围内的，直接写入单字节</span></span><br><span class="line">        <span class="keyword">if</span> ((c &gt;= <span class="number">0x0001</span>) &amp;&amp; (c &lt;= <span class="number">0x007F</span>)) &#123;</span><br><span class="line">            bytearr[count++] = (<span class="keyword">byte</span>) c;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 字符在(0x07FF - 0xFFFF]前闭后开区间，为占用3个字节的汉字，最大值为1111111111111111(共16位)</span></span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (c &gt; <span class="number">0x07FF</span>) &#123;</span><br><span class="line">            <span class="comment">// 第一个字节存4位，或运算0xC0，就是在这4位前面拼1110，最终就是1110 xxxx</span></span><br><span class="line">            bytearr[count++] = (<span class="keyword">byte</span>) (<span class="number">0xE0</span> | ((c &gt;&gt; <span class="number">12</span>) &amp; <span class="number">0x0F</span>));</span><br><span class="line">            <span class="comment">// 第二个字节存6位，或运算0x80，就是在这6位前面拼10，最终就是10xx xxxx</span></span><br><span class="line">            bytearr[count++] = (<span class="keyword">byte</span>) (<span class="number">0x80</span> | ((c &gt;&gt;  <span class="number">6</span>) &amp; <span class="number">0x3F</span>));</span><br><span class="line">            <span class="comment">// 第三个字节存6位，或运算0x80，就是在这6位前面拼10，最终就是10xx xxxx</span></span><br><span class="line">            bytearr[count++] = (<span class="keyword">byte</span>) (<span class="number">0x80</span> | ((c &gt;&gt;  <span class="number">0</span>) &amp; <span class="number">0x3F</span>));</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 字符在(0x007F - 0x07FF]前闭后开区间，为占用2个字节的符号，最大值为11111111111(共11位)</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// 第一个字节存前5位，或运算0xC0，就是在这5位前面拼110，最终就是110x xxxx</span></span><br><span class="line">            bytearr[count++] = (<span class="keyword">byte</span>) (<span class="number">0xC0</span> | ((c &gt;&gt;  <span class="number">6</span>) &amp; <span class="number">0x1F</span>));</span><br><span class="line">            <span class="comment">// 第二个字节存后6位，或运算0x80，就是在这6位前面拼10，最终就是10xx xxxx</span></span><br><span class="line">            bytearr[count++] = (<span class="keyword">byte</span>) (<span class="number">0x80</span> | ((c &gt;&gt;  <span class="number">0</span>) &amp; <span class="number">0x3F</span>));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将缓冲数据写入输出流</span></span><br><span class="line">    out.write(bytearr, <span class="number">0</span>, utflen+<span class="number">2</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 返回写入的字节数</span></span><br><span class="line">    <span class="keyword">return</span> utflen + <span class="number">2</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p class="p red">字符串的存储，本质上就是内部char数组的存储，由于char类型占2字节，可能是ASCII表符号，可能是其他特殊符号，也可能是汉字。对于特殊符号、汉字需要拆成多个字节存储，但每个字节只存储最多6位，空余的位做特殊标记，方便DataInputStream读取时能够识别二进制的类型。</p>
+
+<h2 id="4-DataInputStream"><a href="#4-DataInputStream" class="headerlink" title="4.DataInputStream"></a>4.DataInputStream</h2><h3 id="4-1-readBoolean"><a href="#4-1-readBoolean" class="headerlink" title="4.1 readBoolean"></a>4.1 readBoolean</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">readBoolean</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="comment">// 读取一个字节</span></span><br><span class="line">    <span class="keyword">int</span> ch = in.read();</span><br><span class="line">    <span class="comment">// 如果按照写入的顺序进行读取，这里只可能是0或1，不可能小于0</span></span><br><span class="line">    <span class="keyword">if</span> (ch &lt; <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> EOFException();</span><br><span class="line">    <span class="comment">// 根据是否等于0决定布尔值</span></span><br><span class="line">    <span class="keyword">return</span> (ch != <span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-readInt"><a href="#4-2-readInt" class="headerlink" title="4.2 readInt"></a>4.2 readInt</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">int</span> <span class="title">readInt</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="comment">// 逐次读取4个字节</span></span><br><span class="line">    <span class="keyword">int</span> ch1 = in.read();</span><br><span class="line">    <span class="keyword">int</span> ch2 = in.read();</span><br><span class="line">    <span class="keyword">int</span> ch3 = in.read();</span><br><span class="line">    <span class="keyword">int</span> ch4 = in.read();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果按照写入的顺序进行读取，这4个字节都不可能小于0</span></span><br><span class="line">    <span class="keyword">if</span> ((ch1 | ch2 | ch3 | ch4) &lt; <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> EOFException();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将字节按照顺序升位后相加，得到最终结果</span></span><br><span class="line">    <span class="keyword">return</span> ((ch1 &lt;&lt; <span class="number">24</span>) + (ch2 &lt;&lt; <span class="number">16</span>) + (ch3 &lt;&lt; <span class="number">8</span>) + (ch4 &lt;&lt; <span class="number">0</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-3-readFloat"><a href="#4-3-readFloat" class="headerlink" title="4.3 readFloat"></a>4.3 readFloat</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">float</span> <span class="title">readFloat</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="comment">// 读取一个int值，然后使用java自带的静态方法转化为float </span></span><br><span class="line">    <span class="keyword">return</span> Float.intBitsToFloat(readInt());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-4-readUTF"><a href="#4-4-readUTF" class="headerlink" title="4.4 readUTF"></a>4.4 readUTF</h3><p>writeUTF方法并没有真正读取，而是将自身作为参数交给静态方法处理:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> String <span class="title">readUTF</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> readUTF(<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<br>
+
+<p>真正处理读取逻辑的静态方法:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">static</span> String <span class="title">readUTF</span><span class="params">(DataInput in)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 先读取2个字节，确定这次读取字符串的字节长度</span></span><br><span class="line">    <span class="keyword">int</span> utflen = in.readUnsignedShort();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 临时数组</span></span><br><span class="line">    <span class="keyword">byte</span>[] bytearr = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">char</span>[] chararr = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果输入流是DataInputStream，从内部成员变量取出要写入的数据</span></span><br><span class="line">    <span class="keyword">if</span> (in <span class="keyword">instanceof</span> DataInputStream) &#123;</span><br><span class="line">        DataInputStream dis = (DataInputStream)in;</span><br><span class="line">        <span class="keyword">if</span> (dis.bytearr.length &lt; utflen)&#123;</span><br><span class="line">            dis.bytearr = <span class="keyword">new</span> <span class="keyword">byte</span>[utflen*<span class="number">2</span>];</span><br><span class="line">            dis.chararr = <span class="keyword">new</span> <span class="keyword">char</span>[utflen*<span class="number">2</span>];</span><br><span class="line">        &#125;</span><br><span class="line">        chararr = dis.chararr;</span><br><span class="line">        bytearr = dis.bytearr;</span><br><span class="line">    <span class="comment">// 否则创建新的缓冲区</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        bytearr = <span class="keyword">new</span> <span class="keyword">byte</span>[utflen];</span><br><span class="line">        chararr = <span class="keyword">new</span> <span class="keyword">char</span>[utflen];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 定义变量</span></span><br><span class="line">    <span class="keyword">int</span> c, char2, char3;</span><br><span class="line">    <span class="keyword">int</span> count = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">int</span> chararr_count=<span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 根据utflen读取字符串的全部字节，并放入bytearr数组中</span></span><br><span class="line">    in.readFully(bytearr, <span class="number">0</span>, utflen);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 循环字符串的每一个字符，并逐次放入chararr数组中，遇到值超过ASCII编码表最大值的时候终止</span></span><br><span class="line">    <span class="keyword">while</span> (count &lt; utflen) &#123;</span><br><span class="line">        c = (<span class="keyword">int</span>) bytearr[count] &amp; <span class="number">0xff</span>;</span><br><span class="line">        <span class="keyword">if</span> (c &gt; <span class="number">127</span>) <span class="keyword">break</span>;</span><br><span class="line">        count++;</span><br><span class="line">        chararr[chararr_count++]=(<span class="keyword">char</span>)c;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果字符串中存在。字符值超过ASCII编码表最大值，继续循环</span></span><br><span class="line">    <span class="keyword">while</span> (count &lt; utflen) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 将字节转化为int</span></span><br><span class="line">        c = (<span class="keyword">int</span>) bytearr[count] &amp; <span class="number">0xff</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 将值右移4位</span></span><br><span class="line">        <span class="keyword">switch</span> (c &gt;&gt; <span class="number">4</span>) &#123;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 如果值c在16进制[0001 - 007F]闭区间范围内，二进制范围就是[00000001 - 01111111]</span></span><br><span class="line">            <span class="comment">// 右移4位后范围在[0000 - 0111]闭区间，也就是0～7之间，肯定是单字节</span></span><br><span class="line">            <span class="keyword">case</span> <span class="number">0</span>: <span class="keyword">case</span> <span class="number">1</span>: <span class="keyword">case</span> <span class="number">2</span>: <span class="keyword">case</span> <span class="number">3</span>: <span class="keyword">case</span> <span class="number">4</span>: <span class="keyword">case</span> <span class="number">5</span>: <span class="keyword">case</span> <span class="number">6</span>: <span class="keyword">case</span> <span class="number">7</span>:</span><br><span class="line">                count++;</span><br><span class="line">                chararr[chararr_count++]=(<span class="keyword">char</span>)c;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 如果值c位移4位后是二进制1100或者1101，也就是12或13，那么肯定是2字节特殊符号的第一个字节</span></span><br><span class="line">            <span class="keyword">case</span> <span class="number">12</span>: <span class="keyword">case</span> <span class="number">13</span>:</span><br><span class="line">                <span class="comment">// 递增2，也就是读取进度直接跨2个字节</span></span><br><span class="line">                count += <span class="number">2</span>;</span><br><span class="line">                <span class="comment">// 如果超出长度，那么肯定数据有问题，抛出异常</span></span><br><span class="line">                <span class="keyword">if</span> (count &gt; utflen)</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> UTFDataFormatException(</span><br><span class="line">                        <span class="string">&quot;malformed input: partial character at end&quot;</span>);</span><br><span class="line">                <span class="comment">// count减1就是取符号的第一个字节，校验二进制是不是110开头的</span></span><br><span class="line">                char2 = (<span class="keyword">int</span>) bytearr[count-<span class="number">1</span>];</span><br><span class="line">                <span class="comment">// 如果第一个字节不是110开头，那么连续读的2个字节就不是一个特殊符号</span></span><br><span class="line">                <span class="keyword">if</span> ((char2 &amp; <span class="number">0xC0</span>) != <span class="number">0x80</span>)</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> UTFDataFormatException(</span><br><span class="line">                        <span class="string">&quot;malformed input around byte &quot;</span> + count);</span><br><span class="line">                <span class="comment">// 将两个字节合并，复原成char放入chararr数组</span></span><br><span class="line">                chararr[chararr_count++]=(<span class="keyword">char</span>)(((c &amp; <span class="number">0x1F</span>) &lt;&lt; <span class="number">6</span>) |</span><br><span class="line">                                                (char2 &amp; <span class="number">0x3F</span>));</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="comment">// 如果值c位移4位后是二进制1110，也就是14，那么肯定是3字节汉字的第一个字节</span></span><br><span class="line">            <span class="keyword">case</span> <span class="number">14</span>:</span><br><span class="line">                <span class="comment">// 递增3，也就是读取进度直接跨3个字节</span></span><br><span class="line">                count += <span class="number">3</span>;</span><br><span class="line">                <span class="comment">// 如果超出长度，那么肯定数据有问题，抛出异常</span></span><br><span class="line">                <span class="keyword">if</span> (count &gt; utflen)</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> UTFDataFormatException(</span><br><span class="line">                        <span class="string">&quot;malformed input: partial character at end&quot;</span>);</span><br><span class="line">                <span class="comment">// 读取第一个字节和第二个字节</span></span><br><span class="line">                char2 = (<span class="keyword">int</span>) bytearr[count-<span class="number">2</span>];</span><br><span class="line">                char3 = (<span class="keyword">int</span>) bytearr[count-<span class="number">1</span>];</span><br><span class="line">                <span class="comment">// 如果第一个字节不是1110开头，第二个字节不是10开头，那么连续读的3个字节就不是汉字，抛出异常</span></span><br><span class="line">                <span class="keyword">if</span> (((char2 &amp; <span class="number">0xC0</span>) != <span class="number">0x80</span>) || ((char3 &amp; <span class="number">0xC0</span>) != <span class="number">0x80</span>))</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> UTFDataFormatException(</span><br><span class="line">                        <span class="string">&quot;malformed input around byte &quot;</span> + (count-<span class="number">1</span>));</span><br><span class="line">                <span class="comment">// 将这3个字节合并成char，并放入chararr数组</span></span><br><span class="line">                chararr[chararr_count++]=(<span class="keyword">char</span>)(((c     &amp; <span class="number">0x0F</span>) &lt;&lt; <span class="number">12</span>) |</span><br><span class="line">                                                ((char2 &amp; <span class="number">0x3F</span>) &lt;&lt; <span class="number">6</span>)  |</span><br><span class="line">                                                ((char3 &amp; <span class="number">0x3F</span>) &lt;&lt; <span class="number">0</span>));</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="comment">// 不是上述的情况，那么肯定输数据有问题，抛出异常</span></span><br><span class="line">            <span class="keyword">default</span>:</span><br><span class="line">                <span class="comment">/* 10xx xxxx,  1111 xxxx */</span></span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> UTFDataFormatException(</span><br><span class="line">                    <span class="string">&quot;malformed input around byte &quot;</span> + count);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 将char数组转化为字符串，并返回</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> String(chararr, <span class="number">0</span>, chararr_count);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+        <div class='copyright'>
+          <blockquote>
+            
+              
+                <p>博客内容遵循 署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</p>
+
+              
+            
+              
+                <p>本文永久链接是：<a href=http://yoursite.com/2020/05/19/IO%E6%B5%81-%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86%E5%AD%97%E8%8A%82%E6%B5%81/>http://yoursite.com/2020/05/19/IO%E6%B5%81-%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86%E5%AD%97%E8%8A%82%E6%B5%81/</a></p>
+              
+            
+          </blockquote>
+        </div>
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2021-10-23T16:09:02+08:00">
+  <a class='notlink'>
+    <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
+    <p>更新于：2021年10月23日</p>
+  </a>
+</div>
+
+        
+      
+        
+          
+
+        
+      
+        
+          
+  <div class="new-meta-item share -mob-share-list">
+  <div class="-mob-share-list share-body">
+    
+      
+        <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/05/19/IO%E6%B5%81-%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86%E5%AD%97%E8%8A%82%E6%B5%81/&title=IO流(七) 数据处理字节流 - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+        <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/05/19/IO%E6%B5%81-%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86%E5%AD%97%E8%8A%82%E6%B5%81/&title=IO流(七) 数据处理字节流 - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+        <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/05/19/IO%E6%B5%81-%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86%E5%AD%97%E8%8A%82%E6%B5%81/&title=IO流(七) 数据处理字节流 - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2020/05/22/IO%E6%B5%81-%E7%BC%93%E5%86%B2%E5%A4%84%E7%90%86%E5%AD%97%E8%8A%82%E6%B5%81/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>IO流(八) 缓冲处理字节流</p>
+          <p class='content'>1.概述BufferedInputStream、BufferedOutputStream是带有缓冲区的字节处理流，默认的缓冲区字节数组大小为8192(8KB)，通过装饰器模式对InputStre...</p>
+        </a>
+      
+      
+        <a class='next' href='/2020/05/16/IO%E6%B5%81-%E5%BA%8F%E5%88%97%E5%8C%96%E5%AD%97%E8%8A%82%E6%B5%81/'>
+          <p class='title'>IO流(六) 序列化流<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>1.概述ObjectInputStream即对象输入流，ObjectOutputStream即对象输出流，俩者的主要功能是实现java对象和二进制字节数组的相互转化，也就是常说的序列化与反序列化...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%A6%82%E8%BF%B0"><span class="toc-text">1.概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8"><span class="toc-text">2.简单使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E6%95%B0%E6%8D%AE%E5%86%99%E5%85%A5"><span class="toc-text">2.1 数据写入</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%8F%96"><span class="toc-text">2.2 数据读取</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-DataOutputStream"><span class="toc-text">3.DataOutputStream</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-writeBoolean"><span class="toc-text">3.1 writeBoolean</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-writeInt"><span class="toc-text">3.2 writeInt</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-writeFloat"><span class="toc-text">3.3 writeFloat</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-writeUTF"><span class="toc-text">3.4 writeUTF</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-DataInputStream"><span class="toc-text">4.DataInputStream</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-readBoolean"><span class="toc-text">4.1 readBoolean</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-readInt"><span class="toc-text">4.2 readInt</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-readFloat"><span class="toc-text">4.3 readFloat</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-readUTF"><span class="toc-text">4.4 readUTF</span></a></li></ol></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+        
+      </div>
+      
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+          
+            
+          
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.0.0" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p><a href="/">Copyright © 2017-2020 XXX</a></p>
+
+        </div>
+      
+    
+  </footer>
+
+
+      <a class="s-top fas fa-arrow-up fa-fw" href='javascript:void(0)'></a>
+    </div>
+  </div>
+  <div>
+    <!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    setTimeout(function() {
+      loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+    }, 1);
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+</script>
+
+
+<!-- internal -->
+
+
+
+
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+  
+    <script>
+      window.FPConfig = {
+        delay: 0,
+        ignoreKeywords: [],
+        maxRPS: 5,
+        hoverDelay: 25
+      };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  var GUEST_INFO = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link'.split(',').filter(function (item) {
+    return GUEST_INFO.indexOf(item) > -1
+  });
+  var REQUIRED_FIELDS = ['nick', 'mail', 'link'];
+  var requiredFields = 'nick,mail'.split(',').filter(function (item) {
+    return REQUIRED_FIELDS.indexOf(item) > -1
+  });
+
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+
+    let pagePlaceholder = $.trim($('#pjax-comment-placeholder').text()) || "快来评论吧~";
+
+    let path = $.trim($('#pjax-comment-path').text());
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+
+    var valine = new Valine();
+    valine.init({
+      el: '#valine_container',
+      meta: meta,
+      placeholder: pagePlaceholder,
+      path: path,
+      appId: "",
+      appKey: "",
+      pageSize: '10',
+      avatar: 'robohash',
+      lang: 'zh-cn',
+      visitor: 'true',
+      highlight: 'true',
+      mathJax: 'false',
+      enableQQ: 'true',
+      recordIP: 'false',
+      requiredFields: requiredFields,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps
+    })
+  }
+
+  $(function () {
+    pjax_valine();
+  });
+</script>
+
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+
+  
+    
+<script src="/js/search.js"></script>
+
+  
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+(function ($) {
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+})(jQuery);
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'http://yoursite.com' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'http://yoursite.com' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'http://yoursite.com' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+<!-- more -->
+
+
+    
+      
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+<!-- 样式位于：source/css/_third-party/pjaxanimate.styl -->
+
+<div class="pjax-animate">
+  
+    <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
+    <div id="loading-bar-wrapper"><script>NProgress.configure({parent:"#loading-bar-wrapper",trickleSpeed: 100})</script></div>
+    <script>
+      window.ShowLoading = function() {
+        NProgress.start();
+      };
+      window.HideLoading = function() {
+        NProgress.done();
+      }
+    </script>
+  
+</div>
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+      $('.l_header .switcher .s-search').removeClass('active'); // 关闭移动端激活的搜索框
+      $('.l_header').removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      $('.wrapper').removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      $('.s-top').unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+      window.ShowLoading();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      // 关于百度统计对 SPA 页面的处理：
+      // 方案一：百度统计>管理>单页应用设置中，打开开启按钮即可对SPA进行统计。 https://tongji.baidu.com/web/help/article?id=324
+      // 方案二：取消注释下列代码。 https://tongji.baidu.com/web/help/article?id=235
+      // 
+
+      // 关于谷歌统计对 SPA 页面的处理：
+      // 当应用以动态方式加载内容并更新地址栏中的网址时，也应该更新通过 gtag.js 存储的网页网址。
+      // https://developers.google.cn/analytics/devguides/collection/gtagjs/single-page-applications?hl=zh-cn
+      
+
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+          if (typeof $.fancybox == "undefined") {
+            SCload_fancybox();
+          } else {
+            pjax_fancybox();
+          }
+        
+        
+        
+        
+        
+        
+          pjax_valine();
+        
+        
+        
+        
+        
+      } catch (e) {
+        console.log(e);
+      }
+      window.HideLoading();
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+      window.HideLoading();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+
+    
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/gh/zyoushuo/Blog/hexo/js/mouse_click.js"></script>
+</body>
+</html>

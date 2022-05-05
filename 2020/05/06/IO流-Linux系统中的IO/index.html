@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.0.0'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+
+  <!-- 页面元数据 -->
+  
+  <title>IO流(一) Linux系统中的IO - 来杯冰镇可乐</title>
+  
+
+  
+    <meta name="description" content="Linux系统中的IO概念，包括虚拟文件系统、IO函数、IO模型等">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css">
+
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/l-lin/font-awesome-animation/dist/font-awesome-animation.min.css">
+
+  
+
+  
+
+  
+    <link rel="shortcut icon" type='image/x-icon' href="https://cdn.jsdelivr.net/gh/xaoxuu/assets@master/favicon/favicon.ico">
+  
+
+  
+
+  
+
+  <!-- import link -->
+  
+
+  
+  
+    
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  <!-- 脚本懒加载函数 -->
+  <script>
+  function loadScript(src, cb) {
+    var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+    var script = document.createElement('script');
+    script.setAttribute('type','text/javascript');
+    if (cb) script.onload = cb;
+    script.setAttribute('src', src);
+    HEAD.appendChild(script);
+  }
+  //https://github.com/filamentgroup/loadCSS
+  !function(c){"use strict";var e=function(e,t,n,r){var o,i=c.document,a=i.createElement("link");if(t)o=t;else{var d=(i.body||i.getElementsByTagName("head")[0]).childNodes;o=d[d.length-1]}var f=i.styleSheets;if(r)for(var l in r)r.hasOwnProperty(l)&&a.setAttribute(l,r[l]);a.rel="stylesheet",a.href=e,a.media="only x",function e(t){if(i.body)return t();setTimeout(function(){e(t)})}(function(){o.parentNode.insertBefore(a,t?o:o.nextSibling)});var s=function(e){for(var t=a.href,n=f.length;n--;)if(f[n].href===t)return e();setTimeout(function(){s(e)})};function u(){a.addEventListener&&a.removeEventListener("load",u),a.media=n||"all"}return a.addEventListener&&a.addEventListener("load",u),(a.onloadcssdefined=s)(u),a};"undefined"!=typeof exports?exports.loadCSS=e:c.loadCSS=e}("undefined"!=typeof global?global:this);
+  </script>
+  <script id="loadcss"></script>
+</head>
+
+<body>
+  <header class="l_header auto shadow blur " style='opacity: 0' >
+  <div class='container'>
+  <div class='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a class="s-comment fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+          
+            <i class='fas fa-anchor'></i>
+          
+          
+            Zoke
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-home fa-fw'></i>首页
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-bug fa-fw'></i>日记
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" 
+                  
+                  
+                  >
+                  <i class='fas fa-bahai fa-fw'></i>娱乐
+                </a>
+                
+                  <ul class="list-v">
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-camera-retro fa-fw'></i>相册
+                </a>
+                
+              </li>
+            
+          
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-guitar fa-fw'></i>视频
+                </a>
+                
+              </li>
+            
+          
+                    
+                  </ul>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-home fa-fw'></i>首页
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-bug fa-fw'></i>日记
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" 
+                  
+                  
+                  >
+                  <i class='fas fa-bahai fa-fw'></i>娱乐
+                </a>
+                
+                  <ul class="list-v">
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-camera-retro fa-fw'></i>相册
+                </a>
+                
+              </li>
+            
+          
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-guitar fa-fw'></i>视频
+                </a>
+                
+              </li>
+            
+          
+                    
+                  </ul>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+  <div class="l_body">
+    <div class="l_cover">
+  
+    
+    
+        <div class='cover-wrapper post search' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://cdn.jsdelivr.net/gh/volantis-x/cdn-wallpaper-minimalist@1.0.0/2020/001.jpg"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">冰镇可乐</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <input type="text" class="input u-search-input" placeholder="search you want .." />
+          <i class="icon fas fa-search fa-fw"></i>
+        </form>
+      </div>
+    
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div class="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+  
+    <div class='safearea'>
+      <div class='body-wrapper' id="pjax-container">
+        
+          <!--此文件用来存放一些不方便取值的变量--> 
+<!--思路大概是将值藏到重加载的区域内--> 
+ 
+ 
+ 
+<div id="pjax-data" style="display: none"> 
+  <div id="pjax-ispage">true</div> 
+  <div id="pjax-pageTitle">IO流(一) Linux系统中的IO</div> 
+  <div id="pjax-enable-cover">true</div> 
+  <div id="pjax-comment-path"></div> 
+  <div id="pjax-comment-placeholder"></div> 
+</div> 
+ 
+ 
+<script> 
+  // 处理封面 此时 jquery 还没加载 
+  if ("none" == "none") { // 移除封面 
+    document.getElementsByClassName('cover-wrapper')[0].style.display = "none"; 
+    document.getElementsByClassName('l_header', 'cover-wrapper')[0].classList.add("show"); 
+  } else { 
+    if ("none" == "half") { // 半屏 
+      document.getElementsByClassName('cover-wrapper')[0].setAttribute('id', 'half'); 
+      document.getElementsByClassName('scroll-down')[0].style.display = "none"; 
+    } else if ("none" == "full") { // 全屏 
+      document.getElementsByClassName('cover-wrapper')[0].setAttribute('id', 'full'); 
+      document.getElementsByClassName('scroll-down')[0].style.display = ""; 
+    } 
+    document.getElementsByClassName('cover-wrapper')[0].style.display = ""; 
+    document.getElementsByClassName('l_header', 'cover-wrapper')[0].classList.remove("show"); 
+  } 
+</script> 
+ 
+
+        
+        
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        IO流(一) Linux系统中的IO
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+<div class='new-meta-item author'>
+  <a class='author' href="/" rel="nofollow">
+    <img no-lazy src="">
+    <p>lvtao</p>
+  </a>
+</div>
+
+          
+        
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/io%E6%B5%81/">io流</a>
+    </a>
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2020年5月6日</p>
+  </a>
+</div>
+
+          
+        
+          
+            
+  <div class="new-meta-item browse leancloud">
+    <a class='notlink'>
+      
+      <div id="lc-pv" data-title="IO流(一) Linux系统中的IO" data-path="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/">
+        <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
+        <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
+        次浏览
+      </div>
+    </a>
+  </div>
+
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1.概述"></a>1.概述</h2><p>Java的各种IO流对象，都是在操作系统提供的IO功能基础上进行设计的，因此越过操作系统去研究Java的IO流有点不切实际，通常我们的服务都是部署在Linux系统中，因此研究Linux中的IO原理，是学习Java IO流的基础。</p>
+<h2 id="2-驱动程序"><a href="#2-驱动程序" class="headerlink" title="2.驱动程序"></a>2.驱动程序</h2><h3 id="2-1-什么是驱动程序"><a href="#2-1-什么是驱动程序" class="headerlink" title="2.1 什么是驱动程序"></a>2.1 什么是驱动程序</h3><p>驱动程序是比操作系统更为底层的技术，也是最接近硬件的软件，换句话说就是连接硬件和操作系统的桥梁，它的主要作用是<span class="p red">驱动各种硬件完成自身支持的功能。</span></p>
+<p>以最常用的Window系统为例，重装系统后需要通过鲁大师、驱动精灵等装网卡、显卡等驱动，否则无法连接网络、无法玩LOL等网络游戏。以MacOS为例，连接有线网需要购买转接头，并下载对应厂商提供的转接头驱动程序，否则无法连接。</p>
+<h3 id="2-2-与linux关系"><a href="#2-2-与linux关系" class="headerlink" title="2.2 与linux关系"></a>2.2 与linux关系</h3><p>计算机中有很多硬件，以硬盘为例，又可分为机械硬盘和固态硬盘，每种类型的硬盘又有不同的厂商生产出不同的版本型号，其中每一种情况都可能对应一个驱动软件。而Linux系统在设计IO子系统时不可能将所有情况都考虑并进行兼容，因此在内核提供了一套驱动开发标准，硬件厂商依据此标准开发自己的驱动软件，使用者需要根据对应的硬件下载对应驱动程序，</p><p class="p red">Linux系统通过对驱动的调用，完成对IO设备的控制。</p><p></p>
+<p>因此驱动程序说直白点就是对硬件进行抽象，屏蔽了同一类型硬件但不同版本型号的差异，并提供统一标准API给Linux内核调用，如图:<br><img src="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E9%A9%B1%E5%8A%A8%E7%A8%8B%E5%BA%8F%E4%B8%8ELinux%E5%85%B3%E7%B3%BB.png" class="lazyload" data-srcset="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E9%A9%B1%E5%8A%A8%E7%A8%8B%E5%BA%8F%E4%B8%8ELinux%E5%85%B3%E7%B3%BB.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<h2 id="3-虚拟文件系统"><a href="#3-虚拟文件系统" class="headerlink" title="3.虚拟文件系统"></a>3.虚拟文件系统</h2><p>驱动程序虽然摒弃了同一硬件类型不同版本型号的差异，但是不同的硬件在调用层面仍然有差别，而Linux系统通过<span class="p red">一切皆文件</span>的设计理念，将所有硬件设备抽象成文件子系统，硬盘、网卡等设备都会实现文件子系统的标准接口，然后通过虚拟文件系统对应用程序进行呈现:<br><img src="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E8%99%9A%E6%8B%9F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F.png" class="lazyload" data-srcset="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E8%99%9A%E6%8B%9F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p class="p red">Linux系统虽然将一切看作都文件，但又将文件这个抽象概念分成普通文件、目录文件、链接文件和设备文件，不同的类型提供的操作类型也不同，例如设备文件不能像普通文件那样支持复制、粘贴等功能。</p>
+
+<h3 id="3-1-文件子系统"><a href="#3-1-文件子系统" class="headerlink" title="3.1 文件子系统"></a>3.1 文件子系统</h3><p>暂无</p>
+<!-- 文件子系统包括EXT3、EXT4、XFS、ZFS等，这里不具体研究每个子系统的实现原理，重点放在多数文件子系统都会实现的PageCache缓存机制。PageCache是通过将磁盘中的数据缓存到内存中，以此减少磁盘I/O操作，从而提高性能。在实际调用过程中，除非显示的标记<span class='p red'>O_DIRECT</span>，所有访问都会经过PageCache。 -->
+
+<h3 id="3-1-网络子系统"><a href="#3-1-网络子系统" class="headerlink" title="3.1 网络子系统"></a>3.1 网络子系统</h3><p>暂无</p>
+<!-- 网络子系统包括NFS、samba等。 -->
+
+<h3 id="3-1-其他子系统"><a href="#3-1-其他子系统" class="headerlink" title="3.1 其他子系统"></a>3.1 其他子系统</h3><h2 id="4-文件描述符"><a href="#4-文件描述符" class="headerlink" title="4.文件描述符"></a>4.文件描述符</h2><p>在linux系统中，设备也是以文件的形式存在，要对该设备进行操作就必须先打开这个文件，打开这个文件就会获得这个文件描述符，它是个很小的正整数，可以看作是一个索引值，指向内核为每一个进程所维护的、该进程打开文件的记录表。</p>
+<h3 id="4-1-描述符结构"><a href="#4-1-描述符结构" class="headerlink" title="4.1 描述符结构"></a>4.1 描述符结构</h3><p><img src="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6%E7%BB%93%E6%9E%84.png" class="lazyload" data-srcset="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6%E7%BB%93%E6%9E%84.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>首先每个进程都有一张<span class="p red">文件描述符表</span>，用于记录此进程打开的文件，同一个文件可能会被不同的进程打开，也有可能会被同一进程的不同线程打开，总之每次打开得到的都是不同的文件描述符。同时Linux会对每个进程的打开文件数进行限制，一般是1024个(可以通过命令修改)。</p>
+<p>每个文件描述符在打开文件表都对应一个<span class="p red">打开文件句柄</span>，这个句柄记录了此次打开的一些状态信息，这里重点说下关联操作属性(file_operations)，此属性作为指针指向一张<span class="p red">函数操作表</span>，函数操作表中有当前文件支持的所有操作函数。普通文件、设备文件等不同类型的文件，指向的函数操作表也不同，因此通过这个属性可以将不同类型的文件的操作区分开。</p>
+<p>i-node表维护了文件的<span class="p red">具体信息</span>，每个文件在被进程打开后都会将结构信息加载到i-node表中，如果一个文件被多次打开也只会加载一次，与打开文件句柄是一对多的关系。也就是说应用程序通过内核函数操作文件时，都是基于i-node进行操作。</p>
+<h3 id="4-2-标准描述符"><a href="#4-2-标准描述符" class="headerlink" title="4.2 标准描述符"></a>4.2 标准描述符</h3><table>
+<thead>
+<tr>
+<th>描述符</th>
+<th>名称</th>
+<th>对应设备</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0</td>
+<td>标准输入流</td>
+<td>键盘</td>
+</tr>
+<tr>
+<td>1</td>
+<td>标准输出流</td>
+<td>显示屏</td>
+</tr>
+<tr>
+<td>2</td>
+<td>标准错误流</td>
+<td>显示屏</td>
+</tr>
+</tbody></table>
+<p>当我们在Linux环境中启动一个进程，会自动向此进程的文件描述符表中添加这三个描述符(值固定)，换句话说，进程如果想要对键盘、显示屏进行IO操作，是不需要手动打开的，Linux系统已经帮我们准备好了。</p>
+<p>例如使用nohup命令运行Java包时，会在命令后添加<span class="p red">xxx.log 2>&1</span>，这个后缀的意思就是将<span class="p blue">标准错误输出</span>重定向到<span class="p blue">标准输出流</span>、然后将<span class="p blue">标准输出流</span>重定向到xxx.log文件，说白了就是让java的日志或print输出到指定的日志文件。</p>
+<h3 id="4-3-指针移动"><a href="#4-3-指针移动" class="headerlink" title="4.3 指针移动"></a>4.3 指针移动</h3><p>在文件描述符对应的打开文件句柄中，有个当前偏移量属性，记录了文件读写操作的位置。以读取为例，假设某个文件共2000个字节，初始偏移量就是0，每读取一个字节就将偏移量值加1，读取n个字节就将偏移量加n，直到偏移量递增到1999(从0开始偏移)为止读取结束，后续再调用返回结束标志:</p>
+<h2 id="5-IO函数"><a href="#5-IO函数" class="headerlink" title="5.IO函数"></a>5.IO函数</h2><h3 id="5-1-open"><a href="#5-1-open" class="headerlink" title="5.1 open"></a>5.1 open</h3><p>open函数是最基本的函数，打开一个文件或设备，如果打开成功则返回一个文件描述符值，失败则返回-1。有了文件描述符值就可以对文件或设备进行操作:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// pathname: 文件路径</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// flags参数用于控制打开文件的行为标志:</span></span><br><span class="line"><span class="comment">// O_RDONLY: 以只读的方式打开</span></span><br><span class="line"><span class="comment">// O_WRONLY: 以只写的方式打开</span></span><br><span class="line"><span class="comment">// O_RDWR: 以可读、可写的方式打开</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// mode为附带参数，效果与flags并存，可以在打开时提供额外的选项:</span></span><br><span class="line"><span class="comment">// O_CREAT: 文件不存在则创建文件</span></span><br><span class="line"><span class="comment">// O_EXCL: 如果同时指定了O_CREAT，且文件已经存在，则出错</span></span><br><span class="line"><span class="comment">// O_TRUNC: 如果文件存在，则清空文件内容</span></span><br><span class="line"><span class="comment">// O_APPEND: 写文件时，数据添加到文件末尾</span></span><br><span class="line"><span class="comment">// O_NONBLOCK: 对于设备文件，以非阻塞I/O方式打开</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">open</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">int</span> flags)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">open</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">int</span> flags, <span class="keyword">mode_t</span> mode)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p class="p red">Linux的/dev目录存放了与设备相关的文件，如果你想open一个打印机、键盘、网卡等硬件设备，需要到此目录找到对应的文件，然后将文件路径作为参数传入即可。</p>
+
+<h3 id="5-2-socket"><a href="#5-2-socket" class="headerlink" title="5.2 socket"></a>5.2 socket</h3><p>socket函数与open函数一样用于获取描述符，由于网卡相对其他设备较为特殊，需要额外考虑到IP类型、传输协议等，因此open函数无法满足，需要通过socket函数生成一个套接字描述符(文件描述符的一种):</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/socket.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// protofamily: 地址族，也就是IP地址的类型(处于七层协议的网络层)</span></span><br><span class="line"><span class="comment">// PF_UNIX、PF_LOCAL: 本地通信</span></span><br><span class="line"><span class="comment">// AF_INET、PF_INET: IPv4 Internet协议</span></span><br><span class="line"><span class="comment">// PF_INET6: IPv6 Internet协议</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// type: 套接字类型(处于七层协议的传输层)</span></span><br><span class="line"><span class="comment">// SOCK_STREAM: 字节流</span></span><br><span class="line"><span class="comment">// SOCK_DGRAM: 数据报</span></span><br><span class="line"><span class="comment">// SOCK_SEQPACKET: 有序分组</span></span><br><span class="line"><span class="comment">// SOCK_RAW: 原始套接口</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// protocol: 指定传输协议</span></span><br><span class="line"><span class="comment">// IPPROTO_TCP: TCP传输协议</span></span><br><span class="line"><span class="comment">// IPPTOTO_UDP: UDP传输协议</span></span><br><span class="line"><span class="comment">// IPPROTO_SCTP: STCP传输协议</span></span><br><span class="line"><span class="comment">// IPPROTO_TIPC: TIPC传输协议</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">socket</span><span class="params">(<span class="keyword">int</span> protofamily, <span class="keyword">int</span> type, <span class="keyword">int</span> protocol)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>protofamily与type确定的情况下，可以决定最终的传输协议，但是这俩者组合后可能衍生一或多个传输协议，也可能一个都没有。如果衍生出多个传输协议，就需要通过protocol参数进行补充，说白了就是告诉操作系统具体用哪个；如果仅衍生出一个，protocol参数填0即可；如果一个都没衍生出来，操作系统会选择type默认的传输协议。无论衍生出什么组合，只要protocol参数传入0，那么操作系统都会选择type默认的传输协议。</p>
+<p>这里虽然得到了套接字描述符(sockfd)，但一个服务器可能运行很多个进程，多个进程共享一个网卡硬件完成网络数据的收发，因此无论是服务端还是客户端，必须使用bind函数为此sockfd绑定ip(IPv4、IPv6等)和端口，实现各进程的网络数据传输隔离。</p>
+<p>此时sockfd仍然不知道能和谁通信，因此还得调用listen函数对此sockfd进行监听，如果某个客户端进程(可能本机，也可能远程机器)调用connect函数并指定ip和端口进行连接，服务端的listen函数会监听到连接请求，然后通过accept函数对连接请求进行处理，并返回一个acceptfd。</p>
+<p>linux中服务端和客户端是一对多的关系，accept函数提供于服务端，因为服务端需要知道并区分每一个客户端的连接，因此返回值acceptfd就是标记与每个客户端的连接通道。connect函数提供于客户端，因为一个客户端只能对应一个服务端，所以客户端在连接过程中不会生成新的描述符。</p>
+<p class="p red">如果客户端想要连接多个服务端，那就要手动创建新的sockfd，但ip端口已经被原来的sockfd占用，不同的sockfd绑定同一个ip端口会报错，这时候就得使用端口复用技术，允许某个进程的多个sockfd绑定到某一个ip端口上。绑定成功后再调用connect函数，基于新创建的sockfd与服务端进行连接。</p>
+
+<p>假设服务端和客户端建立的是TCP连接，那么从客户端调用connect函数，到服务端执行accept函数的过程，就是三次握手的过程:<br><img src="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B.png" class="lazyload" data-srcset="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<h3 id="5-3-read与write"><a href="#5-3-read与write" class="headerlink" title="5.3 read与write"></a>5.3 read与write</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="comment">// 读取数据</span></span><br><span class="line"><span class="function"><span class="keyword">ssize_t</span> <span class="title">read</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">void</span> *buf, <span class="keyword">size_t</span> count)</span></span>;</span><br><span class="line"><span class="comment">// 写入数据</span></span><br><span class="line"><span class="function"><span class="keyword">ssize_t</span> <span class="title">write</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">void</span> *buf, <span class="keyword">size_t</span> count)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>就单纯的对描述符对应的文件进行读写，读写成功后会触发文件描述符的指针移动。以读取为例，假设最后读取了10个字节，那么读取后需要将指针(也可以理解为读取进度)往后移动10位，确保下次读取不会对同一位置的字节重复读取。</p>
+<p>以写入为例，假设最后写入了10个字节，也要将指针往后移动10位，确保下次写入接着上次的位置往后写，不会对同一位置重复写，覆盖之前的write操作。</p>
+<h3 id="5-4-send与recv"><a href="#5-4-send与recv" class="headerlink" title="5.4 send与recv"></a>5.4 send与recv</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/socket.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 发送数据</span></span><br><span class="line"><span class="function"><span class="keyword">ssize_t</span> <span class="title">send</span><span class="params">(<span class="keyword">int</span> sockfd, <span class="keyword">const</span> <span class="keyword">void</span> *buff, <span class="keyword">size_t</span> nbytes, <span class="keyword">int</span> flags)</span></span>;</span><br><span class="line"><span class="comment">// 读取数据</span></span><br><span class="line"><span class="function"><span class="keyword">ssize_t</span> <span class="title">recv</span><span class="params">(<span class="keyword">int</span> sockfd, <span class="keyword">void</span> *buff, <span class="keyword">size_t</span> nbytes, <span class="keyword">int</span> flags)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-5-close"><a href="#5-5-close" class="headerlink" title="5.5 close"></a>5.5 close</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">close</span><span class="params">(<span class="keyword">int</span> fd)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<h2 id="6-IO模型"><a href="#6-IO模型" class="headerlink" title="6.IO模型"></a>6.IO模型</h2><h3 id="6-1-同步阻塞IO"><a href="#6-1-同步阻塞IO" class="headerlink" title="6.1 同步阻塞IO"></a>6.1 同步阻塞IO</h3><p><img src="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E5%90%8C%E6%AD%A5%E9%98%BB%E5%A1%9EIO%E6%A8%A1%E5%9E%8B.png" class="lazyload" data-srcset="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E5%90%8C%E6%AD%A5%E9%98%BB%E5%A1%9EIO%E6%A8%A1%E5%9E%8B.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>同步阻塞IO就是应用程序在调用内核函数过程中一直处于等待状态，不能执行其他任何操作，直到内核将数据返回后，才能继续往后执行代码。同步阻塞在磁盘IO和内存IO中使用较为广泛，因为硬盘和内存总会快速读取(大文件除外)，同步阻塞实现起来简单明了，非阻塞或者异步只会让设计更复杂，却又对性能没多少帮助。</p>
+<h3 id="6-2-同步非阻塞IO"><a href="#6-2-同步非阻塞IO" class="headerlink" title="6.2 同步非阻塞IO"></a>6.2 同步非阻塞IO</h3><p><img src="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E5%90%8C%E6%AD%A5%E9%9D%9E%E9%98%BB%E5%A1%9EIO%E6%A8%A1%E5%9E%8B.png" class="lazyload" data-srcset="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E5%90%8C%E6%AD%A5%E9%9D%9E%E9%98%BB%E5%A1%9EIO%E6%A8%A1%E5%9E%8B.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>同步非阻塞IO在数据没有准备好时总会快速返回errno，当数据准备好时才会进入阻塞，直到拷贝到用户空间并返回。这种方式可以让应用程序在进行IO操作时更加灵活，当读取的文件较大或者等待网络请求时，可以利用准备数据的这段时间处理其他逻辑，提高任务的执行效率，直到数据准备完毕后再次调用，阻塞并等待数据拷贝返回。</p>
+<h3 id="6-3-IO多路复用"><a href="#6-3-IO多路复用" class="headerlink" title="6.3 IO多路复用"></a>6.3 IO多路复用</h3><p><img src="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8IO%E6%A8%A1%E5%9E%8B.png" class="lazyload" data-srcset="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8IO%E6%A8%A1%E5%9E%8B.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>IO多路复用模型常用于网路IO，解决服务端和客户端TCP并发连接数高、网络交互不频繁的场景，假设现在用同步(阻塞或非阻塞)的方式处理客户端的网路IO，由于服务端不知道客户端什么时候会发送数据，上面也有讲过每个连接都会分配一个描述符，因此对于每个连接都需要分配一个线程不停的去检查，检测到请求就及时响应。如果连接较少就无所谓了，当连接数达到1W甚至更多，那么就会有1万甚至更多个线程不停的循环检查数据，CPU直接就炸了。</p>
+<p>上述的问题就是服务端经典的C10K问题，本质上是操作系统的问题。IO多路复用采用单线程监听多个客户端网络请求的方式，将多个连接客户端的sockfd放入一个集合中，然后交给某一个线程去轮询这些连接，当发现某个sockfd传来数据时就通知服务端处理，避免大量的线程轮询忙等带来的CPU浪费。由此也可以看出此模型不适合磁盘，因为磁盘IO不像网路IO那样不知道啥时候会有数据传来，磁盘的数据就摆在那读完就结束了。</p>
+<p>Linux系统提供了select、poll、epoll三种IO多路复用机制，虽然都是通过单个线程监听多个描述符，但内部监听的方式不同、存储sockfd的数据结构不同、对sockfd的数量限制也不同，下面单独讲。</p>
+<h3 id="6-4-信号驱动IO"><a href="#6-4-信号驱动IO" class="headerlink" title="6.4 信号驱动IO"></a>6.4 信号驱动IO</h3><p><img src="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E4%BF%A1%E5%8F%B7%E9%A9%B1%E5%8A%A8IO%E6%A8%A1%E5%9E%8B.png" class="lazyload" data-srcset="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E4%BF%A1%E5%8F%B7%E9%A9%B1%E5%8A%A8IO%E6%A8%A1%E5%9E%8B.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>信号驱动IO模型底层采用中断机制，对IO设备进度读取时立刻返回(非阻塞)，Linux系统中用sigaction函数将SIGIO读写信号以及handler回调函数存在内核队列中。当设备IO缓冲区可写或可读时触发SIGIO中断，返回设备fd并回调handler。与其他同步非阻塞IO模型相比，信号驱动IO模型在准备数据阶段不需要应用程序主动轮询检查，因此更节约CPU资源。</p>
+<p><br>缺点也很明显，SIGIO信号不会进行排队，当SIGIO处理函数正在执行，又有俩个新的SIGIO信号触发，这俩新的信号会被阻塞住，当正在执行的SIGIO信号执行完，最后只有新的一个SIGIO会触发继续执行SIGIO函数，另一个SIGIO信号丢失。如图:<br><img src="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/temp.jpeg" class="lazyload" data-srcset="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/temp.jpeg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p><br>另一个缺点是无法识别IO的事件类型，一般用于UDP连接，极少用于TCP连接。这主要是因为UDP是无状态的连接，只有数据到达套接字、发生错误这俩种情况，因此触发SIGIO信号后，回调函数只需要取出数据拷贝到用户态即可。如图:<br><img src="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/temp.jpeg" class="lazyload" data-srcset="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/temp.jpeg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p><br>而TCP属于双向可靠连接，IO事件除了数据到达套接字、发生错误之外，还有各种连接打开、关闭等情况，因此SIGIO信号产生的特别频繁(容易丢失)。另外当触发SIGIO信号后，回调函数无法得知接下来要干什么。如图:<br><img src="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/temp.jpeg" class="lazyload" data-srcset="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/temp.jpeg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<h3 id="6-5-异步非阻塞IO"><a href="#6-5-异步非阻塞IO" class="headerlink" title="6.5 异步非阻塞IO"></a>6.5 异步非阻塞IO</h3><p><img src="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E5%BC%82%E6%AD%A5IO%E6%A8%A1%E5%9E%8B.png" class="lazyload" data-srcset="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/%E5%BC%82%E6%AD%A5IO%E6%A8%A1%E5%9E%8B.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>以上四种IO模型都属于同步IO模型，同步阻塞IO模型全程处于阻塞状态，同步非阻塞IO模型、信号驱动IO模型在数据copy阶段仍然阻塞，因此不能说是异步；IO多路复用在轮询过程中也处于阻塞状态。只有异步非阻塞IO模型才是完完全全的异步模型。</p>
+<p>Linux从2.6版本开始支持异步IO，此功能最初是为数据库设计的，因此通过异步IO的读写操作不会被缓存或缓冲，这就无法利用操作系统的缓存与缓冲机制。</p>
+<h2 id="7-IO多路复用原理"><a href="#7-IO多路复用原理" class="headerlink" title="7 IO多路复用原理"></a>7 IO多路复用原理</h2><h3 id="7-1-select"><a href="#7-1-select" class="headerlink" title="7.1 select"></a>7.1 select</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">select</span> <span class="params">(<span class="keyword">int</span> nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p><br><strong>参数介绍</strong></p>
+<ul>
+<li>nfds: 需要监视的最大的文件描述符值+1</li>
+<li>readfds: 要监听的读文件描述符</li>
+<li>writefds: 要监听的写文件描述符</li>
+<li>exceptfds: 要监听的异常文件描述符</li>
+<li>timeout: 超时设置，null表示没限制一直等、0表示扫描一轮立刻返回、指定值:扫描指定时间，直到超时</li>
+</ul>
+<p><br><strong>返回值</strong></p>
+<ul>
+<li>大于0: 表示多少个描述符就绪</li>
+<li>等于0: 表示超时</li>
+<li>小于0: 表示监控出错了(select本次监控出错)</li>
+</ul>
+<p><br><strong>执行流程图:</strong><br><img src="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/select%E5%87%BD%E6%95%B0%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B.png" class="lazyload" data-srcset="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/select%E5%87%BD%E6%95%B0%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>轮询时如果发现某个描述符没有就绪，那么会从数组中剔除，最终返回的集合中仅包含就绪的描述符，因此应用程序拿到数组后还需要进行遍历，才能确定哪些描述符是就绪的。如果timeout参数为null或特定值，那么会对数组多次轮询，因此在轮询前还会将数组copy一份，防止上次轮询无事件，导致数组被清空。</p>
+<p>轮询毕竟会多余的消耗CPU资源，如果timeout参数为null或特定值，那么会对数组多次轮询，在进程没有从设备读到数据时，会进入设备的睡眠队列中(可设置睡眠时间)，直到睡眠超时或设备发生读写事件提前唤醒，再次进入下次轮询，减少对CPU无意义的消耗。</p>
+<p>select的工作模式为条件触发，函数将存在事件的描述符数组返回给应用程序时，如果应用程序对某个描述符不作任何处理，那么之后的轮询仍然会返回此描述符，直到对此描述符进行处理为止。</p>
+<h3 id="7-2-poll"><a href="#7-2-poll" class="headerlink" title="7.2 poll"></a>7.2 poll</h3><p>使用链表存储监听的描述符，对监听的描述符不作数量上的限制，其他与select一致。</p>
+<h3 id="7-3-epoll"><a href="#7-3-epoll" class="headerlink" title="7.3 epoll"></a>7.3 epoll</h3><p>epoll在2.6内核中提出，主要为了解决select和poll的缺点，比前两者更灵活但实现起来也更复杂。内部操作过程又可分为epoll_create, epoll_ctl、epoll_wait三个函数:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 创建一个epoll的句柄，用于存放需要监听的fd</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_create</span><span class="params">(<span class="keyword">int</span> size)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 对epfd中的某个fd进行相关操作</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_ctl</span><span class="params">(<span class="keyword">int</span> epfd, <span class="keyword">int</span> op, <span class="keyword">int</span> fd, struct epoll_event *event)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 等待epfd上的io事件</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_wait</span><span class="params">(<span class="keyword">int</span> epfd, struct epoll_event * events, <span class="keyword">int</span> maxevents, <span class="keyword">int</span> timeout)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p><br><font color="red">epoll_create函数</font>用于创建一个epoll专用的fd集合，用于存储想要监听的描述符。参数size并不是限制了epoll所能监听的描述符最大个数，只是对内核初始分配内部数据结构的一个建议。</p>
+<p><font color="red">epoll_ctl函数</font>是对epfd(epoll_create函数的返回值)进行相关操作，op参数代表操作类型(新增、修改、删除)，event参数代表操作事件(可读、可写、挂断等)。例如指定某个epfd内部的某个fd，新增一个可读事件监听，新增成功返回0，失败返回-1。</p>
+<p><font color="red">epoll_wait函数</font>用于等待epfd上的io事件，等待过程中线程阻塞。前俩个函数可以创建一个fd集合，并对其中的每个fd设置各种类型的监听事件，而此函数则真正负责监听。内核会把监听到的事件添加到events参数中，最多添加maxevents个，并通过timeout参数控制超时时间，返回监听到的事件数量。</p>
+<p><strong>epoll内部执行流程图:</strong><br><img src="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/epoll%E5%87%BD%E6%95%B0%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B.png" class="lazyload" data-srcset="/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/epoll%E5%87%BD%E6%95%B0%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p>epoll不会像select那样对监听的描述符数量进行限制，也不会像select/poll那样每次监听都将所有fd传到内核，而是通过epoll_ctl函数逐个放入，后续调用epoll_wait函数监听时，只需要告诉内核epfd即可，达到数据轻量拷贝的效果，不过返回时仍然需要拷贝所有fd到应用程序。</p>
+<p>epoll还使用了事件驱动的机制，在内核维护了一个链表记录就绪事件，当某个socket有事件发生时会向CPU发送中断信号，然后执行对应的回调函数将描述符添加到就绪链表中，应用程序通过epoll_wait函数获取就绪描述符时，只需要扫描这个链表即可，也就是说epoll只关心活跃连接，并不会像select/poll那样随着连接数增多，效率降低。</p>
+<p>epoll支持条件触发(LT)和水平触发(ET)两种工作方式，LT的工作方式在写select时说的很清楚了。ET在就绪通知方面与LT相反，对于就绪的描述符仅通知应用程序一次，即使应用程序没有进行处理也不会在多次监听过程中重复提醒，除非你做了某些操作导致变成未就绪状态，后面再次就绪才会再提醒。ET模式在调用epoll_ctl函数时，在event参数的属性中设置。</p>
+<p class="p red">从epoll的原理来看，好像比select/poll要高级很多，但这并不代表epoll能完全代替select/poll。对于监听的fd集合，如果每次检查大多数fd都处于就绪状态，使用事件驱动的机制就有点画蛇添足了，还不如直接轮询。因此epoll相对于select/poll来说，适合连接数更多、请求频率更低的场景。</p>
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+        <div class='copyright'>
+          <blockquote>
+            
+              
+                <p>博客内容遵循 署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</p>
+
+              
+            
+              
+                <p>本文永久链接是：<a href=http://yoursite.com/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/>http://yoursite.com/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/</a></p>
+              
+            
+          </blockquote>
+        </div>
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2022-02-10T18:41:01+08:00">
+  <a class='notlink'>
+    <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
+    <p>更新于：2022年2月10日</p>
+  </a>
+</div>
+
+        
+      
+        
+          
+
+        
+      
+        
+          
+  <div class="new-meta-item share -mob-share-list">
+  <div class="-mob-share-list share-body">
+    
+      
+        <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/&title=IO流(一) Linux系统中的IO - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+        <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/&title=IO流(一) Linux系统中的IO - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+        <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/05/06/IO%E6%B5%81-Linux%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84IO/&title=IO流(一) Linux系统中的IO - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2020/05/07/IO%E6%B5%81-Java%E4%B8%AD%E7%9A%84%E4%BC%A0%E7%BB%9FIO/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>IO流(二) Java中的传统IO</p>
+          <p class='content'>1.概述Java传统IO是指java.io包中，以InputStream、OutputStream及其子类为代表的字节流，和Reader、Writer及其子类为代表的字符流，外加其他辅助类(文件...</p>
+        </a>
+      
+      
+        <a class='next' href='/2020/03/17/%E7%BA%BF%E7%A8%8B%E6%B1%A0/'>
+          <p class='title'>多线程(十七) 线程池<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>简介解释线程池之前要先说一下池化技术，池化技术简单点来说，就是提前保存大量的资源，以备不时之需。而线程池就是利用池化技术保存线程资源的容器，同样也是Java多线程编程的重要基础。
+多线程优点:
+...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%A6%82%E8%BF%B0"><span class="toc-text">1.概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E9%A9%B1%E5%8A%A8%E7%A8%8B%E5%BA%8F"><span class="toc-text">2.驱动程序</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E4%BB%80%E4%B9%88%E6%98%AF%E9%A9%B1%E5%8A%A8%E7%A8%8B%E5%BA%8F"><span class="toc-text">2.1 什么是驱动程序</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E4%B8%8Elinux%E5%85%B3%E7%B3%BB"><span class="toc-text">2.2 与linux关系</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E8%99%9A%E6%8B%9F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="toc-text">3.虚拟文件系统</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E6%96%87%E4%BB%B6%E5%AD%90%E7%B3%BB%E7%BB%9F"><span class="toc-text">3.1 文件子系统</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E7%BD%91%E7%BB%9C%E5%AD%90%E7%B3%BB%E7%BB%9F"><span class="toc-text">3.1 网络子系统</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E5%85%B6%E4%BB%96%E5%AD%90%E7%B3%BB%E7%BB%9F"><span class="toc-text">3.1 其他子系统</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6"><span class="toc-text">4.文件描述符</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E6%8F%8F%E8%BF%B0%E7%AC%A6%E7%BB%93%E6%9E%84"><span class="toc-text">4.1 描述符结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E6%A0%87%E5%87%86%E6%8F%8F%E8%BF%B0%E7%AC%A6"><span class="toc-text">4.2 标准描述符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E6%8C%87%E9%92%88%E7%A7%BB%E5%8A%A8"><span class="toc-text">4.3 指针移动</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-IO%E5%87%BD%E6%95%B0"><span class="toc-text">5.IO函数</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-open"><span class="toc-text">5.1 open</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-socket"><span class="toc-text">5.2 socket</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-read%E4%B8%8Ewrite"><span class="toc-text">5.3 read与write</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-send%E4%B8%8Erecv"><span class="toc-text">5.4 send与recv</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-5-close"><span class="toc-text">5.5 close</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-IO%E6%A8%A1%E5%9E%8B"><span class="toc-text">6.IO模型</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#6-1-%E5%90%8C%E6%AD%A5%E9%98%BB%E5%A1%9EIO"><span class="toc-text">6.1 同步阻塞IO</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-2-%E5%90%8C%E6%AD%A5%E9%9D%9E%E9%98%BB%E5%A1%9EIO"><span class="toc-text">6.2 同步非阻塞IO</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-3-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8"><span class="toc-text">6.3 IO多路复用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-4-%E4%BF%A1%E5%8F%B7%E9%A9%B1%E5%8A%A8IO"><span class="toc-text">6.4 信号驱动IO</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-5-%E5%BC%82%E6%AD%A5%E9%9D%9E%E9%98%BB%E5%A1%9EIO"><span class="toc-text">6.5 异步非阻塞IO</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8%E5%8E%9F%E7%90%86"><span class="toc-text">7 IO多路复用原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#7-1-select"><span class="toc-text">7.1 select</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-2-poll"><span class="toc-text">7.2 poll</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-3-epoll"><span class="toc-text">7.3 epoll</span></a></li></ol></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+        
+      </div>
+      
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+          
+            
+          
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.0.0" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p><a href="/">Copyright © 2017-2020 XXX</a></p>
+
+        </div>
+      
+    
+  </footer>
+
+
+      <a class="s-top fas fa-arrow-up fa-fw" href='javascript:void(0)'></a>
+    </div>
+  </div>
+  <div>
+    <!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    setTimeout(function() {
+      loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+    }, 1);
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+</script>
+
+
+<!-- internal -->
+
+
+
+
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+  
+    <script>
+      window.FPConfig = {
+        delay: 0,
+        ignoreKeywords: [],
+        maxRPS: 5,
+        hoverDelay: 25
+      };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  var GUEST_INFO = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link'.split(',').filter(function (item) {
+    return GUEST_INFO.indexOf(item) > -1
+  });
+  var REQUIRED_FIELDS = ['nick', 'mail', 'link'];
+  var requiredFields = 'nick,mail'.split(',').filter(function (item) {
+    return REQUIRED_FIELDS.indexOf(item) > -1
+  });
+
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+
+    let pagePlaceholder = $.trim($('#pjax-comment-placeholder').text()) || "快来评论吧~";
+
+    let path = $.trim($('#pjax-comment-path').text());
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+
+    var valine = new Valine();
+    valine.init({
+      el: '#valine_container',
+      meta: meta,
+      placeholder: pagePlaceholder,
+      path: path,
+      appId: "",
+      appKey: "",
+      pageSize: '10',
+      avatar: 'robohash',
+      lang: 'zh-cn',
+      visitor: 'true',
+      highlight: 'true',
+      mathJax: 'false',
+      enableQQ: 'true',
+      recordIP: 'false',
+      requiredFields: requiredFields,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps
+    })
+  }
+
+  $(function () {
+    pjax_valine();
+  });
+</script>
+
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+
+  
+    
+<script src="/js/search.js"></script>
+
+  
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+(function ($) {
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+})(jQuery);
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'http://yoursite.com' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'http://yoursite.com' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'http://yoursite.com' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+<!-- more -->
+
+
+    
+      
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+<!-- 样式位于：source/css/_third-party/pjaxanimate.styl -->
+
+<div class="pjax-animate">
+  
+    <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
+    <div id="loading-bar-wrapper"><script>NProgress.configure({parent:"#loading-bar-wrapper",trickleSpeed: 100})</script></div>
+    <script>
+      window.ShowLoading = function() {
+        NProgress.start();
+      };
+      window.HideLoading = function() {
+        NProgress.done();
+      }
+    </script>
+  
+</div>
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+      $('.l_header .switcher .s-search').removeClass('active'); // 关闭移动端激活的搜索框
+      $('.l_header').removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      $('.wrapper').removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      $('.s-top').unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+      window.ShowLoading();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      // 关于百度统计对 SPA 页面的处理：
+      // 方案一：百度统计>管理>单页应用设置中，打开开启按钮即可对SPA进行统计。 https://tongji.baidu.com/web/help/article?id=324
+      // 方案二：取消注释下列代码。 https://tongji.baidu.com/web/help/article?id=235
+      // 
+
+      // 关于谷歌统计对 SPA 页面的处理：
+      // 当应用以动态方式加载内容并更新地址栏中的网址时，也应该更新通过 gtag.js 存储的网页网址。
+      // https://developers.google.cn/analytics/devguides/collection/gtagjs/single-page-applications?hl=zh-cn
+      
+
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+          if (typeof $.fancybox == "undefined") {
+            SCload_fancybox();
+          } else {
+            pjax_fancybox();
+          }
+        
+        
+        
+        
+        
+        
+          pjax_valine();
+        
+        
+        
+        
+        
+      } catch (e) {
+        console.log(e);
+      }
+      window.HideLoading();
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+      window.HideLoading();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+
+    
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/gh/zyoushuo/Blog/hexo/js/mouse_click.js"></script>
+</body>
+</html>
