@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.0.0'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+
+  <!-- 页面元数据 -->
+  
+  <title>IO流(十五) DirectByteBuffer - 来杯冰镇可乐</title>
+  
+
+  
+    <meta name="description" content="DirectByteBuffer的源码解析">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css">
+
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/l-lin/font-awesome-animation/dist/font-awesome-animation.min.css">
+
+  
+
+  
+
+  
+    <link rel="shortcut icon" type='image/x-icon' href="https://cdn.jsdelivr.net/gh/xaoxuu/assets@master/favicon/favicon.ico">
+  
+
+  
+
+  
+
+  <!-- import link -->
+  
+
+  
+  
+    
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  <!-- 脚本懒加载函数 -->
+  <script>
+  function loadScript(src, cb) {
+    var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+    var script = document.createElement('script');
+    script.setAttribute('type','text/javascript');
+    if (cb) script.onload = cb;
+    script.setAttribute('src', src);
+    HEAD.appendChild(script);
+  }
+  //https://github.com/filamentgroup/loadCSS
+  !function(c){"use strict";var e=function(e,t,n,r){var o,i=c.document,a=i.createElement("link");if(t)o=t;else{var d=(i.body||i.getElementsByTagName("head")[0]).childNodes;o=d[d.length-1]}var f=i.styleSheets;if(r)for(var l in r)r.hasOwnProperty(l)&&a.setAttribute(l,r[l]);a.rel="stylesheet",a.href=e,a.media="only x",function e(t){if(i.body)return t();setTimeout(function(){e(t)})}(function(){o.parentNode.insertBefore(a,t?o:o.nextSibling)});var s=function(e){for(var t=a.href,n=f.length;n--;)if(f[n].href===t)return e();setTimeout(function(){s(e)})};function u(){a.addEventListener&&a.removeEventListener("load",u),a.media=n||"all"}return a.addEventListener&&a.addEventListener("load",u),(a.onloadcssdefined=s)(u),a};"undefined"!=typeof exports?exports.loadCSS=e:c.loadCSS=e}("undefined"!=typeof global?global:this);
+  </script>
+  <script id="loadcss"></script>
+</head>
+
+<body>
+  <header class="l_header auto shadow blur " style='opacity: 0' >
+  <div class='container'>
+  <div class='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a class="s-comment fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+          
+            <i class='fas fa-anchor'></i>
+          
+          
+            Zoke
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-home fa-fw'></i>首页
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-bug fa-fw'></i>日记
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" 
+                  
+                  
+                  >
+                  <i class='fas fa-bahai fa-fw'></i>娱乐
+                </a>
+                
+                  <ul class="list-v">
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-camera-retro fa-fw'></i>相册
+                </a>
+                
+              </li>
+            
+          
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-guitar fa-fw'></i>视频
+                </a>
+                
+              </li>
+            
+          
+                    
+                  </ul>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-home fa-fw'></i>首页
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-bug fa-fw'></i>日记
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" 
+                  
+                  
+                  >
+                  <i class='fas fa-bahai fa-fw'></i>娱乐
+                </a>
+                
+                  <ul class="list-v">
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-camera-retro fa-fw'></i>相册
+                </a>
+                
+              </li>
+            
+          
+                    
+                      
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-guitar fa-fw'></i>视频
+                </a>
+                
+              </li>
+            
+          
+                    
+                  </ul>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+  <div class="l_body">
+    <div class="l_cover">
+  
+    
+    
+        <div class='cover-wrapper post search' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://cdn.jsdelivr.net/gh/volantis-x/cdn-wallpaper-minimalist@1.0.0/2020/001.jpg"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">冰镇可乐</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <input type="text" class="input u-search-input" placeholder="search you want .." />
+          <i class="icon fas fa-search fa-fw"></i>
+        </form>
+      </div>
+    
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div class="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+  
+    <div class='safearea'>
+      <div class='body-wrapper' id="pjax-container">
+        
+          <!--此文件用来存放一些不方便取值的变量--> 
+<!--思路大概是将值藏到重加载的区域内--> 
+ 
+ 
+ 
+<div id="pjax-data" style="display: none"> 
+  <div id="pjax-ispage">true</div> 
+  <div id="pjax-pageTitle">IO流(十五) DirectByteBuffer</div> 
+  <div id="pjax-enable-cover">true</div> 
+  <div id="pjax-comment-path"></div> 
+  <div id="pjax-comment-placeholder"></div> 
+</div> 
+ 
+ 
+<script> 
+  // 处理封面 此时 jquery 还没加载 
+  if ("none" == "none") { // 移除封面 
+    document.getElementsByClassName('cover-wrapper')[0].style.display = "none"; 
+    document.getElementsByClassName('l_header', 'cover-wrapper')[0].classList.add("show"); 
+  } else { 
+    if ("none" == "half") { // 半屏 
+      document.getElementsByClassName('cover-wrapper')[0].setAttribute('id', 'half'); 
+      document.getElementsByClassName('scroll-down')[0].style.display = "none"; 
+    } else if ("none" == "full") { // 全屏 
+      document.getElementsByClassName('cover-wrapper')[0].setAttribute('id', 'full'); 
+      document.getElementsByClassName('scroll-down')[0].style.display = ""; 
+    } 
+    document.getElementsByClassName('cover-wrapper')[0].style.display = ""; 
+    document.getElementsByClassName('l_header', 'cover-wrapper')[0].classList.remove("show"); 
+  } 
+</script> 
+ 
+
+        
+        
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        IO流(十五) DirectByteBuffer
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+<div class='new-meta-item author'>
+  <a class='author' href="/" rel="nofollow">
+    <img no-lazy src="">
+    <p>lvtao</p>
+  </a>
+</div>
+
+          
+        
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/">java基础</a><span class="sep"></span><a class="category-link" href="/categories/java%E5%9F%BA%E7%A1%80/io%E6%B5%81/">io流</a>
+    </a>
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2020年6月3日</p>
+  </a>
+</div>
+
+          
+        
+          
+            
+  <div class="new-meta-item browse leancloud">
+    <a class='notlink'>
+      
+      <div id="lc-pv" data-title="IO流(十五) DirectByteBuffer" data-path="/2020/06/03/IO%E6%B5%81-DirectByteBuffer/">
+        <i class="fas fa-eye fa-fw" aria-hidden="true"></i>
+        <span id='number'><i class="fas fa-circle-notch fa-spin fa-fw" aria-hidden="true"></i></span>
+        次浏览
+      </div>
+    </a>
+  </div>
+
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1.概述"></a>1.概述</h2><p>DirectByteBuffer是直接缓冲区，<span class="p red">也就是说缓冲的数据并不在JVM堆内，而是在内核内存中。</span>在执行IO操作时，也就省去了从堆内存到JNI内存、从JNI内存到内核内存两次拷贝，效率大大提高。但堆外内存的回收不受GC的影响，需要在Java层面自己去管理。</p>
+<p>DirectByteBuffer的底层通过mmap()系统函数实现，可以通过<span class="p red">文件映射</span>或<span class="p red">匿名映射</span>的方式申请堆外内存，重写ByteBuffer类的抽象方法时，也都是直接对内存地址进行操作。</p>
+<h2 id="2-映射方式"><a href="#2-映射方式" class="headerlink" title="2.映射方式"></a>2.映射方式</h2><h3 id="2-1-文件映射"><a href="#2-1-文件映射" class="headerlink" title="2.1 文件映射"></a>2.1 文件映射</h3><p>对磁盘文件的映射，是将磁盘文件的整体或部分区域，映射到进程的虚拟地址空间，这块虚拟地址存在与之对应的一块磁盘地址。在Java中，文件映射通过FileChannel类实现:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建随机访问文件对象，设置为可读(r)可写(w)</span></span><br><span class="line">    RandomAccessFile raf = <span class="keyword">new</span> RandomAccessFile(<span class="string">&quot;/文件路径&quot;</span>, <span class="string">&quot;rw&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建文件通道对象</span></span><br><span class="line">    FileChannel fileChannel = raf.getChannel();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建映射缓冲区，映射区域为文件的全部地址，并且支持读和写</span></span><br><span class="line">    MappedByteBuffer mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, <span class="number">0</span>, (<span class="keyword">int</span>) fc.size());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<br>
+FileChannel类的map()方法，虽然映射大小在方法参数中是long类型，但内部的校验逻辑却不允许值超出<span class="p red">Integer.MAX_VALUE</span>，也就是单次最多映射2个G大小(2^32个字节)，如果文件超出2G需要分成多段映射。Java层面并没有对映射的总大小进行限制，使用不当会引起<span class="p red">本机内存溢出。</span>
+
+<h3 id="2-2-匿名映射"><a href="#2-2-匿名映射" class="headerlink" title="2.2 匿名映射"></a>2.2 匿名映射</h3><p>内存映射可以不依赖磁盘文件，本质上是按照申请大小在物理内存(内存条)上选择一块区域，映射到进程的虚拟地址空间，不关联其他任何设备源，在Linux系统中通过malloc()函数实现。在Java中，ByteBuffer提供了静态方法实现:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span>&#123;</span><br><span class="line">    ByteBuffer byteBuffer = ByteBuffer.allocateDirect(<span class="number">1024</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<br>
+匿名映射的总大小受<span class="p blue">JVM参数:-XX:MaxDirectMemorySize</span>限制，默认和JVM堆大小保持一致，如果申请时超出限制则<span class="p red">JVM堆内存溢出</span>。这只是JVM层面的限制，当请求到达操作系统层面，还会存在本机的RAM、SWAP、CPU寻址空间等限制。
+
+<h2 id="3-MappedByteBuffer"><a href="#3-MappedByteBuffer" class="headerlink" title="3.MappedByteBuffer"></a>3.MappedByteBuffer</h2><p>MappedByteBuffer是DirectByteBuffer的抽象父类，但内部所有功能都是针对文件映射设计的，如果是通过匿名映射方式创建，就没有对应的磁盘文件，那么调用MappedByteBuffer方法会报错，具体的细节在下面源码中会讲解。</p>
+<h3 id="3-1-SWAP机制"><a href="#3-1-SWAP机制" class="headerlink" title="3.1 SWAP机制"></a>3.1 SWAP机制</h3><p>SWAP机制是操作系统对运行内存使用率的优化，当操作系统的物理内存不够使用时，会将一部分暂时不会被使用的内存释放出来，也就是写在硬盘上，以供当前运行的程序使用，这个现象称为<span class="p red">换出</span>。那些被释放的空间可能来自一些很长时间没有什么操作的程序，等到那些程序要运行时，再从硬盘的Swap分区中，将原先保存的数据加载回物理内存，这个现象称为<span class="p red">换入</span>。</p>
+<p>并不是所有的内存数据都会被交换到Swap分区中，有相当一部分数据被直接交换到文件系统。例如通过文件映射生成的内存，当内存使用紧张时，临时交换到硬盘的Swap分区没有意义，可以直接刷回对应的文件所在地址，下次恢复直接根据文件地址读取数据到内存即可；通过匿名映射生成的内存，不会像前者那样有个地方可以持久化，因此必须要交换到Swap分区。</p>
+<p><img src="/2020/06/03/IO%E6%B5%81-DirectByteBuffer/SWAP%E5%88%86%E5%8C%BA%E4%BA%A4%E6%8D%A2.png" class="lazyload" data-srcset="/2020/06/03/IO%E6%B5%81-DirectByteBuffer/SWAP%E5%88%86%E5%8C%BA%E4%BA%A4%E6%8D%A2.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<h3 id="3-2-缺页机制"><a href="#3-2-缺页机制" class="headerlink" title="3.2 缺页机制"></a>3.2 缺页机制</h3><p>现在的操作系统基本都采用分页的形式管理内存，这个分页机制与文件系统的PageCache很相似，但完全是两个不同的东西。对于文件映射出来的内存想要持久化到硬盘，是将数据委托给文件系统，而多数文件系统会先将数据写入PageCache，然后在合适的时候刷回硬盘。内存中的数据无论回到文件系统、还是SWAP分区，都是以页为单位进行IO。</p>
+<p>在创建DirectByteBuffer后，并不会直接分配物理内存，当第一次访问数据地址时，操作系统会产生一个缺页异常，触发中断后将数据从硬盘加载到物理内存中，后续还有可能又被换入Swap分区。MappedByteBuffer提供了相关方法，检查当前映射的数据是否已加载到物理内存，或者手动加载到物理内存中。</p>
+<h3 id="3-3-成员变量和构造器"><a href="#3-3-成员变量和构造器" class="headerlink" title="3.3 成员变量和构造器"></a>3.3 成员变量和构造器</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">MappedByteBuffer</span> <span class="keyword">extends</span> <span class="title">ByteBuffer</span></span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">byte</span> unused;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">final</span> FileDescriptor fd;</span><br><span class="line"></span><br><span class="line">	MappedByteBuffer(<span class="keyword">int</span> mark, <span class="keyword">int</span> pos, <span class="keyword">int</span> lim, <span class="keyword">int</span> cap, FileDescriptor fd)&#123;</span><br><span class="line">        <span class="keyword">super</span>(mark, pos, lim, cap);</span><br><span class="line">        <span class="keyword">this</span>.fd = fd;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">	MappedByteBuffer(<span class="keyword">int</span> mark, <span class="keyword">int</span> pos, <span class="keyword">int</span> lim, <span class="keyword">int</span> cap) &#123;</span><br><span class="line">        <span class="keyword">super</span>(mark, pos, lim, cap);</span><br><span class="line">        <span class="keyword">this</span>.fd = <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<br>
+MappedByteBuffer共有两个构造器，第一个构造器供文件映射创建时使用，需要指定磁盘文件的描述符对象；第二个构造器供匿名映射创建时使用，不需要指定磁盘文件的描述符。
+
+<p>成员变量unused好像没啥用，不过这个fd很有意思，FileChannel类的map()方法中，并没有将真正的描述符对象传入构造器，而是创建了一个新的描述符对象，里面的描述符值永远是-1。其实读完源码就会明白，fd的作用只是通过是否为null来判断创建的方式。</p>
+<h3 id="3-4-native方法"><a href="#3-4-native方法" class="headerlink" title="3.4 native方法"></a>3.4 native方法</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 当前映射的区域是否已经加载到物理内存(内存条)上</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">native</span> <span class="keyword">boolean</span> <span class="title">isLoaded0</span><span class="params">(<span class="keyword">long</span> address, <span class="keyword">long</span> length, <span class="keyword">int</span> pageCount)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将指定部分的映射加载到物理内存(内存条)上</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title">load0</span><span class="params">(<span class="keyword">long</span> address, <span class="keyword">long</span> length)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 底层调用msync()系统函数刷盘，可以指定刷盘的映射区域范围，提高效率</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title">force0</span><span class="params">(FileDescriptor fd, <span class="keyword">long</span> address, <span class="keyword">long</span> length)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-5-private方法"><a href="#3-5-private方法" class="headerlink" title="3.5 private方法"></a>3.5 private方法</h3><p><strong>①映射校验</strong>，如果fd为null，代表当前类是通过匿名映射创建的，如果fd不为null，代表当前类是通过文件映射创建的。MappedByteBuffer类所有对外提供的功能都是针对文件映射的，因此所有public修饰方法的第一行代码，都会调用此方法验证当前类的创建方式:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">checkMapped</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (fd == <span class="keyword">null</span>)</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedOperationException();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><br><br><strong>②映射内存的偏移量</strong>，FileChannel类的map()方法可以通过position参数，指定映射的起始地址，也就是说address不一定刚好在某个页的开始位置，此方法就是用于计算address的所在页，与页开始位置的字节距离:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">long</span> <span class="title">mappingOffset</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> ps = Bits.pageSize();</span><br><span class="line">    <span class="keyword">long</span> offset = address % ps;</span><br><span class="line">    <span class="keyword">return</span> (offset &gt;= <span class="number">0</span>) ? offset : (ps + offset);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>假设选择一个6KB大小的磁盘文件，通过map()方法进行映射，position设置为2、size设置为1024，偏移量如图:<br><img src="/2020/06/03/IO%E6%B5%81-DirectByteBuffer/%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%84-%E5%81%8F%E7%A7%BB%E9%87%8F.png" class="lazyload" data-srcset="/2020/06/03/IO%E6%B5%81-DirectByteBuffer/%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%84-%E5%81%8F%E7%A7%BB%E9%87%8F.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p><br><br><strong>③映射内存的访问地址</strong>，在指定position值映射文件时，address不一定正好落在某个页的起始位置，但内存映射的最小单位为页，必然会被加载到虚拟内存以及物理内存中。因此想要得到实际映射地址值，需要根据映射偏移量，往前推一段距离:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">long</span> <span class="title">mappingAddress</span><span class="params">(<span class="keyword">long</span> mappingOffset)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> address - mappingOffset;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>假设选择一个6KB大小的磁盘文件，通过map()方法进行映射，position设置为2、size设置为1024，实际映射地址如图:<br><img src="/2020/06/03/IO%E6%B5%81-DirectByteBuffer/%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%84-%E5%AE%9E%E9%99%85%E6%98%A0%E5%B0%84%E5%9C%B0%E5%9D%80.png" class="lazyload" data-srcset="/2020/06/03/IO%E6%B5%81-DirectByteBuffer/%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%84-%E5%AE%9E%E9%99%85%E6%98%A0%E5%B0%84%E5%9C%B0%E5%9D%80.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<p><br><br><strong>④映射内存的地址长度</strong>，在偏移量大于零的情况下，实际映射内存地址肯定要比address小一些，那么地址的长度也是一样的道理。address对应的长度就是容量，需要在加上偏移量值:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">long</span> <span class="title">mappingLength</span><span class="params">(<span class="keyword">long</span> mappingOffset)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (<span class="keyword">long</span>)capacity() + mappingOffset;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>假设选择一个6KB大小的磁盘文件，通过map()方法进行映射，position设置为2、size设置为1024，实际映射长度如图:<br><img src="/2020/06/03/IO%E6%B5%81-DirectByteBuffer/%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%84-%E5%AE%9E%E9%99%85%E6%98%A0%E5%B0%84%E9%95%BF%E5%BA%A6.png" class="lazyload" data-srcset="/2020/06/03/IO%E6%B5%81-DirectByteBuffer/%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%84-%E5%AE%9E%E9%99%85%E6%98%A0%E5%B0%84%E9%95%BF%E5%BA%A6.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<h3 id="3-6-public方法"><a href="#3-6-public方法" class="headerlink" title="3.6 public方法"></a>3.6 public方法</h3><p><strong>判断当前对象映射的文件地址，是否已经加载到物理地址(内存条)中:</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">isLoaded</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 必须是文件映射创建的缓冲区</span></span><br><span class="line">    checkMapped();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果缓冲区为空，直接返回true</span></span><br><span class="line">    <span class="keyword">if</span> ((address == <span class="number">0</span>) || (capacity() == <span class="number">0</span>))</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取映射区域的偏移量</span></span><br><span class="line">    <span class="keyword">long</span> offset = mappingOffset();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取映射的长度</span></span><br><span class="line">    <span class="keyword">long</span> length = mappingLength(offset);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指定映射的区域范围，判断是否加载到物理地址中</span></span><br><span class="line">    <span class="keyword">return</span> isLoaded0(mappingAddress(offset), length, Bits.pageCount(length));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><br><strong>将当前对象映射的文件地址，加载到物理地址(内存条)中:</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> MappedByteBuffer <span class="title">load</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 必须是文件映射创建的缓冲区</span></span><br><span class="line">    checkMapped();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果缓冲区为空，直接返回</span></span><br><span class="line">    <span class="keyword">if</span> ((address == <span class="number">0</span>) || (capacity() == <span class="number">0</span>))</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取偏移量、映射长度</span></span><br><span class="line">    <span class="keyword">long</span> offset = mappingOffset();</span><br><span class="line">    <span class="keyword">long</span> length = mappingLength(offset);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 通过偏移量计算出实际地址，进行加载</span></span><br><span class="line">    load0(mappingAddress(offset), length);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取默认页大小</span></span><br><span class="line">    Unsafe unsafe = Unsafe.getUnsafe();</span><br><span class="line">    <span class="keyword">int</span> ps = Bits.pageSize();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 计算当前映射长度需要几页</span></span><br><span class="line">    <span class="keyword">int</span> count = Bits.pageCount(length);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取实际地址</span></span><br><span class="line">    <span class="keyword">long</span> a = mappingAddress(offset);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将每一页的起始字节数据读取一遍，好像是给unused赋值的，没看懂...</span></span><br><span class="line">    <span class="keyword">byte</span> x = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;count; i++) &#123;</span><br><span class="line">        x ^= unsafe.getByte(a);</span><br><span class="line">        a += ps;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (unused != <span class="number">0</span>)</span><br><span class="line">        unused = x;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><br><strong>将映射内存区域的内容，持久化到磁盘上，底层通过msync()系统函数:</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> MappedByteBuffer <span class="title">force</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 必须是文件映射创建的缓冲区</span></span><br><span class="line">    checkMapped();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果存在缓冲数据</span></span><br><span class="line">    <span class="keyword">if</span> ((address != <span class="number">0</span>) &amp;&amp; (capacity() != <span class="number">0</span>)) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取偏移量</span></span><br><span class="line">        <span class="keyword">long</span> offset = mappingOffset();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 根据偏移量计算出的起始地址、实际长度，将该区域的内存数据刷回磁盘</span></span><br><span class="line">        force0(fd, mappingAddress(offset), mappingLength(offset));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-DirectByteBuffer"><a href="#4-DirectByteBuffer" class="headerlink" title="4.DirectByteBuffer"></a>4.DirectByteBuffer</h2><h3 id="4-1-成员变量"><a href="#4-1-成员变量" class="headerlink" title="4.1 成员变量"></a>4.1 成员变量</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DirectByteBuffer</span> <span class="keyword">extends</span> <span class="title">MappedByteBuffer</span> <span class="keyword">implements</span> <span class="title">DirectBuffer</span></span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 此类用于直接访问系统资源</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">static</span> <span class="keyword">final</span> Unsafe unsafe = Bits.unsafe();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// JVM中一个对象由头、实例数据、对齐填充组成，此方法可以看作是对象头的长度</span></span><br><span class="line">    <span class="comment">// 对象头后面就是真实的数据，这里视为第一个元素在数组中的起始坐标，用于后续读写数据的位置参考</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> arrayBaseOffset = (<span class="keyword">long</span>)unsafe.arrayBaseOffset(<span class="keyword">byte</span>[].class);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 是否按照非对齐访问，比如存储6个字节，分配的地址值如果永远是6的倍数，那就是对齐访问</span></span><br><span class="line">    <span class="comment">// 内存是不是对齐访问，是由操作系统决定的，用于减少CPU的读写效率</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> unaligned = Bits.unaligned();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 和堆外内存释放有关，下面会讲</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Object att;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 当前对象被回收后，堆外内存释放对象</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Cleaner cleaner;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-构造器"><a href="#4-2-构造器" class="headerlink" title="4.2 构造器"></a>4.2 构造器</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">DirectByteBuffer(<span class="keyword">int</span> cap) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用父类MappedByteBuffer的构造器</span></span><br><span class="line">    <span class="keyword">super</span>(-<span class="number">1</span>, <span class="number">0</span>, cap, cap);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//直接内存是否要页对齐，这个返回值和操作系统有关系</span></span><br><span class="line">    <span class="keyword">boolean</span> pa = VM.isDirectMemoryPageAligned();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取默认的页大小(通常为4096，也就是4KB)</span></span><br><span class="line">    <span class="keyword">int</span> ps = Bits.pageSize();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果需要页对齐，最终映射的内存大小要比实际申请的大小，多出一个默认页的大小</span></span><br><span class="line">    <span class="keyword">long</span> size = Math.max(<span class="number">1L</span>, (<span class="keyword">long</span>)cap + (pa ? ps : <span class="number">0</span>));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// JVM控制可申请直接内存的总大小，每次申请时需要调用此方法，检查剩余可申请的直接内存容量，是否足够本次分配</span></span><br><span class="line">    <span class="comment">// 如果分配成功，JVM会更新已分配直接内存大小记录，如果不够分配，则抛出异常</span></span><br><span class="line">    Bits.reserveMemory(size, cap);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">long</span> base = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// 调用Unsafe类，匿名映射一块指定大小的内存，并返回映射地址</span></span><br><span class="line">        base = unsafe.allocateMemory(size);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (OutOfMemoryError x) &#123;</span><br><span class="line">        <span class="comment">// 映射失败，先将JVM刚刚加上的已分配的直接内存的大小减掉，在抛出异常</span></span><br><span class="line">        Bits.unreserveMemory(size, cap);</span><br><span class="line">        <span class="keyword">throw</span> x;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将地址所有值都设置为0</span></span><br><span class="line">    unsafe.setMemory(base, size, (<span class="keyword">byte</span>) <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果需要页对齐，但申请的内存大小不是默认页大小的整数倍，利用上面多申请的一页内存，将内存地址填充对齐</span></span><br><span class="line">    <span class="keyword">if</span> (pa &amp;&amp; (base % ps != <span class="number">0</span>)) &#123;</span><br><span class="line">        address = base + ps - (base &amp; (ps - <span class="number">1</span>));</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 如果是整数倍则直接使用</span></span><br><span class="line">        address = base;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建一个直接内存的回收对象，用于直接内存的回收，Cleaner类下面会单独讲</span></span><br><span class="line">    cleaner = Cleaner.create(<span class="keyword">this</span>, <span class="keyword">new</span> Deallocator(base, size, cap));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 和其他缓冲区没任何关系，所以设置为null</span></span><br><span class="line">    att = <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-读写方法"><a href="#4-2-读写方法" class="headerlink" title="4.2 读写方法"></a>4.2 读写方法</h3><p><br><strong>重写ByteBuffer的三个读取方法:</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 从映射区域读取单个字节数据</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">byte</span> <span class="title">get</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> ((unsafe.getByte(ix(nextGetIndex()))));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 从映射区域读取i个字节数据</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">byte</span> <span class="title">get</span><span class="params">(<span class="keyword">int</span> i)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> ((unsafe.getByte(ix(checkIndex(i)))));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 从映射区域的offset坐标，批量读取length个字节并填装到dst数组</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ByteBuffer <span class="title">get</span><span class="params">(<span class="keyword">byte</span>[] dst, <span class="keyword">int</span> offset, <span class="keyword">int</span> length)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 当读取的元素数量超过默认阈值</span></span><br><span class="line">    <span class="keyword">if</span> (((<span class="keyword">long</span>)length &lt;&lt; <span class="number">0</span>) &gt; Bits.JNI_COPY_TO_ARRAY_THRESHOLD) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 老规矩，调用Buffer的静态方法校验坐标</span></span><br><span class="line">        checkBounds(offset, length, dst.length);</span><br><span class="line">        <span class="keyword">int</span> pos = position();</span><br><span class="line">        <span class="keyword">int</span> lim = limit();</span><br><span class="line">        <span class="keyword">assert</span> (pos &lt;= lim);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 读取的坐标范围最多到limit限制值</span></span><br><span class="line">        <span class="keyword">int</span> rem = (pos &lt;= lim ? lim - pos : <span class="number">0</span>);</span><br><span class="line">        <span class="keyword">if</span> (length &gt; rem)</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> BufferUnderflowException();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 内部采用Unsafe.copyMemory()方法进行拷贝</span></span><br><span class="line">        Bits.copyToArray(ix(pos), dst, arrayBaseOffset,</span><br><span class="line">                             (<span class="keyword">long</span>)offset &lt;&lt; <span class="number">0</span>,</span><br><span class="line">                             (<span class="keyword">long</span>)length &lt;&lt; <span class="number">0</span>);</span><br><span class="line">        <span class="comment">// 更新读取进度</span></span><br><span class="line">        position(pos + length);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 当读取的元素数量低于默认阈值，调用Buffer的一个个读取方式，消耗成本更低</span></span><br><span class="line">        <span class="keyword">super</span>.get(dst, offset, length);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><br><strong>重写ByteBuffer的四个写入方法:</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 将单个字节写入映射区域</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ByteBuffer <span class="title">put</span><span class="params">(<span class="keyword">byte</span> x)</span> </span>&#123;</span><br><span class="line">    unsafe.putByte(ix(nextPutIndex()), ((x)));</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将单个字节写入映射区域</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ByteBuffer <span class="title">put</span><span class="params">(<span class="keyword">int</span> i, <span class="keyword">byte</span> x)</span> </span>&#123;</span><br><span class="line">    unsafe.putByte(ix(checkIndex(i)), ((x)));</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将字节缓冲对象的数据写入映射区域</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ByteBuffer <span class="title">put</span><span class="params">(ByteBuffer src)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果参数缓冲对象是DirectByteBuffer类型</span></span><br><span class="line">    <span class="keyword">if</span> (src <span class="keyword">instanceof</span> DirectByteBuffer) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 不能是自己</span></span><br><span class="line">        <span class="keyword">if</span> (src == <span class="keyword">this</span>)</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 转化成DirectByteBuffer引用</span></span><br><span class="line">        DirectByteBuffer sb = (DirectByteBuffer)src;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取参数缓冲区对象的 读取位置、边界值</span></span><br><span class="line">        <span class="keyword">int</span> spos = sb.position();</span><br><span class="line">        <span class="keyword">int</span> slim = sb.limit();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 不能越界</span></span><br><span class="line">        <span class="keyword">assert</span> (spos &lt;= slim);</span><br><span class="line">        <span class="keyword">int</span> srem = (spos &lt;= slim ? slim - spos : <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取当前也就是要写入的缓冲区的 读取位置、边界值</span></span><br><span class="line">        <span class="keyword">int</span> pos = position();</span><br><span class="line">        <span class="keyword">int</span> lim = limit();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 也不能越界</span></span><br><span class="line">        <span class="keyword">assert</span> (pos &lt;= lim);</span><br><span class="line">        <span class="keyword">int</span> rem = (pos &lt;= lim ? lim - pos : <span class="number">0</span>);</span><br><span class="line">        <span class="keyword">if</span> (srem &gt; rem)</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> BufferOverflowException();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 将参数缓冲区的position坐标往后，直到limit坐标的数据，写入当前缓冲区的映射内存中</span></span><br><span class="line">        unsafe.copyMemory(sb.ix(spos), ix(pos), (<span class="keyword">long</span>)srem &lt;&lt; <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 更新参数缓冲区的读取进度</span></span><br><span class="line">        sb.position(spos + srem);</span><br><span class="line">        <span class="comment">// 更新当前缓冲区的读取进度</span></span><br><span class="line">        position(pos + srem);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (src.hb != <span class="keyword">null</span>) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果hb数组不为空，那就从数组中读取对应的数据，写入当前缓冲区的映射内存中</span></span><br><span class="line">        <span class="keyword">int</span> spos = src.position();</span><br><span class="line">        <span class="keyword">int</span> slim = src.limit();</span><br><span class="line">        <span class="keyword">assert</span> (spos &lt;= slim);</span><br><span class="line">        <span class="keyword">int</span> srem = (spos &lt;= slim ? slim - spos : <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">        put(src.hb, src.offset + spos, srem);</span><br><span class="line">        src.position(spos + srem);</span><br><span class="line"></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 如果参数缓冲区无法预判什么类型的，就调用父类的方法一个个循环写入</span></span><br><span class="line">        <span class="keyword">super</span>.put(src);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> ByteBuffer <span class="title">put</span><span class="params">(<span class="keyword">byte</span>[] src, <span class="keyword">int</span> offset, <span class="keyword">int</span> length)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (((<span class="keyword">long</span>)length &lt;&lt; <span class="number">0</span>) &gt; Bits.JNI_COPY_FROM_ARRAY_THRESHOLD) &#123;</span><br><span class="line">        checkBounds(offset, length, src.length);</span><br><span class="line">        <span class="keyword">int</span> pos = position();</span><br><span class="line">        <span class="keyword">int</span> lim = limit();</span><br><span class="line">        <span class="keyword">assert</span> (pos &lt;= lim);</span><br><span class="line">        <span class="keyword">int</span> rem = (pos &lt;= lim ? lim - pos : <span class="number">0</span>);</span><br><span class="line">        <span class="keyword">if</span> (length &gt; rem)</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> BufferOverflowException();</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            Bits.copyFromArray(src, arrayBaseOffset,</span><br><span class="line">                               (<span class="keyword">long</span>)offset &lt;&lt; <span class="number">0</span>,</span><br><span class="line">                               ix(pos),</span><br><span class="line">                               (<span class="keyword">long</span>)length &lt;&lt; <span class="number">0</span>);</span><br><span class="line">        position(pos + length);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.put(src, offset, length);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<br>
+<p class="p red">基本上和HeapByteBuffer的重写逻辑差不多，只不过HeapByteBuffer的position对应数组的坐标，而DirectByteBuffer的position对应映射地址的偏移量。</p>
+
+<h3 id="4-3-复制方法"><a href="#4-3-复制方法" class="headerlink" title="4.3 复制方法"></a>4.3 复制方法</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 基于当前缓冲区，从position开始往后切割一个缓冲区</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ByteBuffer <span class="title">slice</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> pos = <span class="keyword">this</span>.position();</span><br><span class="line">    <span class="keyword">int</span> lim = <span class="keyword">this</span>.limit();</span><br><span class="line">    <span class="keyword">assert</span> (pos &lt;= lim);</span><br><span class="line">    <span class="keyword">int</span> rem = (pos &lt;= lim ? lim - pos : <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">int</span> off = (pos &lt;&lt; <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">assert</span> (off &gt;= <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> DirectByteBuffer(<span class="keyword">this</span>, -<span class="number">1</span>, <span class="number">0</span>, rem, rem, off);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 基于当前缓冲区，复制一个缓冲区</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ByteBuffer <span class="title">duplicate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> DirectByteBuffer(<span class="keyword">this</span>, <span class="keyword">this</span>.markValue(), <span class="keyword">this</span>.position(), <span class="keyword">this</span>.limit(), <span class="keyword">this</span>.capacity(), <span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 基于当前缓冲区，复制一个只读缓冲区</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ByteBuffer <span class="title">asReadOnlyBuffer</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> DirectByteBufferR(<span class="keyword">this</span>, <span class="keyword">this</span>.markValue(), <span class="keyword">this</span>.position(), <span class="keyword">this</span>.limit(), <span class="keyword">this</span>.capacity(), <span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-4-其他方法"><a href="#4-4-其他方法" class="headerlink" title="4.4 其他方法"></a>4.4 其他方法</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> ByteBuffer <span class="title">compact</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> pos = position();</span><br><span class="line">    <span class="keyword">int</span> lim = limit();</span><br><span class="line">    <span class="keyword">assert</span> (pos &lt;= lim);</span><br><span class="line">    <span class="keyword">int</span> rem = (pos &lt;= lim ? lim - pos : <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    unsafe.copyMemory(ix(pos), ix(<span class="number">0</span>), (<span class="keyword">long</span>)rem &lt;&lt; <span class="number">0</span>);</span><br><span class="line">    position(rem);</span><br><span class="line">    limit(capacity());</span><br><span class="line">    discardMark();</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isDirect</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isReadOnly</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="5-堆外内存释放"><a href="#5-堆外内存释放" class="headerlink" title="5.堆外内存释放"></a>5.堆外内存释放</h2><p>JVM可以回自动收堆内的DirectByteBuffer对象，但对应的堆外内存的释放必须通过Unsafe类的freeMemory()方法，而DirectByteBuffer类并没有封装相关方法供开发者使用完毕后调用，而是在对象创建的时候就生成一个钩子函数，当DirectByteBuffer被GC回收时触发，释放对应的堆外内存。</p>
+<h3 id="5-1-Deallocator"><a href="#5-1-Deallocator" class="headerlink" title="5.1 Deallocator"></a>5.1 Deallocator</h3><p>DirectByteBuffer对象的构造器中，会将自身以及一个Deallocator对象封装成一个Cleaner实例，用于后续的堆外内存回收:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 创建DirectByteBuffer时调用</span></span><br><span class="line">cleaner = Cleaner.create(<span class="keyword">this</span>, <span class="keyword">new</span> Deallocator(base, size, cap));</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建DirectByteBufferR时调用</span></span><br><span class="line">cleaner = Cleaner.create(<span class="keyword">this</span>, unmapper);</span><br></pre></td></tr></table></figure>
+<br>
+
+<p>Deallocator是DirectByteBuffer的私有内部类，在创建时需要指定堆外内存的信息，并将堆外内存释放的逻辑代码封装在run()方法内部，供Cleaner调用:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Deallocator</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> Unsafe unsafe = Unsafe.getUnsafe();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">long</span> address;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">long</span> size;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> capacity;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="title">Deallocator</span><span class="params">(<span class="keyword">long</span> address, <span class="keyword">long</span> size, <span class="keyword">int</span> capacity)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">assert</span> (address != <span class="number">0</span>);</span><br><span class="line">        <span class="keyword">this</span>.address = address;</span><br><span class="line">        <span class="keyword">this</span>.size = size;</span><br><span class="line">        <span class="keyword">this</span>.capacity = capacity;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 钩子函数执行逻辑</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果address为0，说明已经清理过了</span></span><br><span class="line">        <span class="keyword">if</span> (address == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 指定堆外地址，释放内存</span></span><br><span class="line">        unsafe.freeMemory(address);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 将地址内容作废</span></span><br><span class="line">        address = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 从JVM的计数器中，减去释放的内存大小</span></span><br><span class="line">        Bits.unreserveMemory(size, capacity);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="5-2-Cleaner"><a href="#5-2-Cleaner" class="headerlink" title="5.2 Cleaner"></a>5.2 Cleaner</h3><p>Cleaner类的源码就不写了，它本质上是个虚引用对象，并且顶层继承是Reference抽象类，Reference抽象类内部有个静态的单向链表，当某个DirectByteBuffer实例除了Reference实现类之外，没有其他强引用时，这些Reference实现类会被JVM放入Reference抽象类的静态单向链表。</p>
+<p>Reference抽象类的内部还有一个静态代码块，初始化一个名叫ReferenceHandler的线程，这个线程是个优先级很高的守护线程，启动后会不停的循环上述的静态单向链表，如果不为空就根据情况作出对应的逻辑处理:<br><img src="/2020/06/03/IO%E6%B5%81-DirectByteBuffer/Cleaner%E8%99%9A%E5%BC%95%E7%94%A8.png" class="lazyload" data-srcset="/2020/06/03/IO%E6%B5%81-DirectByteBuffer/Cleaner%E8%99%9A%E5%BC%95%E7%94%A8.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" alt="图片"></p>
+<br>
+
+<p class="p red">从流程图中可以看出，JDK对Cleaner类型的虚引用做了特殊处理，强转并调用clean()方法，到这里就触发DirectByteBuffer实例创建时注册的钩子函数，使堆内对象与对应的堆外内存一起被释放。关于虚引用的原理，这里讲的比较简单，如果想要掌握具体的实现，还得去看Reference源码。</p>
+
+<h3 id="5-3-att属性"><a href="#5-3-att属性" class="headerlink" title="5.3 att属性"></a>5.3 att属性</h3><p>堆外内存释放还有个细节，例如创建一个DirectByteBuffer实例记作A，调用A的slice()或duplicate()或asReadOnlyBuffer()方法生成实例B，此时A和B内部的address是同一块地址，当A除了虚引用Cleaner外没有其他引用时，A的Cleaner触发钩子函数，如果此时实例B仍在使用，会导致内部的address失效，造成程序错误。</p>
+<p>DirectByteBuffer的解决办法，是为slice()、duplicate()、asReadOnlyBuffer()方法专门提供一个构造器，将实例A初始化为实例B的att属性，如果B还在使用时，就会强引用A，那么就不会触发A的Cleaner的钩子函数。</p>
+<!-- 内存特别小不适合，初始化时间长，不如用堆内 -->
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+        <div class='copyright'>
+          <blockquote>
+            
+              
+                <p>博客内容遵循 署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</p>
+
+              
+            
+              
+                <p>本文永久链接是：<a href=http://yoursite.com/2020/06/03/IO%E6%B5%81-DirectByteBuffer/>http://yoursite.com/2020/06/03/IO%E6%B5%81-DirectByteBuffer/</a></p>
+              
+            
+          </blockquote>
+        </div>
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2022-07-13T09:33:47+08:00">
+  <a class='notlink'>
+    <i class="fas fa-edit fa-fw" aria-hidden="true"></i>
+    <p>更新于：2022年7月13日</p>
+  </a>
+</div>
+
+        
+      
+        
+          
+
+        
+      
+        
+          
+  <div class="new-meta-item share -mob-share-list">
+  <div class="-mob-share-list share-body">
+    
+      
+        <a class="-mob-share-qq" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://yoursite.com/2020/06/03/IO%E6%B5%81-DirectByteBuffer/&title=IO流(十五) DirectByteBuffer - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+        <a class="-mob-share-qzone" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://yoursite.com/2020/06/03/IO%E6%B5%81-DirectByteBuffer/&title=IO流(十五) DirectByteBuffer - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qzone.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+        <a class="-mob-share-weibo" title="" rel="external nofollow noopener noreferrer noopener"
+          
+          target="_blank" href="http://service.weibo.com/share/share.php?url=http://yoursite.com/2020/06/03/IO%E6%B5%81-DirectByteBuffer/&title=IO流(十五) DirectByteBuffer - 来杯冰镇可乐&summary="
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/weibo.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=">
+          
+        </a>
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2020/09/01/RocketMQ%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>RocketMQ(一)架构原理</p>
+          <p class='content'>简介RocketMQ是阿里巴巴开源的消息中间件，使用Java语言开发，具有高吞吐量、高可用性，适合大规模分布式系统应用的特点。设计方面参考了kafka的整体机制和架构设计，并在此基础上添加了分布...</p>
+        </a>
+      
+      
+        <a class='next' href='/2020/06/02/IO%E6%B5%81-HeapByteBuffer/'>
+          <p class='title'>IO流(十四) HeapByteBuffer<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>1.概述HeapByteBuffer即堆内字节缓冲区，缓冲数据存储在父类ByteBuffer的hb属性中，内存空间的申请与释放完全由JVM负责，不用考虑内存回收的问题。在向IO设备写入数据时，需...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%A6%82%E8%BF%B0"><span class="toc-text">1.概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%98%A0%E5%B0%84%E6%96%B9%E5%BC%8F"><span class="toc-text">2.映射方式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%84"><span class="toc-text">2.1 文件映射</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E5%8C%BF%E5%90%8D%E6%98%A0%E5%B0%84"><span class="toc-text">2.2 匿名映射</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-MappedByteBuffer"><span class="toc-text">3.MappedByteBuffer</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-SWAP%E6%9C%BA%E5%88%B6"><span class="toc-text">3.1 SWAP机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E7%BC%BA%E9%A1%B5%E6%9C%BA%E5%88%B6"><span class="toc-text">3.2 缺页机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F%E5%92%8C%E6%9E%84%E9%80%A0%E5%99%A8"><span class="toc-text">3.3 成员变量和构造器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-native%E6%96%B9%E6%B3%95"><span class="toc-text">3.4 native方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-5-private%E6%96%B9%E6%B3%95"><span class="toc-text">3.5 private方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-6-public%E6%96%B9%E6%B3%95"><span class="toc-text">3.6 public方法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-DirectByteBuffer"><span class="toc-text">4.DirectByteBuffer</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F"><span class="toc-text">4.1 成员变量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E6%9E%84%E9%80%A0%E5%99%A8"><span class="toc-text">4.2 构造器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E8%AF%BB%E5%86%99%E6%96%B9%E6%B3%95"><span class="toc-text">4.2 读写方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E5%A4%8D%E5%88%B6%E6%96%B9%E6%B3%95"><span class="toc-text">4.3 复制方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E5%85%B6%E4%BB%96%E6%96%B9%E6%B3%95"><span class="toc-text">4.4 其他方法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E5%A0%86%E5%A4%96%E5%86%85%E5%AD%98%E9%87%8A%E6%94%BE"><span class="toc-text">5.堆外内存释放</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-Deallocator"><span class="toc-text">5.1 Deallocator</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-Cleaner"><span class="toc-text">5.2 Cleaner</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-att%E5%B1%9E%E6%80%A7"><span class="toc-text">5.3 att属性</span></a></li></ol></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+        
+      </div>
+      
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+          
+            
+          
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.0.0" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p><a href="/">Copyright © 2017-2020 XXX</a></p>
+
+        </div>
+      
+    
+  </footer>
+
+
+      <a class="s-top fas fa-arrow-up fa-fw" href='javascript:void(0)'></a>
+    </div>
+  </div>
+  <div>
+    <!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    setTimeout(function() {
+      loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+    }, 1);
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+</script>
+
+
+<!-- internal -->
+
+
+
+
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+  
+    <script>
+      window.FPConfig = {
+        delay: 0,
+        ignoreKeywords: [],
+        maxRPS: 5,
+        hoverDelay: 25
+      };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  var GUEST_INFO = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link'.split(',').filter(function (item) {
+    return GUEST_INFO.indexOf(item) > -1
+  });
+  var REQUIRED_FIELDS = ['nick', 'mail', 'link'];
+  var requiredFields = 'nick,mail'.split(',').filter(function (item) {
+    return REQUIRED_FIELDS.indexOf(item) > -1
+  });
+
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+
+    let pagePlaceholder = $.trim($('#pjax-comment-placeholder').text()) || "快来评论吧~";
+
+    let path = $.trim($('#pjax-comment-path').text());
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+
+    var valine = new Valine();
+    valine.init({
+      el: '#valine_container',
+      meta: meta,
+      placeholder: pagePlaceholder,
+      path: path,
+      appId: "",
+      appKey: "",
+      pageSize: '10',
+      avatar: 'robohash',
+      lang: 'zh-cn',
+      visitor: 'true',
+      highlight: 'true',
+      mathJax: 'false',
+      enableQQ: 'true',
+      recordIP: 'false',
+      requiredFields: requiredFields,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps
+    })
+  }
+
+  $(function () {
+    pjax_valine();
+  });
+</script>
+
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+
+  
+    
+<script src="/js/search.js"></script>
+
+  
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+(function ($) {
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+})(jQuery);
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'http://yoursite.com' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'http://yoursite.com' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'http://yoursite.com' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+<!-- more -->
+
+
+    
+      
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+<!-- 样式位于：source/css/_third-party/pjaxanimate.styl -->
+
+<div class="pjax-animate">
+  
+    <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
+    <div id="loading-bar-wrapper"><script>NProgress.configure({parent:"#loading-bar-wrapper",trickleSpeed: 100})</script></div>
+    <script>
+      window.ShowLoading = function() {
+        NProgress.start();
+      };
+      window.HideLoading = function() {
+        NProgress.done();
+      }
+    </script>
+  
+</div>
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+      $('.l_header .switcher .s-search').removeClass('active'); // 关闭移动端激活的搜索框
+      $('.l_header').removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      $('.wrapper').removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      $('.s-top').unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+      window.ShowLoading();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      // 关于百度统计对 SPA 页面的处理：
+      // 方案一：百度统计>管理>单页应用设置中，打开开启按钮即可对SPA进行统计。 https://tongji.baidu.com/web/help/article?id=324
+      // 方案二：取消注释下列代码。 https://tongji.baidu.com/web/help/article?id=235
+      // 
+
+      // 关于谷歌统计对 SPA 页面的处理：
+      // 当应用以动态方式加载内容并更新地址栏中的网址时，也应该更新通过 gtag.js 存储的网页网址。
+      // https://developers.google.cn/analytics/devguides/collection/gtagjs/single-page-applications?hl=zh-cn
+      
+
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+          if (typeof $.fancybox == "undefined") {
+            SCload_fancybox();
+          } else {
+            pjax_fancybox();
+          }
+        
+        
+        
+        
+        
+        
+          pjax_valine();
+        
+        
+        
+        
+        
+      } catch (e) {
+        console.log(e);
+      }
+      window.HideLoading();
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+      window.HideLoading();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+
+    
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/gh/zyoushuo/Blog/hexo/js/mouse_click.js"></script>
+</body>
+</html>
